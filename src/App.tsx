@@ -1,33 +1,13 @@
 import React from 'react';
-import { Alert, Button } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { Button, Typography, Icon } from 'lens-ui'
+import toast, { Toaster } from 'react-hot-toast'
 import axios from 'axios';
 import { useState } from 'react';
 import player from './player'
 import { Status } from './status';
-import { DisplayMessageFunc } from './common';
-
-class MessageState {
-  show: boolean;
-  variant: string;
-  message: string;
-
-  constructor(show: boolean = false, variant: string = "", message: string = "") {
-    this.show = show;
-    this.variant = variant;
-    this.message = message;
-  }
-}
+import 'lens-ui/dist/index.css';
 
 function App() {
-  const [message, setMessage] = useState(new MessageState())
-
-  const displayMessage: DisplayMessageFunc = (message: string, variant: string, timeout_ms: number) => {
-    setMessage(new MessageState(true, variant, message))
-    if (timeout_ms > 0) {
-      setTimeout(() => setMessage(new MessageState()), timeout_ms)
-    }
-  }
 
   const onNew = () => {
     const url = "https://api.spacetraders.io/v2/register"
@@ -42,44 +22,26 @@ function App() {
       })
       .catch((err) => {
         console.log(err)
-        setMessage(new MessageState(true, "danger", "Error: " + err.message))
-        // setTimeout(() => setMessage(new MessageState()), 1000)
+        toast.error(err.message)
       })
   }
 
   const onOK = () => {
-    setMessage(new MessageState(true, "success", "OK !"))
-  }
-
-  const onAgentInfo = () => {
-    
-    player.getAgentInfo((symbol, headquarters, credits) => {
-      console.log(symbol)
-      setMessage(new MessageState(true, "success", symbol + headquarters + credits))
-    })
-      // .then(
-      // .catch((err) => {
-      //   console.log(err)
-      //   setMessage(new MessageState(true, "danger", "Error: " + err.message))
-      // })
+    toast.success("Hello world!")
   }
 
   return (
     <div className="App">
-      <div className="message">{
-        message.show &&
-        <Alert dismissible onClose={() => setMessage(new MessageState())} key="error" variant={message.variant} style={{ margin: "auto", maxWidth: "50%", marginTop: "5px", marginBottom: "5px" }}>{message.message}</Alert>
-      }
-      </div>
       <div className="dashboard">
-        <h1>
+        <Typography variant="h3">
           Dashboard
-        </h1>
-        <Status displayMessage={displayMessage}/>
-        <Button onClick={onNew}>New</Button> <Button onClick={onOK}>OK</Button> <Button onClick={onAgentInfo}>Info</Button>
+        </Typography>
+        <Status />
+        <Button className="m1" onClick={onNew}>New</Button> 
+        <Button className="m1" onClick={onOK}>Hi</Button> 
+        <Button className="m1" intent="success" onClick={() => toast("Hi")}>Info</Button>
       </div>
-
-      <div className="justify-content-end">Hello world!</div>
+      <Toaster position='top-right' />
     </div>
   );
 }
