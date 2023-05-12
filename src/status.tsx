@@ -12,13 +12,24 @@ const Status = () => {
 
     const refresh = () => {
         setLoading(true)
-        player.getAgentInfo((symbol, headquarters, credits) => {
-            setName(symbol)
-            setCredits(credits)
-            setHome(headquarters)
-            toast.success("Fetched agent")
-            setLoading(false)
+        const promise = player.getAgentInfo()
+        toast.promise(promise, {
+            loading: "Fetching agent info",
+            success: "Fetched agent",
+            error: "Error, check console"
         })
+
+        promise
+            .then((res) => {
+                const data = res.data.data
+                setName(data.symbol)
+                setCredits(data.credits)
+                setHome(data.headquarters)
+                setLoading(false)
+            })
+            .catch((err) => {
+                console.log(err)
+            })
     }
 
     useEffect(() => {
@@ -27,7 +38,7 @@ const Status = () => {
 
     return (
         <div>
-            <Row style={{maxWidth: "75%", height: "2.4em", margin: "auto", padding: "1em", alignItems: "center"}}>
+            <Row style={{ maxWidth: "75%", height: "2.4em", margin: "auto", padding: "1em", alignItems: "center" }}>
                 <Col sm><Typography variant="h6">${credits}</Typography></Col>
                 <Col sm><Typography variant="h6">{name} from {home}</Typography></Col>
                 <Col xs >
