@@ -9,3 +9,22 @@
 .m1 {
   margin: 1em;
 }
+
+code {
+  color: red;
+  font-family: Consolas;
+}
+
+#mapContainer {
+  display: inline-block;
+}
+
+#mapBackground {
+  position: absolute;
+  z-index: 0;
+}
+
+#mapCanvas {
+  position: relative;
+  z-index: 1;
+}
