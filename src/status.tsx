@@ -1,20 +1,15 @@
-import React, { useEffect } from "react";
-import { useState } from "react";
-import player from "./player";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import Button from "@atlaskit/button";
-import Spinner from "@atlaskit/spinner";
-import RefreshIcon from "@atlaskit/icon/glyph/refresh";
+import api from "./api";
+import { RefreshButton } from "./components/refresh-button";
 
 const Status = () => {
   const [name, setName] = useState("");
   const [credits, setCredits] = useState(-1);
   const [home, setHome] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  const refresh = () => {
-    setLoading(true);
-    const promise = player.getAgentInfo();
+  const refresh = (onDone: Function = () => {}) => {
+    const promise = api.agent.getMyAgent();
     toast.promise(promise, {
       loading: "Fetching agent info",
       success: "Fetched agent",
@@ -27,10 +22,11 @@ const Status = () => {
         setName(data.symbol);
         setCredits(data.credits);
         setHome(data.headquarters);
-        setLoading(false);
+        onDone();
       })
       .catch((err) => {
         console.log(err);
+        onDone();
       });
   };
 
@@ -58,16 +54,7 @@ const Status = () => {
           {name} from {home}
         </h6>
       </div>
-      <div>
-        {loading ? (
-          <Spinner />
-        ) : (
-          <Button
-            onClick={refresh}
-            iconBefore={<RefreshIcon label="" />}
-          ></Button>
-        )}
-      </div>
+      <RefreshButton onClick={refresh} />
     </div>
   );
 };

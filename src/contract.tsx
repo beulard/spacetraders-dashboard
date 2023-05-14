@@ -1,5 +1,6 @@
-import React, { useEffect } from "react";
 import Button from "@atlaskit/button";
+import { Code } from "@atlaskit/code";
+import DynamicTable from "@atlaskit/dynamic-table";
 import Modal, {
   ModalBody,
   ModalFooter,
@@ -7,19 +8,13 @@ import Modal, {
   ModalTitle,
   ModalTransition,
 } from "@atlaskit/modal-dialog";
-import { Code } from "@atlaskit/code";
-import RefreshIcon from "@atlaskit/icon/glyph/refresh";
-import DynamicTable from "@atlaskit/dynamic-table";
-import toast from "react-hot-toast";
-import { useState } from "react";
-import player from "./player";
-import {
-  ContractsApi,
-  Configuration,
-  Contract,
-  ContractDeliverGood,
-} from "spacetraders-sdk";
 import Popup from "@atlaskit/popup";
+import Spinner from "@atlaskit/spinner";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { Contract, ContractDeliverGood } from "spacetraders-sdk";
+import api from "./api";
+import { RefreshButton } from "./components/refresh-button";
 
 function getTotalPayment(contract: Contract) {
   return contract.terms.payment.onAccepted + contract.terms.payment.onFulfilled;
@@ -42,6 +37,28 @@ const Deadline = (props: { deadline: Date }) => {
           ${diff.getSeconds()}s left`;
   }
   return <>{getTimeLeftString()}</>;
+};
+
+const ContractDescription = (props: { contract: Contract }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Popup
+      isOpen={isOpen}
+      onClose={() => setIsOpen(false)}
+      content={() => <ContractBody contract={props.contract}></ContractBody>}
+      trigger={(triggerProps) => (
+        <Button
+          style={{ width: "4.5em" }}
+          {...triggerProps}
+          appearance="primary"
+          isSelected={isOpen}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? "Hide" : "Show"}
+        </Button>
+      )}
+    ></Popup>
+  );
 };
 
 const ContractBody = (props: { contract: Contract }) => {
@@ -93,6 +110,7 @@ const ContractBody = (props: { contract: Contract }) => {
           const d = item as ContractDeliverGood;
           return (
             <li key={idx}>
+              {/* TODO Clickable destination symbol */}
               {d.tradeSymbol} to {d.destinationSymbol} {d.unitsFulfilled}/
               {d.unitsRequired}
             </li>
@@ -100,11 +118,11 @@ const ContractBody = (props: { contract: Contract }) => {
         })}
       </ul>
       {showJSON && (
-        <div style={{ margin: "1em 0em 1em 1em" }}>
+        <div style={{ margin: "1em 0em 1em 0em" }}>
           <Code>{JSON.stringify(contract, null, 2)}</Code>
         </div>
       )}
-      <div style={{ margin: "1em 0em 1em 1em" }}>
+      <div style={{}}>
         <Button appearance="subtle" onClick={() => setShowJSON(!showJSON)}>
           {showJSON ? "Hide JSON" : "Show JSON"}
         </Button>
@@ -112,18 +130,14 @@ const ContractBody = (props: { contract: Contract }) => {
     </div>
   );
 };
+
 const ContractList = () => {
   const [contracts, setContracts] = useState(Array<Contract>());
   const [modalOpen, setModalOpen] = useState(false);
   const [acceptContractId, setAcceptContractId] = useState("");
 
-  const config = new Configuration({
-    accessToken: player.apiToken,
-  });
-  const api = new ContractsApi(config);
-
-  const refresh = () => {
-    const promise = api.getContracts();
+  const refresh = (onDone: Function = () => {}) => {
+    const promise = api.contract.getContracts();
 
     toast.promise(promise, {
       loading: "Fetching contracts",
@@ -133,12 +147,14 @@ const ContractList = () => {
 
     promise
       .then((res) => {
-        // console.log(res);
+        console.log(res);
         const data = res.data.data;
         setContracts(data);
+        onDone();
       })
       .catch((err) => {
         console.log(err);
+        onDone();
       });
   };
   useEffect(refresh, []);
@@ -166,28 +182,6 @@ const ContractList = () => {
         isSortable: true,
       },
     ],
-  };
-
-  const ContractDescription = (props: { contract: Contract }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    return (
-      <Popup
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        content={() => <ContractBody contract={props.contract}></ContractBody>}
-        trigger={(triggerProps) => (
-          <Button
-            style={{ width: "4.5em" }}
-            {...triggerProps}
-            appearance="primary"
-            isSelected={isOpen}
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? "Hide" : "Show"}
-          </Button>
-        )}
-      ></Popup>
-    );
   };
 
   const tableRows = contracts.map((contract, idx) => ({
@@ -234,7 +228,7 @@ const ContractList = () => {
 
   return (
     <div>
-      <div style={{ margin: "auto", marginTop: "5em", width: "40em" }}>
+      <div style={{ margin: "auto", marginTop: "1em", width: "40em" }}>
         <div
           style={{
             display: "flex",
@@ -245,11 +239,7 @@ const ContractList = () => {
           }}
         >
           <h4 style={{ flex: "5 5 auto" }}>Contracts</h4>
-          <Button
-            iconBefore={<RefreshIcon label="" />}
-            onClick={refresh}
-            style={{ flex: "0 1 auto", alignSelf: "flex-end" }}
-          ></Button>
+          <RefreshButton onClick={refresh} />
         </div>
       </div>
       <div style={{ margin: "auto", maxWidth: "60em" }}>
@@ -279,15 +269,22 @@ const ContractList = () => {
                 <Button
                   appearance="primary"
                   onClick={() => {
-                    const promise = api.acceptContract(acceptContractId);
+                    const promise =
+                      api.contract.acceptContract(acceptContractId);
+                    setContracts(
+                      contracts.map((c) =>
+                        c.id === acceptContractId ? { ...c, accepted: true } : c
+                      )
+                    );
                     setModalOpen(false);
+                    setAcceptContractId("");
                     toast.promise(promise, {
                       loading: "Accepting...",
                       success: "Accepted contract. Good luck!",
                       error: "Error!",
                     });
                     promise
-                      .then((res) => {
+                      .then((_) => {
                         refresh();
                       })
                       .catch((err) => {
