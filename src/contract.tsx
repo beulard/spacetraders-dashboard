@@ -9,7 +9,6 @@ import Modal, {
   ModalTransition,
 } from "@atlaskit/modal-dialog";
 import Popup from "@atlaskit/popup";
-import Spinner from "@atlaskit/spinner";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Contract, ContractDeliverGood } from "spacetraders-sdk";
@@ -21,22 +20,26 @@ function getTotalPayment(contract: Contract) {
 }
 
 const Deadline = (props: { deadline: Date }) => {
+  // Time left in milliseconds
   const [timeLeft, setTimeLeft] = useState(
     props.deadline.getTime() - Date.now()
   );
 
-  const decrement = () => setTimeLeft(timeLeft - 1);
-
-  setTimeout(decrement, 1000);
+  setInterval(() => {
+    setTimeLeft(timeLeft - 1000);
+  }, 1000);
 
   function getTimeLeftString() {
-    const diff = new Date(timeLeft - Date.now());
+    let seconds = Math.floor(timeLeft / 1000);
+    let minutes = Math.floor(seconds / 60);
+    let hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
 
-    return `${diff.getDate()}d
-          ${diff.getHours()}h ${diff.getMinutes()}m
-          ${diff.getSeconds()}s left`;
+    return `${days}d
+          ${hours % 24}h ${minutes % 60}m
+          ${seconds % 60}s left`;
   }
-  return <>{getTimeLeftString()}</>;
+  return <span>{getTimeLeftString()}</span>;
 };
 
 const ContractDescription = (props: { contract: Contract }) => {
