@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { Status } from "./status";
 import { ContractList } from "./contract";
 import { Map } from "./map";
+import FleetList from "./fleet";
 import Breadcrumbs, { BreadcrumbsItem } from "@atlaskit/breadcrumbs";
 import {
   Content,
@@ -29,6 +30,7 @@ function App() {
         <Status />
         <Map />
         <ContractList />
+        <FleetList />
       </div>
     </div>
   );

@@ -1,20 +1,13 @@
-import React, { ChangeEvent, useEffect, useRef } from "react";
-import ReactDOM from "react-dom/client";
+import { useEffect, useRef } from "react";
 import Button from "@atlaskit/button";
-import TableTree, {
-  Cell,
-  Header,
-  Headers,
-  Row,
-  Rows,
-} from "@atlaskit/table-tree";
 import Select from "@atlaskit/select";
 import "./index.css";
 
 import toast from "react-hot-toast";
 import { useState } from "react";
-import player from "./player";
 import { Configuration, FleetApi, Ship, System } from "spacetraders-sdk";
+
+import api from "./api";
 
 type Props = {
   title: string;
@@ -57,11 +50,7 @@ const CollapsibleElement = ({ title, children }: Props) => {
   );
 };
 
-const MoveElement = (props: {
-  fleetApi: FleetApi;
-  ship: Ship;
-  refresh: () => void;
-}) => {
+const MoveElement = (props: { ship: Ship; refresh: () => void }) => {
   const [selectedWaypoint, setSelectedWayPoint] = useState("");
   const [navigating, setNavigating] = useState(false);
   const [arrival, setArrival] = useState("");
@@ -118,7 +107,7 @@ const MoveElement = (props: {
           alignSelf: "center",
         }}
         onClick={() => {
-          props.fleetApi
+          api.fleet
             .navigateShip(props.ship.symbol, {
               waypointSymbol: selectedWaypoint,
             })
@@ -148,13 +137,8 @@ const MoveElement = (props: {
 export default () => {
   const [fleet, setFleet] = useState(Array<Ship>);
 
-  const config = new Configuration({
-    accessToken: player.apiToken,
-  });
-  const fleetApi = new FleetApi(config);
-
   const refresh = () => {
-    const promise = fleetApi.getMyShips();
+    const promise = api.fleet.getMyShips();
 
     toast.promise(promise, {
       loading: "Fetching fleet",
@@ -187,13 +171,11 @@ export default () => {
             >
               <div style={{ gridArea: "a" }}> Navigation</div>
               <div style={{ gridArea: "b" }}>Status : </div>
-              <div style={{ gridArea: "c" }}>{ship.nav.status}</div>
+              <div style={{ gridArea: "c" }}>
+                {ship.nav.status} at {ship.nav.route.departure.symbol}
+              </div>
               <div style={{ gridArea: "d" }}>
-                <MoveElement
-                  fleetApi={fleetApi}
-                  ship={ship}
-                  refresh={refresh}
-                ></MoveElement>
+                <MoveElement ship={ship} refresh={refresh}></MoveElement>
               </div>
             </div>
             <div className="tab2">TAB2</div>
