@@ -1,3 +1,19 @@
+@font-face {
+  font-family: "Roboto";
+  src: url(./resources/Roboto-Regular.ttf), format("ttf");
+  font-weight: normal;
+}
+@font-face {
+  font-family: "Roboto";
+  src: url(./resources/Roboto-Bold.ttf), format("ttf");
+  font-weight: bold;
+}
+@font-face {
+  font-family: "MajorMonoDisplay";
+  src: local("MajorMonoDisplay"), url(./resources/MajorMonoDisplay-Regular.ttf), format("ttf");
+}
+
+
 .dashboard {
   text-align: center;
 }
