@@ -1,9 +1,9 @@
 import Button, { ButtonGroup } from "@atlaskit/button";
 import Toggle from "@atlaskit/toggle";
-import paper from "paper";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { System, SystemWaypoint, SystemsApi } from "spacetraders-sdk";
+import * as ex from "excalibur";
 
 const SystemList = (props: {
   systems: Array<System>;
@@ -70,168 +70,186 @@ const SystemList = (props: {
   );
 };
 
+function clamp(x: number, xmin: number, xmax: number) {
+  return Math.max(Math.min(x, xmax), xmin);
+}
+
 const Map = () => {
   const [show, setShow] = useState(true);
   const [systems, setSystems] = useState(Array<System>());
   const [drawnSystems, setDrawnSystems] = useState(0);
   const [selectedSystem, setSelectedSystem] = useState<System | null>(null);
   const [showSystemInfo, setShowSystemInfo] = useState(true);
+
+  const maxZoomScale = 1;
+  const minZoomScale = 0.05;
+  // By how much to scale the system positions returned by the API into engine coordinates
+  const systemPositionScale = 20;
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const gameLayerRef = useRef<paper.Layer | null>(null);
-  const uiLayerRef = useRef<paper.Layer | null>(null);
+  const gameRef = useRef<ex.Engine | null>(null);
 
   const init = () => {
-    paper.setup(canvasRef.current!);
-    paper.view.zoom = 0.2;
-    // ctxRef.current = canvasRef.current!.getContext("2d");
-    const gameLayer = new paper.Layer();
-    gameLayer.applyMatrix = false;
-    gameLayerRef.current = gameLayer;
-    const uiLayer = new paper.Layer();
-    uiLayerRef.current = uiLayer;
-    gameLayer.activate();
+    const game = new ex.Engine({
+      width: 600,
+      height: 400,
+      canvasElement: canvasRef.current!,
+      enableCanvasTransparency: true,
+      backgroundColor: new ex.Color(0, 0, 0, 0.5),
+    });
+    gameRef.current = game;
 
-    gameLayer.onMouseDown = (event: paper.MouseEvent) => {
-      console.log(
-        event.point,
-        gameLayer.globalToLocal(event.point),
-        paper.view.projectToView(event.point)
+    game.currentScene.camera.pos = ex.vec(0, 0);
+    game.currentScene.camera.zoom = minZoomScale;
+    game.start().then(() => {
+      game.currentScene.camera.zoomOverTime(0.4, 1000.0);
+    });
+
+    const camera = game.currentScene.camera;
+    camera.clearAllStrategies();
+
+    game.input.pointers.on("wheel", (evt) => {
+      console.log(camera.zoom);
+      camera.zoomOverTime(
+        clamp(
+          camera.zoom * 0.66 ** Math.sign(evt.deltaY),
+          minZoomScale,
+          maxZoomScale
+        ),
+        50,
+        ex.EasingFunctions.EaseInOutCubic
       );
-    };
+    });
 
-    // Drag map around with mouse
-    paper.view.onMouseDrag = (event: paper.MouseEvent) => {
-      gameLayer.translate(event.delta);
-    };
-
-    // Zoom with mousewheel (not handled by paperjs)
-    canvasRef.current!.addEventListener("wheel", (event: WheelEvent) => {
-      event.preventDefault();
-      // console.log(Math.sign(event.deltaY));
-      paper.view.zoom *= 1 - 0.15 * Math.sign(event.deltaY);
-      console.log(paper.view.zoom);
-      gameLayer.children.forEach((c) => {
-        // c.scale(1.0 / (1.0 - 0.25 * Math.sign(event.deltaY)));
-      });
-
-      // Pan toward the mouse
-      let direction = new paper.Point(event.offsetX, event.offsetY).subtract(
-        paper.view.center
-      );
-
-      // console.log(paper.view.zoom);
-      // console.log(mousePos, direction.divide(canvasRef.current!.width));
-      gameLayer.translate(
-        direction.multiply(
-          (1 * 100 * Math.sign(event.deltaY)) /
-            paper.view.zoom /
-            Math.sqrt(
-              canvasRef.current!.width ** 2 + canvasRef.current!.height ** 2
-            )
-        )
-      );
+    // Drag camera with mouse
+    const pointers = game.input.pointers;
+    let dragStart = ex.vec(0, 0);
+    let cameraDragStart = ex.vec(0, 0);
+    let dragging = false;
+    pointers.on("move", (evt) => {
+      const nativeEvt = evt.nativeEvent as MouseEvent;
+      // Mouse wheel only
+      if (nativeEvt.buttons & 4 && pointers.isDragging(evt.pointerId)) {
+        if (!dragging) {
+          dragging = true;
+          dragStart = evt.screenPos;
+          cameraDragStart = camera.pos;
+        }
+        camera.pos = cameraDragStart.sub(
+          evt.screenPos.sub(dragStart).scale(1.0 / camera.zoom)
+        );
+      } else {
+        dragging = false;
+      }
     });
   };
 
   const systemTypeColor = {
-    NEUTRON_STAR: "cyan",
-    RED_STAR: "red",
-    ORANGE_STAR: "orange",
-    BLUE_STAR: "blue",
-    YOUNG_STAR: "AliceBlue",
-    WHITE_DWARF: "white",
-    BLACK_HOLE: "black",
-    HYPERGIANT: "purple",
-    NEBULA: "Chartreuse",
-    UNSTABLE: "hotpink",
+    NEUTRON_STAR: ex.Color.Cyan,
+    RED_STAR: ex.Color.Red,
+    ORANGE_STAR: ex.Color.Orange,
+    BLUE_STAR: ex.Color.Blue,
+    YOUNG_STAR: ex.Color.ExcaliburBlue,
+    WHITE_DWARF: ex.Color.White,
+    BLACK_HOLE: ex.Color.Black,
+    HYPERGIANT: ex.Color.Violet,
+    NEBULA: ex.Color.Green,
+    UNSTABLE: ex.Color.Rose,
   };
 
   function drawSystems(systems: Array<System>) {
-    // console.log(systems);
-    const layer = gameLayerRef.current!;
-    layer.activate();
+    const game = gameRef.current!;
+    const camera = game.currentScene.camera;
+    let selectedSystemCircle: ex.Actor | null = null;
+    let selectedSystemLabel: ex.Label | null = null;
 
-    let selectedSystemCircle: paper.Path.Circle | null = null;
-    let selectedSystemTooltip: paper.TextItem | null = null;
-    let selectedSystemIndicator = new paper.Path.RegularPolygon(
-      new paper.Point(0, 0),
-      3,
-      20
-    );
-    selectedSystemIndicator.rotate(180);
-    selectedSystemIndicator.fillColor = new paper.Color("#e9e9ff");
-    selectedSystemIndicator.visible = false;
-    selectedSystemIndicator.scale(0.66, 1);
-
+    // TODO encapsulate in Actor.onInitialize
     systems.forEach((system) => {
-      // let position = layer.globalToLocal(
-      //   paper.view.viewToProject(new paper.Point(system.x * 8, system.y * 8))
-      // );
-      let position = new paper.Point(system.x * 8, system.y * 8);
-      let circle = new paper.Path.Circle(position.clone(), 10);
-      circle.strokeColor = new paper.Color(systemTypeColor[system.type]);
-      circle.strokeWidth = 5;
-      circle.fillColor = new paper.Color(systemTypeColor[system.type]);
-      circle.fillColor.alpha = 0.2;
+      let systemGfx = new ex.Actor({
+        pos: ex.vec(
+          system.x * systemPositionScale,
+          system.y * systemPositionScale
+        ),
+      });
+      const circle = new ex.Actor({
+        pos: ex.vec(0, 0),
+        radius: 15,
+        color: systemTypeColor[system.type],
+      });
+      circle.pointer.useGraphicsBounds = true;
+      systemGfx.addChild(circle);
 
-      let tooltip = new paper.PointText(
-        circle.position.add(new paper.Point(15, 20))
-      );
-      tooltip.fontSize = 24;
-      tooltip.sendToBack();
-      tooltip.content = system.symbol;
-      tooltip.fillColor = new paper.Color("#ffffff");
-      tooltip.fillColor!.alpha = 0.6;
-      tooltip.fontFamily = "monospace";
-      tooltip.addTo(circle);
-      // tooltip.visible = false;
+      // Instantiate a font per label (for some reason)
+      const symbolFont = new ex.Font({
+        family: "Roboto",
+        size: 16,
+      });
 
-      circle.onMouseEnter = () => {
-        // tooltip.visible = true;
-        // circle.addChild(tooltip);
-        circle.strokeWidth += 2;
-        circle.fillColor!.alpha = 0.3;
-        tooltip.content = system.symbol + "\n" + system.type;
-        tooltip.fillColor!.alpha += 0.1;
-      };
-      circle.onMouseLeave = () => {
-        // tooltip.visible = false;
-        circle.strokeWidth -= 2;
-        circle.fillColor!.alpha = 0.2;
-        tooltip.content = system.symbol;
-        tooltip.fillColor!.alpha -= 0.1;
-      };
-      circle.onMouseDown = () => {
-        // circle.selected = true;
-        setSelectedSystem(system);
-        if (selectedSystemCircle) {
-          selectedSystemCircle.strokeWidth -= 4;
+      const symbolFontBold = new ex.Font({
+        family: "Roboto",
+        size: 16,
+        bold: true,
+      });
+
+      const label = new ex.Label({
+        pos: ex.vec(10, 10),
+        text: system.symbol,
+        color: ex.Color.White.darken(0.1),
+        font: symbolFont,
+      });
+      label.on("preupdate", () => {
+        // TODO a way to hide system labels when too far?
+        // TODO show only sector labels when zooming all the way out?
+        label.scale = ex
+          .vec(1, 1)
+          .scale(1.0 / clamp(camera.zoom, 0.5, maxZoomScale));
+      });
+      label.pointer.useGraphicsBounds = true;
+
+      systemGfx.events.wire(circle.events);
+      systemGfx.events.wire(label.events);
+      systemGfx.addChild(label);
+
+      // Highlight selected system on click
+      systemGfx.on("pointerdown", (evt) => {
+        if (evt.button === "Left") {
+          if (selectedSystemCircle) {
+            // Return previous selection to normal
+            selectedSystemCircle.color = selectedSystemCircle.color.darken(0.5);
+            selectedSystemLabel!.font = symbolFont;
+            selectedSystemLabel!.color = ex.Color.White.darken(0.1);
+          }
+          setSelectedSystem(system);
+          selectedSystemLabel = label;
+          selectedSystemCircle = circle;
+
+          circle.color = circle.color.lighten(0.5);
+          label.font = symbolFontBold;
+          label.color = ex.Color.White;
         }
-        if (selectedSystemTooltip) {
-          selectedSystemTooltip.fillColor!.alpha -= 0.3;
-        }
+      });
 
-        selectedSystemCircle = circle;
-        selectedSystemCircle.strokeWidth += 4;
-        selectedSystemTooltip = tooltip;
-        selectedSystemTooltip.fillColor!.alpha += 0.3;
-        selectedSystemIndicator.visible = true;
-        selectedSystemIndicator.position = selectedSystemCircle.position.add(
-          new paper.Point(0, -45)
-        );
-      };
+      game.add(systemGfx);
     });
   }
 
   useEffect(() => {
-    if (show) {
-      init();
-      drawSystems(systems.slice(drawnSystems));
-      setDrawnSystems(systems.length);
+    if (gameRef.current) {
+      // If we get here it means we got a live reload on dev server, usually
+      gameRef.current.currentScene.clear();
+      gameRef.current.stop();
     }
-  }, [show]);
+    init();
+
+    drawSystems(systems);
+  }, []);
 
   useEffect(() => {
+    console.log(
+      "effect systems",
+      systems.slice(drawnSystems).length,
+      systems.length
+    );
     drawSystems(systems.slice(drawnSystems));
     setDrawnSystems(systems.length);
   }, [systems]);
@@ -242,7 +260,7 @@ const Map = () => {
         <div id="mapContainer">
           <img
             id="mapBackground"
-            src="/assets/starbg_gen_600x400.png"
+            src="/assets/starbg_gen2_600x400.png"
             alt="bg"
           ></img>
           <canvas
@@ -255,22 +273,34 @@ const Map = () => {
       )}
       <div style={{}}>
         <ButtonGroup>
-          <Button
+          {/* <Button
             appearance="primary"
             style={{ margin: "0.5em" }}
             onClick={() => {
-              setDrawnSystems(0);
+              console.log(show);
+              if (show) {
+                // If user toggle off
+                gameRef.current!.stop();
+                setDrawnSystems(0);
+              } else {
+                // Restart everything
+                // init();
+                console.log(systems);
+                drawSystems(systems);
+                setDrawnSystems(systems.length);
+              }
               setShow(!show);
             }}
           >
             Toggle
-          </Button>
+          </Button> */}
           <Button
             appearance="default"
             style={{ margin: "0.5em" }}
             onClick={() => {
-              gameLayerRef.current!.matrix.reset();
-              paper.view.zoom = 0.1;
+              const camera = gameRef.current!.currentScene.camera;
+              camera.move(ex.vec(0, 0), 1000);
+              camera.zoomOverTime(0.4, 1000);
             }}
           >
             Center
@@ -323,7 +353,7 @@ const SystemInfo = (props: { system: System | null }) => {
       style={{
         textAlign: "center",
         margin: "auto",
-        maxWidth: "15em",
+        maxWidth: "30em",
         marginTop: "1em",
       }}
     >
@@ -343,7 +373,23 @@ const SystemInfo = (props: { system: System | null }) => {
           <h6>Waypoints</h6>
           <div style={{}}>
             {system.waypoints.map((waypoint) => (
-              <WaypointInfo waypoint={waypoint} />
+              <div
+                style={{
+                  display: "grid",
+                  alignItems: "center",
+                  gridTemplateRows: "min-content",
+                  gridTemplateColumns: "25em 10em",
+                }}
+              >
+                <WaypointInfo waypoint={waypoint} />
+                <Button
+                  onClick={() => {
+                    console.log("Not yet implemented");
+                  }}
+                >
+                  Send ship
+                </Button>
+              </div>
             ))}
           </div>
         </>
