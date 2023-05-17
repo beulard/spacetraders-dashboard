@@ -191,7 +191,6 @@ export default () => {
               <div style={{ gridArea: "d" }}>
                 <MoveElement
                   fleetApi={fleetApi}
-                  fleet={fleet}
                   ship={ship}
                   refresh={refresh}
                 ></MoveElement>
