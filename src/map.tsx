@@ -1,21 +1,8 @@
 import Button, { ButtonGroup } from "@atlaskit/button";
 import Toggle from "@atlaskit/toggle";
-import { useEffect, useRef, useState } from "react";
-import toast from "react-hot-toast";
-import { System, SystemWaypoint, SystemsApi } from "spacetraders-sdk";
 import * as ex from "excalibur";
-import { SystemData } from "./system";
-import Badge from "@atlaskit/badge";
-import DropdownMenu, {
-  DropdownItem,
-  DropdownItemCheckbox,
-  DropdownItemGroup,
-} from "@atlaskit/dropdown-menu";
-import {
-  Accordion,
-  AccordionBody,
-  AccordionHeader,
-} from "./components/accordion";
+import { useEffect, useRef, useState } from "react";
+import { System, SystemWaypoint, SystemsApi } from "spacetraders-sdk";
 
 const SystemList = (props: {
   systems: Array<System>;
@@ -345,7 +332,7 @@ const Map = (props: { setSelectedSystem: Function }) => {
   );
 };
 
-const WaypointInfo = (props: { waypoint: SystemWaypoint }) => {
+export const WaypointInfo = (props: { waypoint: SystemWaypoint }) => {
   const waypoint = props.waypoint;
 
   return (
@@ -355,95 +342,8 @@ const WaypointInfo = (props: { waypoint: SystemWaypoint }) => {
   );
 };
 
-const ShipSelector = () => {
+export const ShipSelector = () => {
   return <>Send ship (TODO)</>;
 };
 
-const SystemInfo = (props: { system: System | null }) => {
-  const system = props.system;
-
-  return (
-    <span
-      style={{
-        float: "left",
-        textAlign: "left",
-        // minWidth: "35%",
-        // maxWidth: "35%",
-        width: "30%",
-        // marginRight: "2em",
-      }}
-    >
-      {system && (
-        <div>
-          <h4 style={{ marginBottom: "0.25em" }}>
-            {system.symbol} {system.type}{" "}
-          </h4>
-          {system.waypoints.length > 0 && (
-            <Accordion>
-              <AccordionHeader setShown={() => {}} shown={true}>
-                <h6 style={{ display: "inline" }}>
-                  Waypoints
-                  <span className="waypointCount">
-                    <Badge>{system.waypoints.length}</Badge>
-                  </span>
-                </h6>
-              </AccordionHeader>
-              <AccordionBody setShown={() => {}} shown={true}>
-                {system.waypoints.map((waypoint) => (
-                  <div style={{ width: "100%" }}>
-                    <DropdownMenu
-                      trigger={({ triggerRef, ...props }) => (
-                        <div style={{ width: "100%" }}>
-                          <Button
-                            style={{
-                              width: "100%",
-                              textAlign: "left",
-                              display: "flex",
-                            }}
-                            {...props}
-                            ref={triggerRef}
-                          >
-                            <WaypointInfo waypoint={waypoint} />
-                          </Button>
-                        </div>
-                      )}
-                    >
-                      <DropdownItemGroup>
-                        <DropdownItem>
-                          <ShipSelector />
-                        </DropdownItem>
-                      </DropdownItemGroup>
-                    </DropdownMenu>
-
-                    {/* <Button
-                      onClick={() => {
-                        console.log("Not yet implemented");
-                      }}
-                    >
-                      Send ship
-                    </Button> */}
-                  </div>
-                ))}
-              </AccordionBody>
-            </Accordion>
-          )}
-
-          {system.factions.length > 0 && (
-            <Accordion>
-              <AccordionHeader setShown={() => {}} shown={true}>
-                <h6>Factions</h6>
-              </AccordionHeader>
-              <AccordionBody setShown={() => {}} shown={true}>
-                {system.factions.map((faction) => (
-                  <p>{faction.symbol}</p>
-                ))}
-              </AccordionBody>
-            </Accordion>
-          )}
-        </div>
-      )}
-    </span>
-  );
-};
-
-export { Map, SystemInfo };
+export { Map };

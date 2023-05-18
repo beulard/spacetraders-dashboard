@@ -5,9 +5,10 @@ import { System } from "spacetraders-sdk";
 import api from "./api";
 import { ContractList } from "./contract";
 import FleetList from "./fleet";
-import { Map, SystemInfo } from "./map";
+import { Map } from "./map";
 import { Status } from "./status";
 import { getSystemSymbol } from "./system";
+import { SystemInfo } from "./system-info";
 
 function App() {
   // Systems.FetchCache().then((systems) => {
@@ -97,6 +98,7 @@ function App() {
         <div style={{ display: "inline-block", width: "100%" }}>
           <SystemInfo system={selectedSystem} />
           <Map setSelectedSystem={setSelectedSystem} />
+          {/* TODO searchable list of systems <SystemList setSelectedSystem={setSelectedSystem} /> */}
         </div>
         <ContractList setSelectedSystem={setSelectedSystem} />
         <FleetList />
