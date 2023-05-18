@@ -32,6 +32,7 @@ function App() {
         <ContractList />
         <FleetList />
       </div>
+      <div style={{ minHeight: "300px" }}>Footer</div>
     </div>
   );
 }

@@ -14,6 +14,7 @@
     "@atlaskit/page-header": "^10.4.0",
     "@atlaskit/page-layout": "^1.6.0",
     "@atlaskit/popup": "^1.6.0",
+    "@atlaskit/progress-bar": "^0.6.2",
     "@atlaskit/select": "^16.2.3",
     "@atlaskit/table-tree": "^9.4.0",
     "@atlaskit/toggle": "^12.6.0",

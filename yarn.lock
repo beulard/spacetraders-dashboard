@@ -334,6 +334,17 @@
     "@emotion/react" "^11.7.1"
     "@emotion/serialize" "^1.1.0"
 
+"@atlaskit/progress-bar@^0.6.2":
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/@atlaskit/progress-bar/-/progress-bar-0.6.2.tgz#5247694f0540f531ad3a9d507aec262112dbd4a1"
+  integrity sha512-PjC9a6/SnBniTZhPgca1y+lXdDhz/SrG5exO2u2M5lg4gqr+lFKkPBynSjcZ8ZAjJbndJuRBn4DeUTNYqRuLEg==
+  dependencies:
+    "@atlaskit/ds-lib" "^2.2.0"
+    "@atlaskit/theme" "^12.5.0"
+    "@atlaskit/tokens" "^1.4.0"
+    "@babel/runtime" "^7.0.0"
+    "@emotion/react" "^11.7.1"
+
 "@atlaskit/select@^16.2.3":
   version "16.2.3"
   resolved "https://registry.yarnpkg.com/@atlaskit/select/-/select-16.2.3.tgz#fc126d181461f75e66206dfc114d3a6ba4a146aa"
