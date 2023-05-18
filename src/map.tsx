@@ -4,52 +4,60 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { System, SystemWaypoint, SystemsApi } from "spacetraders-sdk";
 import * as ex from "excalibur";
+import { SystemData } from "./system";
+import Badge from "@atlaskit/badge";
+import DropdownMenu, {
+  DropdownItem,
+  DropdownItemCheckbox,
+  DropdownItemGroup,
+} from "@atlaskit/dropdown-menu";
+import {
+  Accordion,
+  AccordionBody,
+  AccordionHeader,
+} from "./components/accordion";
 
 const SystemList = (props: {
   systems: Array<System>;
   setSystems: Function;
 }) => {
-  const [fetchedCount, setFetchedCount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const fetchLimit = 200;
-
   const api = new SystemsApi();
 
   // Fetch systems
-  useEffect(() => {
-    console.log(currentPage);
-    const promise = api.getSystems(currentPage, 20);
+  // useEffect(() => {
+  //   console.log(currentPage);
+  //   const promise = api.getSystems(currentPage, 20);
 
-    toast.promise(promise, {
-      loading: "Fetching systems",
-      success: "Fetched systems",
-      error: "Error",
-    });
+  //   toast.promise(promise, {
+  //     loading: "Fetching systems",
+  //     success: "Fetched systems",
+  //     error: "Error",
+  //   });
 
-    promise
-      .then((res) => {
-        console.log(currentPage);
-        console.log(res);
-        const meta = res.data.meta;
-        let nFetched = res.data.data.length;
-        props.setSystems(props.systems.concat(res.data.data));
+  //   promise
+  //     .then((res) => {
+  //       console.log(currentPage);
+  //       console.log(res);
+  //       const meta = res.data.meta;
+  //       let nFetched = res.data.data.length;
+  //       props.setSystems(props.systems.concat(res.data.data));
 
-        console.log(props.systems.length);
+  //       console.log(props.systems.length);
 
-        // Stop updating fetched count if we got all systems already
-        if (fetchedCount + nFetched >= fetchLimit /*meta.limit*/) {
-          toast("fetched all ?");
-          console.log(props.systems.length);
-        } else {
-          toast(`fetching ${nFetched} more...`);
-          setFetchedCount(fetchedCount + nFetched);
-          setCurrentPage(currentPage + 1);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, [fetchedCount, currentPage]);
+  //       // Stop updating fetched count if we got all systems already
+  //       if (fetchedCount + nFetched >= fetchLimit /*meta.limit*/) {
+  //         toast("fetched all ?");
+  //         console.log(props.systems.length);
+  //       } else {
+  //         toast(`fetching ${nFetched} more...`);
+  //         setFetchedCount(fetchedCount + nFetched);
+  //         setCurrentPage(currentPage + 1);
+  //       }
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     });
+  // }, [fetchedCount, currentPage]);
 
   return (
     <div
@@ -74,11 +82,9 @@ function clamp(x: number, xmin: number, xmax: number) {
   return Math.max(Math.min(x, xmax), xmin);
 }
 
-const Map = () => {
+const Map = (props: { setSelectedSystem: Function }) => {
   const [show, setShow] = useState(true);
-  const [systems, setSystems] = useState(Array<System>());
-  const [drawnSystems, setDrawnSystems] = useState(0);
-  const [selectedSystem, setSelectedSystem] = useState<System | null>(null);
+  // const [drawnSystems, setDrawnSystems] = useState(0);
   const [showSystemInfo, setShowSystemInfo] = useState(true);
 
   const maxZoomScale = 1;
@@ -109,7 +115,7 @@ const Map = () => {
     camera.clearAllStrategies();
 
     game.input.pointers.on("wheel", (evt) => {
-      console.log(camera.zoom);
+      // console.log(camera.zoom);
       camera.zoomOverTime(
         clamp(
           camera.zoom * 0.66 ** Math.sign(evt.deltaY),
@@ -216,10 +222,10 @@ const Map = () => {
           if (selectedSystemCircle) {
             // Return previous selection to normal
             selectedSystemCircle.color = selectedSystemCircle.color.darken(0.5);
-            selectedSystemLabel!.font = symbolFont;
+            selectedSystemLabel!.font = symbolFont.clone();
             selectedSystemLabel!.color = ex.Color.White.darken(0.1);
           }
-          setSelectedSystem(system);
+          props.setSelectedSystem(system);
           selectedSystemLabel = label;
           selectedSystemCircle = circle;
 
@@ -241,23 +247,32 @@ const Map = () => {
     }
     init();
 
-    drawSystems(systems);
+    // props.systems.addListener((newSystems) => {
+    //   if (props.systems.getAll().length < 200) {
+    //     console.log("Drawing " + newSystems.length + " new systems!");
+    //     drawSystems(newSystems);
+    //   } else {
+    //     console.log("Too many systems to draw at once.");
+    //   }
+    // });
+
+    // drawSystems(props.systems.getAll().slice(0, 200));
   }, []);
 
-  useEffect(() => {
-    console.log(
-      "effect systems",
-      systems.slice(drawnSystems).length,
-      systems.length
-    );
-    drawSystems(systems.slice(drawnSystems));
-    setDrawnSystems(systems.length);
-  }, [systems]);
+  // useEffect(() => {
+  //   console.log(
+  //     "effect systems",
+  //     systems.slice(drawnSystems).length,
+  //     systems.length
+  //   );
+  //   drawSystems(systems.slice(drawnSystems));
+  //   setDrawnSystems(systems.length);
+  // }, [systems]); TODO [Systems.GetAll().length] ?
 
   return (
-    <div>
+    <span style={{ display: "inline-block" }}>
       {show && (
-        <div id="mapContainer">
+        <span id="mapContainer">
           <img
             id="mapBackground"
             src="/assets/starbg_gen2_600x400.png"
@@ -269,7 +284,7 @@ const Map = () => {
             width={600}
             height={400}
           ></canvas>
-        </div>
+        </span>
       )}
       <div style={{}}>
         <ButtonGroup>
@@ -324,9 +339,9 @@ const Map = () => {
           </div>
         </ButtonGroup>
       </div>
-      <SystemList systems={systems} setSystems={setSystems} />
-      {showSystemInfo && <SystemInfo system={selectedSystem} />}
-    </div>
+      {/* <SystemList systems={systems} setSystems={setSystems} /> */}
+      {/* {showSystemInfo && <SystemInfo system={selectedSystem} />} */}
+    </span>
   );
 };
 
@@ -340,62 +355,95 @@ const WaypointInfo = (props: { waypoint: SystemWaypoint }) => {
   );
 };
 
+const ShipSelector = () => {
+  return <>Send ship (TODO)</>;
+};
+
 const SystemInfo = (props: { system: System | null }) => {
-  // const [system, setSystem] = useState(null);
   const system = props.system;
 
-  if (!system) {
-    return <></>;
-  }
-
   return (
-    <div
+    <span
       style={{
-        textAlign: "center",
-        margin: "auto",
-        maxWidth: "30em",
-        marginTop: "1em",
+        float: "left",
+        textAlign: "left",
+        // minWidth: "35%",
+        // maxWidth: "35%",
+        width: "30%",
+        // marginRight: "2em",
       }}
     >
-      <h5>
-        {system.symbol} {system.type}{" "}
-      </h5>
-      {system.factions.length > 0 && (
-        <>
-          <h6>Factions</h6>
-          {system.factions.map((faction) => (
-            <p>{faction.symbol}</p>
-          ))}
-        </>
+      {system && (
+        <div>
+          <h4 style={{ marginBottom: "0.25em" }}>
+            {system.symbol} {system.type}{" "}
+          </h4>
+          {system.waypoints.length > 0 && (
+            <Accordion>
+              <AccordionHeader setShown={() => {}} shown={true}>
+                <h6 style={{ display: "inline" }}>
+                  Waypoints
+                  <span className="waypointCount">
+                    <Badge>{system.waypoints.length}</Badge>
+                  </span>
+                </h6>
+              </AccordionHeader>
+              <AccordionBody setShown={() => {}} shown={true}>
+                {system.waypoints.map((waypoint) => (
+                  <div style={{ width: "100%" }}>
+                    <DropdownMenu
+                      trigger={({ triggerRef, ...props }) => (
+                        <div style={{ width: "100%" }}>
+                          <Button
+                            style={{
+                              width: "100%",
+                              textAlign: "left",
+                              display: "flex",
+                            }}
+                            {...props}
+                            ref={triggerRef}
+                          >
+                            <WaypointInfo waypoint={waypoint} />
+                          </Button>
+                        </div>
+                      )}
+                    >
+                      <DropdownItemGroup>
+                        <DropdownItem>
+                          <ShipSelector />
+                        </DropdownItem>
+                      </DropdownItemGroup>
+                    </DropdownMenu>
+
+                    {/* <Button
+                      onClick={() => {
+                        console.log("Not yet implemented");
+                      }}
+                    >
+                      Send ship
+                    </Button> */}
+                  </div>
+                ))}
+              </AccordionBody>
+            </Accordion>
+          )}
+
+          {system.factions.length > 0 && (
+            <Accordion>
+              <AccordionHeader setShown={() => {}} shown={true}>
+                <h6>Factions</h6>
+              </AccordionHeader>
+              <AccordionBody setShown={() => {}} shown={true}>
+                {system.factions.map((faction) => (
+                  <p>{faction.symbol}</p>
+                ))}
+              </AccordionBody>
+            </Accordion>
+          )}
+        </div>
       )}
-      {system.waypoints.length > 0 && (
-        <>
-          <h6>Waypoints</h6>
-          <div style={{}}>
-            {system.waypoints.map((waypoint) => (
-              <div
-                style={{
-                  display: "grid",
-                  alignItems: "center",
-                  gridTemplateRows: "min-content",
-                  gridTemplateColumns: "25em 10em",
-                }}
-              >
-                <WaypointInfo waypoint={waypoint} />
-                <Button
-                  onClick={() => {
-                    console.log("Not yet implemented");
-                  }}
-                >
-                  Send ship
-                </Button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+    </span>
   );
 };
 
-export { Map };
+export { Map, SystemInfo };
