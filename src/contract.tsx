@@ -1,5 +1,5 @@
 import Button from "@atlaskit/button";
-import { Code } from "@atlaskit/code";
+import { Code, CodeBlock } from "@atlaskit/code";
 import DynamicTable from "@atlaskit/dynamic-table";
 import Modal, {
   ModalBody,
@@ -11,7 +11,7 @@ import Modal, {
 import Popup from "@atlaskit/popup";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Contract, ContractDeliverGood } from "spacetraders-sdk";
+import { Contract, ContractDeliverGood, System } from "spacetraders-sdk";
 import api from "./api";
 import { RefreshButton } from "./components/refresh-button";
 
@@ -25,9 +25,11 @@ const Deadline = (props: { deadline: Date }) => {
     props.deadline.getTime() - Date.now()
   );
 
-  setInterval(() => {
-    setTimeLeft(timeLeft - 1000);
-  }, 1000);
+  useEffect(() => {
+    setTimeout(() => {
+      setTimeLeft(timeLeft - 1000);
+    }, 1000);
+  }, [timeLeft]);
 
   function getTimeLeftString() {
     let seconds = Math.floor(timeLeft / 1000);
@@ -42,13 +44,23 @@ const Deadline = (props: { deadline: Date }) => {
   return <span>{getTimeLeftString()}</span>;
 };
 
-const ContractDescription = (props: { contract: Contract }) => {
+const ContractDescription = (props: {
+  contract: Contract;
+  setSelectedSystem: Function;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Popup
+      placement="auto"
       isOpen={isOpen}
       onClose={() => setIsOpen(false)}
-      content={() => <ContractBody contract={props.contract}></ContractBody>}
+      content={(popupProps) => (
+        <ContractBody
+          contract={props.contract}
+          setSelectedSystem={props.setSelectedSystem}
+          onUpdate={popupProps.update}
+        />
+      )}
       trigger={(triggerProps) => (
         <Button
           style={{ width: "4.5em" }}
@@ -64,7 +76,11 @@ const ContractDescription = (props: { contract: Contract }) => {
   );
 };
 
-const ContractBody = (props: { contract: Contract }) => {
+const ContractBody = (props: {
+  contract: Contract;
+  setSelectedSystem: Function;
+  onUpdate: Function;
+}) => {
   const [showJSON, setShowJSON] = useState(false);
 
   const contract = props.contract;
@@ -112,21 +128,45 @@ const ContractBody = (props: { contract: Contract }) => {
         {contract.terms.deliver?.map((item, idx) => {
           const d = item as ContractDeliverGood;
           return (
-            <li key={idx}>
-              {/* TODO Clickable destination symbol */}
-              {d.tradeSymbol} to {d.destinationSymbol} {d.unitsFulfilled}/
-              {d.unitsRequired}
+            <li key={idx} style={{ alignItems: "center" }}>
+              {d.tradeSymbol} to{" "}
+              <div
+                className="link-button"
+                onClick={() => {
+                  // TODO use local storage
+                  api.system
+                    .getSystem(
+                      d.destinationSymbol.split("-").slice(0, 2).join("-")
+                    )
+                    .then((res) => {
+                      props.setSelectedSystem(res.data.data);
+                    });
+                }}
+              >
+                {d.destinationSymbol}
+              </div>{" "}
+              {d.unitsFulfilled}/{d.unitsRequired}
             </li>
           );
         })}
       </ul>
       {showJSON && (
         <div style={{ margin: "1em 0em 1em 0em" }}>
-          <Code>{JSON.stringify(contract, null, 2)}</Code>
+          <CodeBlock
+            language="json"
+            text={JSON.stringify(contract, null, 2)}
+            showLineNumbers={false}
+          />
         </div>
       )}
       <div style={{}}>
-        <Button appearance="subtle" onClick={() => setShowJSON(!showJSON)}>
+        <Button
+          appearance="subtle"
+          onClick={() => {
+            setShowJSON(!showJSON);
+            props.onUpdate();
+          }}
+        >
           {showJSON ? "Hide JSON" : "Show JSON"}
         </Button>
       </div>
@@ -134,7 +174,7 @@ const ContractBody = (props: { contract: Contract }) => {
   );
 };
 
-const ContractList = () => {
+const ContractList = (props: { setSelectedSystem: Function }) => {
   const [contracts, setContracts] = useState(Array<Contract>());
   const [modalOpen, setModalOpen] = useState(false);
   const [acceptContractId, setAcceptContractId] = useState("");
@@ -150,7 +190,7 @@ const ContractList = () => {
 
     promise
       .then((res) => {
-        console.log(res);
+        // console.log(res);
         const data = res.data.data;
         setContracts(data);
         onDone();
@@ -202,7 +242,10 @@ const ContractList = () => {
       {
         key: "info",
         content: (
-          <ContractDescription contract={contract}></ContractDescription>
+          <ContractDescription
+            contract={contract}
+            setSelectedSystem={props.setSelectedSystem}
+          />
         ),
       },
       {
