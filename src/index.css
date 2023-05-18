@@ -9,8 +9,9 @@
   font-weight: bold;
 }
 
-.dashboard {
+#dashboard {
   text-align: center;
+  margin: 0em 5em 0em 5em;
 }
 
 .message {
@@ -28,14 +29,49 @@ code {
 
 #mapContainer {
   display: inline-block;
+  text-align: right;
 }
 
 #mapBackground {
+  display: inline-block;
   position: absolute;
   z-index: 0;
 }
 
 #mapCanvas {
+  display: inline-block;
   position: relative;
   z-index: 1;
+}
+
+canvas {
+  display: inline;
+}
+
+.link-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline;
+  color: skyblue;
+  margin: 0;
+  padding: 0;
+}
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.waypointCount {
+  padding: 0.5em;
+}
+
+.waypointList {
+  display: none;
+}
+
+.waypointList.responsive {
+  display: block;
+  clear: both;
+  padding: 0;
+  height: 160px;
 }

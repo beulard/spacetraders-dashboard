@@ -47,12 +47,12 @@ const Status = () => {
       }}
     >
       <div>
-        <h6>${credits}</h6>
+        <h5>${credits}</h5>
       </div>
       <div>
-        <h6>
+        <h4>
           {name} from {home}
-        </h6>
+        </h4>
       </div>
       <RefreshButton onClick={refresh} />
     </div>

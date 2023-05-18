@@ -41,6 +41,15 @@
     prop-types "^15.5.10"
     use-memo-one "^1.1.1"
 
+"@atlaskit/badge@^15.1.2":
+  version "15.1.2"
+  resolved "https://registry.yarnpkg.com/@atlaskit/badge/-/badge-15.1.2.tgz#8f23149249db94077d17f249f0a2aaec26a48b9f"
+  integrity sha512-UwKvGZ20YNrcP+jSeu/caTUDZJEnAxfPx7aZQyhUhRV7fC0ccsl7En/vt5vP90nvKgPuPTeJC/nVNEIEUV9vtA==
+  dependencies:
+    "@atlaskit/codemod-utils" "^4.2.0"
+    "@atlaskit/ds-explorations" "^2.1.0"
+    "@babel/runtime" "^7.0.0"
+
 "@atlaskit/blanket@^12.4.0":
   version "12.4.0"
   resolved "https://registry.yarnpkg.com/@atlaskit/blanket/-/blanket-12.4.0.tgz#e66625380e17b397db699420f1ef3ddf56fbaf65"
@@ -131,6 +140,25 @@
     "@babel/runtime" "^7.0.0"
     fbjs "^3.0.0"
 
+"@atlaskit/dropdown-menu@^11.9.1":
+  version "11.9.1"
+  resolved "https://registry.yarnpkg.com/@atlaskit/dropdown-menu/-/dropdown-menu-11.9.1.tgz#2a640dc9c8412af3d306c778d3f6ba27ea4d60c4"
+  integrity sha512-8qbkZtl2ELTIbahC5O3tGn0YSYrmQYK5I+bJXrQdrb/L0moIoTKmhu9qqzgFXfW1biOD8cyng/LtCuwmHhgHzg==
+  dependencies:
+    "@atlaskit/button" "^16.7.0"
+    "@atlaskit/codemod-utils" "^4.2.0"
+    "@atlaskit/ds-lib" "^2.2.0"
+    "@atlaskit/icon" "^21.12.0"
+    "@atlaskit/menu" "^1.7.0"
+    "@atlaskit/popup" "^1.6.0"
+    "@atlaskit/spinner" "^15.5.0"
+    "@atlaskit/theme" "^12.5.0"
+    "@atlaskit/tokens" "^1.4.0"
+    "@atlaskit/visually-hidden" "^1.2.0"
+    "@babel/runtime" "^7.0.0"
+    "@emotion/react" "^11.7.1"
+    bind-event-listener "^2.1.1"
+
 "@atlaskit/ds-explorations@^2.1.0":
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/@atlaskit/ds-explorations/-/ds-explorations-2.1.0.tgz#f34bf6c42cd529a4a45ee1c0fe2de88756e5915c"
@@ -209,6 +237,21 @@
   integrity sha512-evSCVR6Yikjd7dojDzXkcRafE8bC6Q5KFTjPPJJjy8os6iXCmF42elFsCQtk6Hstw/CQwkeMG2nL1mhnrJChQg==
   dependencies:
     "@babel/runtime" "^7.0.0"
+
+"@atlaskit/menu@^1.7.0":
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/@atlaskit/menu/-/menu-1.7.1.tgz#61f3301540134d83babe6d59404674f140397656"
+  integrity sha512-0Sir+F3dwL1deoH8zrFvbJp/xxtlMjmUKREvWqHTrUlg0Nq3BbiHfyMsWjmLrSLDevoj+Jn/YMSYxKFuNcqXcw==
+  dependencies:
+    "@atlaskit/ds-explorations" "^2.1.0"
+    "@atlaskit/ds-lib" "^2.2.0"
+    "@atlaskit/focus-ring" "^1.3.0"
+    "@atlaskit/platform-feature-flags" "^0.2.0"
+    "@atlaskit/primitives" "^0.9.0"
+    "@atlaskit/theme" "^12.5.0"
+    "@atlaskit/tokens" "^1.4.0"
+    "@babel/runtime" "^7.0.0"
+    "@emotion/react" "^11.7.1"
 
 "@atlaskit/modal-dialog@^12.5.0":
   version "12.5.0"
@@ -2536,6 +2579,11 @@
   version "0.0.29"
   resolved "https://registry.yarnpkg.com/@types/json5/-/json5-0.0.29.tgz#ee28707ae94e11d2b827bcbe5270bcea7f3e71ee"
   integrity sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==
+
+"@types/lokijs@^1.5.8":
+  version "1.5.8"
+  resolved "https://registry.yarnpkg.com/@types/lokijs/-/lokijs-1.5.8.tgz#0c365744f6e473ac6e9a6d8b174649b6ef85f47d"
+  integrity sha512-HN4vmoYHqF0mx91Cci6xaH1uN1JAMbakqNFXggpbd2L/RTUMrvx//dJTJehEtEF+a/qXfLbVSeO6p3Oegx/hDg==
 
 "@types/mime@*":
   version "3.0.1"
@@ -7013,6 +7061,11 @@ log-symbols@^4.1.0:
   dependencies:
     chalk "^4.1.0"
     is-unicode-supported "^0.1.0"
+
+lokijs@^1.5.12:
+  version "1.5.12"
+  resolved "https://registry.yarnpkg.com/lokijs/-/lokijs-1.5.12.tgz#cb55b37009bdf09ee7952a6adddd555b893653a0"
+  integrity sha512-Q5ALD6JiS6xAUWCwX3taQmgwxyveCtIIuL08+ml0nHwT3k0S/GIFJN+Hd38b1qYIMaE5X++iqsqWVksz7SYW+Q==
 
 loose-envify@^1.0.0, loose-envify@^1.1.0, loose-envify@^1.4.0:
   version "1.4.0"
