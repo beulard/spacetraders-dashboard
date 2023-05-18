@@ -7,7 +7,6 @@ import { ContractList } from "./contract";
 import FleetList from "./fleet";
 import { Map } from "./map";
 import { Status } from "./status";
-import { getSystemSymbol } from "./system";
 import { SystemInfo } from "./system-info";
 
 function App() {
@@ -83,10 +82,13 @@ function App() {
     // Set default selected system to HQ
     api.agent.getMyAgent().then((res) => {
       const hq = res.data.data.headquarters;
+
+      /*
       api.system.getSystem(getSystemSymbol(hq)).then((res) => {
         console.log(res.data.data);
         setSelectedSystem(res.data.data);
       });
+      */
     });
   }, []);
 
