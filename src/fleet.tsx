@@ -6,52 +6,43 @@ import "./index.css";
 
 import toast from "react-hot-toast";
 import { useState } from "react";
-import { Ship, ShipNav, ShipNavRoute } from "spacetraders-sdk";
+import {
+  Ship,
+  ShipCargoItem,
+  ShipNavRoute,
+  Market,
+  TradeGood,
+} from "spacetraders-sdk";
 
 import api from "./api";
+
+import {
+  Accordion,
+  AccordionBody,
+  AccordionHeader,
+} from "./components/accordion";
+import { Color } from "excalibur";
 
 type Props = {
   title: string;
   children?: JSX.Element[] | JSX.Element;
 };
 
-const CollapsibleElement = (props: {
-  title: string;
-  children: JSX.Element[] | JSX.Element;
-  style?: React.CSSProperties | undefined;
-}) => {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-
-  const toCollapse = useRef<any>(null);
-
-  return (
-    <div>
-      <h2
-        style={{
-          cursor: "pointer",
-        }}
-        onClick={() => setIsCollapsed(!isCollapsed)}
-      >
-        {props.title}
-      </h2>
-      {isCollapsed == false && (
-        <div
-          ref={toCollapse}
-          style={{
-            ...props.style,
-          }}
-        >
-          {props.children}
-        </div>
-      )}
-    </div>
-  );
+const ColorSet = {
+  "1": "#FC440F",
+  "2": "#1E96FC",
+  "3": "#1EFFBC",
+  "4": "#FCF300",
+  "5": "#FFC600",
 };
 
 const Navigation = (props: { ship: Ship; refresh: () => void }) => {
   const FuelStatus = () => {
     return <></>;
   };
+
+  useEffect(() => {}, [props.ship]);
+
   const NavStatus = () => {
     const [routeProgress, setRouteProgress] = useState<number>(1);
     const [navRoute, setNavRoute] = useState<ShipNavRoute>();
@@ -152,7 +143,21 @@ const Navigation = (props: { ship: Ship; refresh: () => void }) => {
           return (
             <>
               <span>Docked at {props.ship.nav.route.destination.symbol}</span>
-              <Button appearance="primary">Orbit</Button>
+              <Button
+                appearance="primary"
+                onClick={() => {
+                  const promise = api.fleet.dockShip(props.ship.symbol);
+                  promise
+                    .then((res) => {
+                      props.refresh();
+                    })
+                    .catch((err) => {
+                      console.log(err);
+                    });
+                }}
+              >
+                Orbit
+              </Button>
               <SelectWaypoint />
             </>
           );
@@ -162,7 +167,21 @@ const Navigation = (props: { ship: Ship; refresh: () => void }) => {
               <span>
                 Orbitting around {props.ship.nav.route.destination.symbol}
               </span>
-              <Button appearance="primary">Orbit</Button>
+              <Button
+                appearance="primary"
+                onClick={() => {
+                  const promise = api.fleet.dockShip(props.ship.symbol);
+                  promise
+                    .then((res) => {
+                      props.refresh();
+                    })
+                    .catch((err) => {
+                      console.log(err);
+                    });
+                }}
+              >
+                Dock
+              </Button>
               <SelectWaypoint />
             </>
           );
@@ -179,13 +198,11 @@ const Navigation = (props: { ship: Ship; refresh: () => void }) => {
       style={{
         margin: 10,
         padding: 10,
-        backgroundColor: "#007bff",
+        backgroundColor: ColorSet[2],
         borderRadius: 4,
       }}
     >
-      <h4>
-        <b>Navigation</b>
-      </h4>
+      <h3>Navigation</h3>
       <FuelStatus />
       <NavStatus />
     </div>
@@ -198,13 +215,84 @@ const Inventory = (props: { ship: Ship; refresh: () => void }) => {
       style={{
         margin: 10,
         padding: 10,
-        backgroundColor: "#dc3545",
+        backgroundColor: ColorSet[4],
         borderRadius: 4,
       }}
     >
-      <h4>
-        <b>Inventory</b>
-      </h4>
+      {props.ship.cargo.inventory.map((value: ShipCargoItem) => {
+        return (
+          <div>
+            <h3>Inventory</h3>
+            <span>{value.units} - </span>
+            <span>{value.name}</span>
+            <span> ({value.symbol})</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const MarketInfo = (props: { ship: Ship; refresh: () => void }) => {
+  const [marketInfo, setMarketInfo] = useState<Market>();
+
+  const refresh = () => {
+    const promise = api.system.getMarket(
+      props.ship.nav.systemSymbol,
+      props.ship.nav.waypointSymbol
+    );
+    promise
+      .then((res) => {
+        const data = res.data.data;
+        setMarketInfo(data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  useEffect(refresh, [props.ship.nav.waypointSymbol]);
+
+  return (
+    <div
+      style={{
+        margin: 10,
+        padding: 10,
+        backgroundColor: ColorSet[1],
+        borderRadius: 4,
+      }}
+    >
+      <h3>Market</h3>
+      <div
+        style={{
+          display: "flex",
+        }}
+      >
+        <div>
+          <h4>Buying</h4>
+          {marketInfo?.imports.map((value: TradeGood) => {
+            return (
+              <div>
+                <span>
+                  {value.name} ({value.symbol})
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div>
+          <h4>Selling</h4>
+          {marketInfo?.exports.map((value: TradeGood) => {
+            return (
+              <div>
+                <span>
+                  {value.name} ({value.symbol})
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };
@@ -234,18 +322,20 @@ export default () => {
 
   return (
     <div>
-      <h1> Fleet </h1>
       {fleet.map((ship) => {
         return (
-          <CollapsibleElement
-            title={ship.symbol}
-            style={{
-              display: "flex",
-            }}
-          >
-            <Navigation ship={ship} refresh={refresh} />
-            <Inventory ship={ship} refresh={refresh} />
-          </CollapsibleElement>
+          <Accordion>
+            <AccordionHeader shown={true} setShown={() => {}}>
+              <div>{ship.symbol}</div>
+            </AccordionHeader>
+            <AccordionBody shown={false} setShown={() => {}}>
+              <div style={{ display: "flex" }}>
+                <Navigation ship={ship} refresh={refresh} />
+                <Inventory ship={ship} refresh={refresh} />
+                <MarketInfo ship={ship} refresh={refresh}></MarketInfo>
+              </div>
+            </AccordionBody>
+          </Accordion>
         );
       })}
     </div>
