@@ -123,7 +123,7 @@ class SystemData {
               this.fetchPage(currentPage++);
 
               this.db.info().then((info) => {
-                if (info.doc_count === total) {
+                if (info.doc_count >= total || currentPage >= total / 20 + 1) {
                   // toast.dismiss(progressBarToast);
                   clearInterval(id);
                 }
