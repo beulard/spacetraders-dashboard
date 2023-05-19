@@ -1,5 +1,5 @@
 import Button from "@atlaskit/button";
-import { Code, CodeBlock } from "@atlaskit/code";
+import { CodeBlock } from "@atlaskit/code";
 import DynamicTable from "@atlaskit/dynamic-table";
 import Modal, {
   ModalBody,
@@ -11,9 +11,10 @@ import Modal, {
 import Popup from "@atlaskit/popup";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Contract, ContractDeliverGood, System } from "spacetraders-sdk";
+import { Contract, ContractDeliverGood } from "spacetraders-sdk";
 import api from "./api";
 import { RefreshButton } from "./components/refresh-button";
+import { getSystemSymbol, Systems } from "./system";
 
 function getTotalPayment(contract: Contract) {
   return contract.terms.payment.onAccepted + contract.terms.payment.onFulfilled;
@@ -59,6 +60,7 @@ const ContractDescription = (props: {
           contract={props.contract}
           setSelectedSystem={props.setSelectedSystem}
           onUpdate={popupProps.update}
+          close={() => setIsOpen(false)}
         />
       )}
       trigger={(triggerProps) => (
@@ -80,6 +82,7 @@ const ContractBody = (props: {
   contract: Contract;
   setSelectedSystem: Function;
   onUpdate: Function;
+  close: Function;
 }) => {
   const [showJSON, setShowJSON] = useState(false);
 
@@ -133,14 +136,12 @@ const ContractBody = (props: {
               <div
                 className="link-button"
                 onClick={() => {
-                  // TODO use local storage
-                  api.system
-                    .getSystem(
-                      d.destinationSymbol.split("-").slice(0, 2).join("-")
-                    )
-                    .then((res) => {
-                      props.setSelectedSystem(res.data.data);
-                    });
+                  Systems.get(getSystemSymbol(d.destinationSymbol)).then(
+                    (system) => {
+                      props.setSelectedSystem(system);
+                      props.close();
+                    }
+                  );
                 }}
               >
                 {d.destinationSymbol}

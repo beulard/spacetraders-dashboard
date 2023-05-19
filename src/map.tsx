@@ -2,7 +2,8 @@ import Button, { ButtonGroup } from "@atlaskit/button";
 import Toggle from "@atlaskit/toggle";
 import * as ex from "excalibur";
 import { useEffect, useRef, useState } from "react";
-import { System, SystemWaypoint, SystemsApi } from "spacetraders-sdk";
+import { System, SystemsApi, SystemWaypoint } from "spacetraders-sdk";
+import { Systems } from "./system";
 
 const SystemList = (props: {
   systems: Array<System>;
@@ -114,6 +115,9 @@ const Map = (props: { setSelectedSystem: Function }) => {
       );
     });
 
+    // TODO
+    // When user stops dragging, look for Systems that might be on screen but are not shown currently
+
     // Drag camera with mouse
     const pointers = game.input.pointers;
     let dragStart = ex.vec(0, 0);
@@ -158,73 +162,80 @@ const Map = (props: { setSelectedSystem: Function }) => {
 
     // TODO encapsulate in Actor.onInitialize
     systems.forEach((system) => {
-      let systemGfx = new ex.Actor({
-        pos: ex.vec(
-          system.x * systemPositionScale,
-          system.y * systemPositionScale
-        ),
-      });
-      const circle = new ex.Actor({
-        pos: ex.vec(0, 0),
-        radius: 15,
-        color: systemTypeColor[system.type],
-      });
-      circle.pointer.useGraphicsBounds = true;
-      systemGfx.addChild(circle);
+      if (!drawnSystems.includes(system.symbol) && drawnSystems.length < 200) {
+        drawnSystems.push(system.symbol);
+        // console.log(`Drawing ${system.symbol}`);
+        let systemGfx = new ex.Actor({
+          pos: ex.vec(
+            system.x * systemPositionScale,
+            system.y * systemPositionScale
+          ),
+        });
+        const circle = new ex.Actor({
+          pos: ex.vec(0, 0),
+          radius: 15,
+          color: systemTypeColor[system.type],
+        });
+        circle.pointer.useGraphicsBounds = true;
+        systemGfx.addChild(circle);
 
-      // Instantiate a font per label (for some reason)
-      const symbolFont = new ex.Font({
-        family: "Roboto",
-        size: 16,
-      });
+        // Instantiate a font per label (for some reason)
+        const symbolFont = new ex.Font({
+          family: "Roboto",
+          size: 16,
+        });
 
-      const symbolFontBold = new ex.Font({
-        family: "Roboto",
-        size: 16,
-        bold: true,
-      });
+        const symbolFontBold = new ex.Font({
+          family: "Roboto",
+          size: 16,
+          bold: true,
+        });
 
-      const label = new ex.Label({
-        pos: ex.vec(10, 10),
-        text: system.symbol,
-        color: ex.Color.White.darken(0.1),
-        font: symbolFont,
-      });
-      label.on("preupdate", () => {
-        // TODO a way to hide system labels when too far?
-        // TODO show only sector labels when zooming all the way out?
-        label.scale = ex
-          .vec(1, 1)
-          .scale(1.0 / clamp(camera.zoom, 0.5, maxZoomScale));
-      });
-      label.pointer.useGraphicsBounds = true;
+        const label = new ex.Label({
+          pos: ex.vec(10, 10),
+          text: system.symbol,
+          color: ex.Color.White.darken(0.1),
+          font: symbolFont,
+        });
+        label.on("preupdate", () => {
+          // TODO a way to hide system labels when too far?
+          // TODO show only sector labels when zooming all the way out?
+          label.scale = ex
+            .vec(1, 1)
+            .scale(1.0 / clamp(camera.zoom, 0.5, maxZoomScale));
+        });
+        label.pointer.useGraphicsBounds = true;
 
-      systemGfx.events.wire(circle.events);
-      systemGfx.events.wire(label.events);
-      systemGfx.addChild(label);
+        systemGfx.events.wire(circle.events);
+        systemGfx.events.wire(label.events);
+        systemGfx.addChild(label);
 
-      // Highlight selected system on click
-      systemGfx.on("pointerdown", (evt) => {
-        if (evt.button === "Left") {
-          if (selectedSystemCircle) {
-            // Return previous selection to normal
-            selectedSystemCircle.color = selectedSystemCircle.color.darken(0.5);
-            selectedSystemLabel!.font = symbolFont.clone();
-            selectedSystemLabel!.color = ex.Color.White.darken(0.1);
+        // Highlight selected system on click
+        systemGfx.on("pointerdown", (evt) => {
+          if (evt.button === "Left") {
+            if (selectedSystemCircle) {
+              // Return previous selection to normal
+              selectedSystemCircle.color =
+                selectedSystemCircle.color.darken(0.5);
+              selectedSystemLabel!.font = symbolFont.clone();
+              selectedSystemLabel!.color = ex.Color.White.darken(0.1);
+            }
+            props.setSelectedSystem(system);
+            selectedSystemLabel = label;
+            selectedSystemCircle = circle;
+
+            circle.color = circle.color.lighten(0.5);
+            label.font = symbolFontBold;
+            label.color = ex.Color.White;
           }
-          props.setSelectedSystem(system);
-          selectedSystemLabel = label;
-          selectedSystemCircle = circle;
+        });
 
-          circle.color = circle.color.lighten(0.5);
-          label.font = symbolFontBold;
-          label.color = ex.Color.White;
-        }
-      });
-
-      game.add(systemGfx);
+        game.add(systemGfx);
+      }
     });
   }
+
+  const drawnSystems: Array<string> = [];
 
   useEffect(() => {
     if (gameRef.current) {
@@ -234,16 +245,20 @@ const Map = (props: { setSelectedSystem: Function }) => {
     }
     init();
 
-    // props.systems.addListener((newSystems) => {
-    //   if (props.systems.getAll().length < 200) {
-    //     console.log("Drawing " + newSystems.length + " new systems!");
-    //     drawSystems(newSystems);
-    //   } else {
-    //     console.log("Too many systems to draw at once.");
-    //   }
-    // });
+    // Add systems added to local DB to scene graph
+    Systems.addListener((change) => {
+      drawSystems([change.doc as any as System]);
+    });
 
-    // drawSystems(props.systems.getAll().slice(0, 200));
+    // Draw all from DB
+    // TODO ordering is wrong / drawing faraway systems
+    Systems.getAll().then((systems) => {
+      console.log(
+        "rows",
+        systems.rows.map((row) => row.doc)
+      );
+      drawSystems(systems.rows.map((row) => row.doc as unknown as System));
+    });
   }, []);
 
   // useEffect(() => {
@@ -275,27 +290,7 @@ const Map = (props: { setSelectedSystem: Function }) => {
       )}
       <div style={{}}>
         <ButtonGroup>
-          {/* <Button
-            appearance="primary"
-            style={{ margin: "0.5em" }}
-            onClick={() => {
-              console.log(show);
-              if (show) {
-                // If user toggle off
-                gameRef.current!.stop();
-                setDrawnSystems(0);
-              } else {
-                // Restart everything
-                // init();
-                console.log(systems);
-                drawSystems(systems);
-                setDrawnSystems(systems.length);
-              }
-              setShow(!show);
-            }}
-          >
-            Toggle
-          </Button> */}
+          {/* TODO remove Center button replaced by locate and toggle */}
           <Button
             appearance="default"
             style={{ margin: "0.5em" }}
@@ -327,7 +322,6 @@ const Map = (props: { setSelectedSystem: Function }) => {
         </ButtonGroup>
       </div>
       {/* <SystemList systems={systems} setSystems={setSystems} /> */}
-      {/* {showSystemInfo && <SystemInfo system={selectedSystem} />} */}
     </span>
   );
 };

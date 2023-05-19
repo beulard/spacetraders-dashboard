@@ -1,5 +1,6 @@
 import Badge from "@atlaskit/badge";
 import Button from "@atlaskit/button";
+import Tooltip from "@atlaskit/tooltip";
 import DropdownMenu, {
   DropdownItem,
   DropdownItemGroup,
@@ -28,9 +29,24 @@ const SystemInfo = (props: { system: System | null }) => {
     >
       {system && (
         <div>
-          <h4 style={{ marginBottom: "0.25em" }}>
-            {system.symbol} {system.type}{" "}
-          </h4>
+          <div style={{ marginBottom: "0.25em", display: "inline-block" }}>
+            <Tooltip content="Locate on map" delay={100} position="top">
+              {(tooltipProps) => (
+                <Button
+                  {...tooltipProps}
+                  onClick={() => {
+                    alert("TODO");
+                  }}
+                  appearance="subtle"
+                  style={{ display: "inline", height: "100%" }}
+                >
+                  <big>
+                    {system.symbol} [{system.type}]
+                  </big>
+                </Button>
+              )}
+            </Tooltip>
+          </div>
           {system.waypoints.length > 0 && (
             <Accordion>
               <AccordionHeader setShown={() => {}} shown={true}>
@@ -42,16 +58,15 @@ const SystemInfo = (props: { system: System | null }) => {
                 </h6>
               </AccordionHeader>
               <AccordionBody setShown={() => {}} shown={true}>
-                {system.waypoints.map((waypoint) => (
-                  <div style={{ width: "100%" }}>
+                {system.waypoints.map((waypoint, idx) => (
+                  <div style={{ width: "100%" }} key={idx}>
                     <DropdownMenu
                       trigger={({ triggerRef, ...props }) => (
                         <div style={{ width: "100%" }}>
                           <Button
+                            shouldFitContainer
                             style={{
-                              width: "100%",
                               textAlign: "left",
-                              display: "flex",
                             }}
                             {...props}
                             ref={triggerRef}
@@ -87,8 +102,8 @@ const SystemInfo = (props: { system: System | null }) => {
                 <h6>Factions</h6>
               </AccordionHeader>
               <AccordionBody setShown={() => {}} shown={true}>
-                {system.factions.map((faction) => (
-                  <p>{faction.symbol}</p>
+                {system.factions.map((faction, idx) => (
+                  <p key={idx}>{faction.symbol}</p>
                 ))}
               </AccordionBody>
             </Accordion>
