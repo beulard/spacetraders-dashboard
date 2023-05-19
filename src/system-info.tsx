@@ -58,8 +58,8 @@ const SystemInfo = (props: { system: System | null }) => {
                 </h6>
               </AccordionHeader>
               <AccordionBody setShown={() => {}} shown={true}>
-                {system.waypoints.map((waypoint) => (
-                  <div style={{ width: "100%" }}>
+                {system.waypoints.map((waypoint, idx) => (
+                  <div style={{ width: "100%" }} key={idx}>
                     <DropdownMenu
                       trigger={({ triggerRef, ...props }) => (
                         <div style={{ width: "100%" }}>
@@ -102,8 +102,8 @@ const SystemInfo = (props: { system: System | null }) => {
                 <h6>Factions</h6>
               </AccordionHeader>
               <AccordionBody setShown={() => {}} shown={true}>
-                {system.factions.map((faction) => (
-                  <p>{faction.symbol}</p>
+                {system.factions.map((faction, idx) => (
+                  <p key={idx}>{faction.symbol}</p>
                 ))}
               </AccordionBody>
             </Accordion>

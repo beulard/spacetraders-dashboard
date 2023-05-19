@@ -1,17 +1,13 @@
-// TODO A searchable database/list of all systems, prefetched and loaded from some json file on startup
-// The map view should get its systems list from here.
-// Should perhaps support updates
-
-import { GetSystem200Response, System } from "spacetraders-sdk";
+import PouchDB from "pouchdb";
+import { toast } from "react-hot-toast";
 import api from "./api";
-import loki from "lokijs";
-import { AxiosResponse } from "axios";
 
 // TODO on the right side of canvas:
 // + A searchable list of systems/waypoints which show the object on map + info when clicked
 
-/** Get the system symbol from the full symbol
- *  e.g. get X1-ABCD from X1-ABCD-1337D
+/**
+ * Get the system symbol from the full symbol
+ * e.g. get X1-ABCD from X1-ABCD-1337D
  * @param fullSymbol
  */
 export function getSystemSymbol(fullSymbol: string) {
@@ -19,160 +15,148 @@ export function getSystemSymbol(fullSymbol: string) {
 }
 
 class SystemData {
-  private static _instance: SystemData;
-  private systemList: Array<System> = [];
-  private fetchedPages = [];
-  private listeners: Array<SystemData.ListenerCallback> = [];
-  private db: Loki;
-  private systems: Collection<System>;
+  private db: PouchDB.Database;
 
   public constructor() {
     // Initialize local db
-    console.log("Init db");
-    this.db = new loki("spacetrader.db", {
-      verbose: true,
-      // env: "BROWSER",
-      autosave: true,
-      autosaveInterval: 10000,
-      autoload: true,
-    });
-    console.log();
-    console.log("collections", this.db.listCollections());
-    this.systems =
-      this.db.getCollection("systems") || this.db.addCollection("systems");
+    this.db = new PouchDB("spacetrader.db");
   }
 
-  public static New() {
-    return (this._instance = new SystemData());
-  }
-
-  public static get Inst() {
-    return this._instance || (this._instance = new SystemData());
-  }
-
-  private fetchLoopId: NodeJS.Timeout | null = null;
   /**
-   *
-   * @param limit Cap on number of systems to fetch
-   */
-  public fetchAllFromAPI(limit: number) {
-    /**
-     *
-     * @param from First page
-     * @param to Last+1 page
-     * @param maxCount Total number of systems (as of res.data.meta.total)
-     * @param intervalPages How many pages to fetch at once between waits
-     * @param limit Number of systems per page
-     */
-    const fetchPages = (
-      from: number,
-      to: number,
-      maxCount: number,
-      intervalPages: number,
-      limit = 20
-    ) => {
-      console.log(`Fetched systems ${this.systemList.length}/${maxCount}`);
-      // Too many systems
-      if (to * limit > maxCount) {
-        console.log(`Exceeded system fetch limit (${maxCount})`);
-        return;
-      }
-      console.log(`FETCHING PAGES ${from} to ${to}`);
-      for (let i = from; i < to; ++i) {
-        api.system.getSystems(i, limit).then((res) => {
-          this.systemList = [...this.systemList, ...res.data.data];
-
-          /// Notify listeners of new systems
-          this.listeners.forEach((func) => func(res.data.data));
-        });
-      }
-      // Calls itself after a delay to continue fetching
-      this.fetchLoopId = setTimeout(() => {
-        fetchPages(to, to + intervalPages, maxCount, intervalPages, 20);
-      }, 2000);
-    };
-
-    api.system.getSystems(1, 1).then((res) => {
-      console.log("get 1 system: ", res.data.meta);
-      const maxCount = res.data.meta.total;
-
-      const limitPerPage = 20; // Systems per page
-      const intervalPages = 1; // Pages per wave
-
-      // Start fetching
-      fetchPages(
-        1,
-        1 + intervalPages,
-        limit > 0 ? limit : maxCount,
-        intervalPages,
-        limitPerPage
-      );
-    });
-  }
-
-  public fetchCache() {
-    return new Promise((resolve, reject) => {
-      this.systemList = JSON.parse(localStorage.getItem("systems")!).data.data;
-      resolve(this.systemList);
-    });
-  }
-
-  /** Get the system named `symbol`
-   *
+   * Get the system named `symbol`
    * @param symbol
+   * @returns A promise of the system
    */
   public get(symbol: string): Promise<any> {
     // Check whether system exists in cache
-    const system = this.systems.findOne({ symbol: symbol });
-    console.log(this.systems.data);
-    // Not in there, try to fetch it from the api
-    if (system) {
-      return new Promise((resolve) => {
-        resolve(system);
-      });
-    } else {
-      console.log(`${symbol} not found in local DB, fetching...`);
-      const promise = api.system.getSystem(symbol);
-      promise
-        .then((res) => {
-          console.log(`${symbol} found in API`);
-          // Store it in the local db
-          this.systems.insert(res.data.data);
-          console.log(this.systems.data); //
-          this.db.save();
-        })
-        .catch((err) => {
-          console.log(`System ${symbol} does not exist!`);
-          console.log(err);
+    const promise = this.db
+      .get(symbol)
+      .then((res) => {
+        toast.success(`${symbol} in local db`);
+        return res;
+      })
+      .catch(() => {
+        // If system is not found in local db, fetch API
+
+        const fetchPromise = api.system
+          .getSystem(symbol)
+          .then((res) => res.data.data)
+          .catch((err) => {
+            console.log(err);
+          });
+        toast.promise(fetchPromise, {
+          loading: `${symbol} not found in db, fetching...`,
+          error: `System ${symbol} does not exist!`,
+          success: `Fetched ${symbol}`,
         });
-      console.log("promise:", promise);
-      return promise;
-    }
+
+        fetchPromise.then((system) => {
+          toast.success(`${symbol} found in API`);
+          // Store it in the local db
+          this.db.put({ _id: symbol, ...system }, { force: true });
+          return system;
+        });
+
+        return fetchPromise;
+      });
+    return promise;
   }
 
-  public getByIndex(index: number) {}
+  /**
+   * Fetch a page of 20 systems from the API
+   * @param pageIndex
+   */
+  public fetchPage(pageIndex: number) {
+    const promise = api.system.getSystems(pageIndex, 20);
+    promise
+      .then((res) => {
+        // toast.success(`Fetched page ${pageIndex}`);
 
+        const systems = res.data.data;
+        this.db.bulkDocs(
+          systems.map((system) => ({ _id: system.symbol, ...system }))
+        );
+      })
+      .catch((err) => {
+        toast.error(`Failed to fetch page ${pageIndex}`);
+        console.log(err);
+      });
+    return promise;
+  }
+
+  /**
+   * Fetch every system in the API and store it in the local DB if not yet present
+   */
+  public fetchAll() {
+    // Determine how many systems we have stored so far
+    this.db
+      .info()
+      .then((info) => {
+        return info.doc_count;
+      })
+      .then((count) => {
+        console.log(count);
+
+        // Determine how many systems there are in total
+        api.system
+          .getSystems(1, 1)
+          .then((res) => {
+            return res.data.meta.total;
+          })
+          .then((total) => {
+            let currentPage = Math.floor(count / 20) + 1;
+            console.log(currentPage);
+
+            // TODO possible to update progress bar in toast ?
+            // const progressBarToast = toast(
+            //   <div style={{ width: "10em" }}>
+            //     Fetching systems...
+            //     <ProgressBar value={count / total} />
+            //   </div>,
+            //   { duration: 3000000 }
+            // );
+
+            const id = setInterval(() => {
+              toast.loading(`Fetching page ${currentPage} / ${total / 20}`, {
+                duration: 2000,
+              });
+              this.fetchPage(currentPage++);
+
+              this.db.info().then((info) => {
+                if (info.doc_count === total) {
+                  // toast.dismiss(progressBarToast);
+                  clearInterval(id);
+                }
+              });
+            }, 2000);
+          });
+      });
+  }
+
+  /**
+   * Get all systems present in the local DB
+   */
   public getAll() {
-    return this.systemList;
+    return this.db.allDocs({ include_docs: true });
   }
 
-  public clear() {
-    this.systemList = [];
-    this.listeners = [];
-  }
   // Add a listener for changes to the system list
-  public addListener(callback: SystemData.ListenerCallback) {
-    this.listeners.push(callback);
+  public addListener(callback: ListenerCallback) {
+    // this.listeners.push(callback);
+    return this.db
+      .changes({
+        since: "now",
+        live: true,
+        include_docs: true,
+      })
+      .on("change", (change) => {
+        callback(change);
+      });
   }
-
-  // Do a full refetch of the system data from the API and write it to disk
-  public update() {}
 }
-// Callback function signature for listeners of SystemData changes
-namespace SystemData {
-  export interface ListenerCallback {
-    (systems: Array<System>): void;
-  }
+
+interface ListenerCallback {
+  (changes: PouchDB.Core.ChangesResponseChange<{}>): void;
 }
 
 const Systems = new SystemData();
