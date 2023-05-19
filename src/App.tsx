@@ -38,6 +38,7 @@ function App() {
         <ContractList setSelectedSystem={setSelectedSystem} />
         <FleetList />
       </div>
+      <div style={{ minHeight: "300px" }}>Footer</div>
     </div>
   );
 }
