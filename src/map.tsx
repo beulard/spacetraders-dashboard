@@ -148,7 +148,7 @@ class SystemViewScene extends ex.Scene {
       if (dragging) {
         // Stopped dragging this frame
         this.updateDrawnSystems();
-        console.log("ac", this.actors.length);
+        // console.log("ac", this.actors.length);
       }
     });
   }
@@ -176,7 +176,7 @@ class SystemViewScene extends ex.Scene {
         },
       },
     }).then((res) => {
-      console.log(res.docs.length);
+      // console.log(res.docs.length);
       this.drawSystems(res.docs.map((sys) => sys as unknown as System));
     });
   }
