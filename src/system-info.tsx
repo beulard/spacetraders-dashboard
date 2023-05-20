@@ -2,13 +2,15 @@ import Badge from "@atlaskit/badge";
 import Button from "@atlaskit/button";
 import { CheckboxSelect, OptionType } from "@atlaskit/select";
 import Tooltip from "@atlaskit/tooltip";
-import { useEffect, useState } from "react";
-import { Ship, System, SystemWaypoint } from "spacetraders-sdk";
+import { Ref, useContext, useEffect, useState } from "react";
+import { Ship, System, SystemWaypoint, Waypoint } from "spacetraders-sdk";
 import api from "./api";
 import { Accordion } from "./components/accordion";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
 import toast from "react-hot-toast";
 import { MultiValue } from "react-select";
+import { SystemViewScene } from "./map";
+import { MessageContext, MessageQueue, MessageType } from "./message-queue";
 
 const ShipSelector = (props: { destinationSymbol: string }) => {
   const [fleet, setFleet] = useState<Array<Ship>>([]);
@@ -40,8 +42,8 @@ const ShipSelector = (props: { destinationSymbol: string }) => {
               value: ship.symbol,
             }))}
             onChange={(ships) => {
-              console.log(ships);
-              console.log(ships.map((ship) => ship.value));
+              // console.log(ships);
+              // console.log(ships.map((ship) => ship.value));
               setSendShips(ships);
             }}
             value={sendShips}
@@ -81,11 +83,20 @@ const ShipSelector = (props: { destinationSymbol: string }) => {
   );
 };
 
-const SystemInfoActions = (props: { waypoint: SystemWaypoint }) => {
+const SystemInfoActions = (props: {
+  waypoint: SystemWaypoint;
+  details: Waypoint; // TODO
+}) => {
   return (
     <Accordion
       isOpen={false}
-      header={props.waypoint.symbol}
+      header={
+        <>
+          <span>
+            {props.waypoint.symbol} [{props.waypoint.type}]
+          </span>
+        </>
+      }
       body={<ShipSelector destinationSymbol={props.waypoint.symbol} />}
     />
   );
@@ -95,15 +106,28 @@ const SystemInfoActions = (props: { waypoint: SystemWaypoint }) => {
  * Shows a list of waypoints in `props.system`. Each waypoint is a dropdown menu
  * which allows the user to pick an action (e.g. send ship, fetch market, ...)
  */
-const SystemInfo = (props: { system: System | null }) => {
+const SystemInfo = (props: {
+  system: System | null;
+  systemViewRef: Ref<SystemViewScene | null>;
+}) => {
   const system = props.system;
+  const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
+  const msgQueue = useContext(MessageContext);
+
+  useEffect(() => {
+    if (system) {
+      api.system.getSystemWaypoints(system.symbol).then((res) => {
+        setWaypoints(res.data.data);
+      });
+    }
+  }, [system]);
 
   return (
     <span
       style={{
         float: "left",
         textAlign: "left",
-        width: "30%",
+        width: "40%",
       }}
     >
       {system && (
@@ -114,7 +138,9 @@ const SystemInfo = (props: { system: System | null }) => {
                 <Button
                   {...tooltipProps}
                   onClick={() => {
-                    alert("TODO");
+                    // alert("TODO");
+                    msgQueue?.post(MessageType.Locate, system);
+                    msgQueue?.post(MessageType.Hi, "hello");
                   }}
                   appearance="subtle"
                   style={{ display: "inline", height: "100%" }}
@@ -140,7 +166,11 @@ const SystemInfo = (props: { system: System | null }) => {
             body={
               system.waypoints.length > 0 &&
               system.waypoints.map((waypoint, idx) => (
-                <SystemInfoActions waypoint={waypoint} key={idx} />
+                <SystemInfoActions
+                  key={idx}
+                  waypoint={waypoint}
+                  details={waypoints[idx]}
+                />
               ))
             }
           />

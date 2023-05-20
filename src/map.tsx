@@ -1,11 +1,8 @@
-import Button, { ButtonGroup } from "@atlaskit/button";
-import Toggle from "@atlaskit/toggle";
 import * as ex from "excalibur";
-import { useEffect, useRef, useState } from "react";
-import { Ship, System, SystemsApi, SystemWaypoint } from "spacetraders-sdk";
+import { useContext, useEffect, useRef } from "react";
+import { System } from "spacetraders-sdk";
 import { Systems } from "./system";
-import { CheckboxSelect } from "@atlaskit/select";
-import api from "./api";
+import { MessageContext, MessageQueue } from "./message-queue";
 
 function clamp(x: number, xmin: number, xmax: number) {
   return Math.max(Math.min(x, xmax), xmin);
@@ -94,7 +91,7 @@ class SystemViewScene extends ex.Scene {
   private systemsGfx: Map<string, SystemGfx>;
   private selectedSystemGfx: SystemGfx | null = null;
 
-  constructor(input: ex.Input.EngineInput) {
+  constructor(input: ex.Input.EngineInput, msgQueue: MessageQueue) {
     super();
 
     this.systemsGfx = new Map<string, SystemGfx>();
@@ -224,12 +221,6 @@ class SystemViewScene extends ex.Scene {
           gfx.scale = ex
             .vec(1, 1)
             .scale(1.0 / clamp(this.camera.zoom, 0.2, this.maxZoomScale));
-          // this.circle.scale = ex
-          //   .vec(1, 1)
-          //   .scale(
-          //     1.0 /
-          //       clamp(_engine.currentScene.camera.zoom, 0.5, this.maxZoomScale)
-          //   );
         });
 
         this.systemsGfx.set(system.symbol, gfx);
@@ -252,9 +243,9 @@ class MapData {
 
   public game: ex.Engine;
 
-  constructor(gameOptions: ex.EngineOptions) {
+  constructor(gameOptions: ex.EngineOptions, msgQueue: MessageQueue) {
     this.game = new ex.Engine(gameOptions);
-    this.systemViewScene = new SystemViewScene(this.game.input);
+    this.systemViewScene = new SystemViewScene(this.game.input, msgQueue);
     this.game.addScene("systemview", this.systemViewScene);
 
     this.game.start().then(() => {
@@ -268,9 +259,13 @@ class MapData {
 /**
  * Map component. Holds a ref to the MapData object.
  */
-const MapView = (props: { setSelectedSystem: Function }) => {
+const MapView = (props: {
+  setSystemViewRef: Function;
+  setSelectedSystem: Function;
+}) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const data = useRef<MapData | null>(null);
+  const msgQueue = useContext(MessageContext);
 
   // Initialise the game data
   useEffect(() => {
@@ -280,13 +275,18 @@ const MapView = (props: { setSelectedSystem: Function }) => {
       data.current.game.stop();
     }
 
-    data.current = new MapData({
-      width: 600,
-      height: 400,
-      canvasElement: canvasRef.current!,
-      enableCanvasTransparency: true,
-      backgroundColor: new ex.Color(0, 0, 0, 0.5),
-    });
+    data.current = new MapData(
+      {
+        width: 600,
+        height: 400,
+        canvasElement: canvasRef.current!,
+        enableCanvasTransparency: true,
+        backgroundColor: new ex.Color(0, 0, 0, 0.5),
+      },
+      msgQueue!
+    );
+
+    props.setSystemViewRef(data.current.systemViewScene);
 
     data.current.systemViewScene.addSelectedSystemListener(
       props.setSelectedSystem
@@ -312,4 +312,4 @@ const MapView = (props: { setSelectedSystem: Function }) => {
   );
 };
 
-export { MapView as Map };
+export { MapView, SystemViewScene };
