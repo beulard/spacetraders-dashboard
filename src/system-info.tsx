@@ -1,18 +1,100 @@
 import Badge from "@atlaskit/badge";
 import Button from "@atlaskit/button";
+import { CheckboxSelect, OptionType } from "@atlaskit/select";
 import Tooltip from "@atlaskit/tooltip";
-import DropdownMenu, {
-  DropdownItem,
-  DropdownItemGroup,
-} from "@atlaskit/dropdown-menu";
-import { System } from "spacetraders-sdk";
-import {
-  Accordion,
-  AccordionBody,
-  AccordionHeader,
-} from "./components/accordion";
-import { ShipSelector, WaypointInfo } from "./map";
+import { useEffect, useState } from "react";
+import { Ship, System, SystemWaypoint } from "spacetraders-sdk";
+import api from "./api";
+import { Accordion } from "./components/accordion";
+import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
+import toast from "react-hot-toast";
+import { MultiValue } from "react-select";
 
+const ShipSelector = (props: { destinationSymbol: string }) => {
+  const [fleet, setFleet] = useState<Array<Ship>>([]);
+  const [sendShips, setSendShips] = useState<MultiValue<OptionType>>([]);
+
+  // TODO replace by local DB?
+  useEffect(() => {
+    api.fleet
+      .getMyShips()
+      .then((res) => {
+        setFleet(res.data.data);
+        // console.log("ships", res.data.meta, res.data.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
+
+  return (
+    <>
+      <label htmlFor="checkbox-select-ship">Send ships</label>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <div style={{ flexGrow: 1 }}>
+          <CheckboxSelect
+            inputId="checkbox-select-ship"
+            placeholder="SH1P-1"
+            options={fleet.map((ship) => ({
+              label: ship.symbol,
+              value: ship.symbol,
+            }))}
+            onChange={(ships) => {
+              console.log(ships);
+              console.log(ships.map((ship) => ship.value));
+              setSendShips(ships);
+            }}
+            value={sendShips}
+          />
+        </div>
+        <div style={{ width: "3em", padding: "0 0 0 0.5em" }}>
+          <Button
+            shouldFitContainer={true}
+            iconAfter={<ArrowRightIcon label="" />}
+            onClick={() => {
+              sendShips.forEach((ship) => {
+                console.log(
+                  `Navigating ${ship.label} to ${props.destinationSymbol}`
+                );
+                api.fleet
+                  .navigateShip(ship.label, {
+                    waypointSymbol: props.destinationSymbol,
+                  })
+                  .then((res) => {
+                    // TODO properly process, store, display response (ETA, fuel, nav)
+                    console.log(res);
+                    toast.success(
+                      `Navigating ${ship.label} to ${props.destinationSymbol}`
+                    );
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                    toast.error(err.response.data.error.message);
+                  });
+              });
+              setSendShips([]);
+            }}
+          ></Button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+const SystemInfoActions = (props: { waypoint: SystemWaypoint }) => {
+  return (
+    <Accordion
+      isOpen={false}
+      header={props.waypoint.symbol}
+      body={<ShipSelector destinationSymbol={props.waypoint.symbol} />}
+    />
+  );
+};
+
+/**
+ * Shows a list of waypoints in `props.system`. Each waypoint is a dropdown menu
+ * which allows the user to pick an action (e.g. send ship, fetch market, ...)
+ */
 const SystemInfo = (props: { system: System | null }) => {
   const system = props.system;
 
@@ -21,10 +103,7 @@ const SystemInfo = (props: { system: System | null }) => {
       style={{
         float: "left",
         textAlign: "left",
-        // minWidth: "35%",
-        // maxWidth: "35%",
         width: "30%",
-        // marginRight: "2em",
       }}
     >
       {system && (
@@ -47,66 +126,33 @@ const SystemInfo = (props: { system: System | null }) => {
               )}
             </Tooltip>
           </div>
-          {system.waypoints.length > 0 && (
-            <Accordion>
-              <AccordionHeader setShown={() => {}} shown={true}>
-                <h6 style={{ display: "inline" }}>
-                  Waypoints
-                  <span className="waypointCount">
-                    <Badge>{system.waypoints.length}</Badge>
-                  </span>
-                </h6>
-              </AccordionHeader>
-              <AccordionBody setShown={() => {}} shown={true}>
-                {system.waypoints.map((waypoint, idx) => (
-                  <div style={{ width: "100%" }} key={idx}>
-                    <DropdownMenu
-                      trigger={({ triggerRef, ...props }) => (
-                        <div style={{ width: "100%" }}>
-                          <Button
-                            shouldFitContainer
-                            style={{
-                              textAlign: "left",
-                            }}
-                            {...props}
-                            ref={triggerRef}
-                          >
-                            <WaypointInfo waypoint={waypoint} />
-                          </Button>
-                        </div>
-                      )}
-                    >
-                      <DropdownItemGroup>
-                        <DropdownItem>
-                          <ShipSelector />
-                        </DropdownItem>
-                      </DropdownItemGroup>
-                    </DropdownMenu>
 
-                    {/* <Button
-                                      onClick={() => {
-                                        console.log("Not yet implemented");
-                                      }}
-                                    >
-                                      Send ship
-                                    </Button> */}
-                  </div>
-                ))}
-              </AccordionBody>
-            </Accordion>
-          )}
+          <Accordion
+            isOpen={true}
+            header={
+              <h6 style={{ display: "inline" }}>
+                Waypoints
+                <span className="waypoint-count">
+                  <Badge>{system.waypoints.length}</Badge>
+                </span>
+              </h6>
+            }
+            body={
+              system.waypoints.length > 0 &&
+              system.waypoints.map((waypoint, idx) => (
+                <SystemInfoActions waypoint={waypoint} key={idx} />
+              ))
+            }
+          />
 
           {system.factions.length > 0 && (
-            <Accordion>
-              <AccordionHeader setShown={() => {}} shown={true}>
-                <h6>Factions</h6>
-              </AccordionHeader>
-              <AccordionBody setShown={() => {}} shown={true}>
-                {system.factions.map((faction, idx) => (
-                  <p key={idx}>{faction.symbol}</p>
-                ))}
-              </AccordionBody>
-            </Accordion>
+            <Accordion
+              isOpen={true}
+              header={<h6>Factions</h6>}
+              body={system.factions.map((faction, idx) => (
+                <p key={idx}>{faction.symbol}</p>
+              ))}
+            ></Accordion>
           )}
         </div>
       )}

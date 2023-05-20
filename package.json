@@ -30,6 +30,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "excalibur": "^0.27.0",
     "pouchdb": "^8.0.1",
+    "pouchdb-find": "^8.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",

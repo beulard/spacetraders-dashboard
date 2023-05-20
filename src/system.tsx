@@ -1,4 +1,5 @@
 import PouchDB from "pouchdb";
+import PouchFind from "pouchdb-find";
 import { toast } from "react-hot-toast";
 import api from "./api";
 
@@ -18,8 +19,15 @@ class SystemData {
   private db: PouchDB.Database;
 
   public constructor() {
+    PouchDB.plugin(PouchFind);
     // Initialize local db
     this.db = new PouchDB("spacetrader.db");
+    this.db.createIndex({ index: { fields: ["symbol"] } }).then((res) => {
+      console.log("Symbol index ready");
+    });
+    this.db.createIndex({ index: { fields: ["x", "y"] } }).then((res) => {
+      console.log("Coordinate index ready");
+    });
   }
 
   /**
@@ -73,9 +81,14 @@ class SystemData {
         // toast.success(`Fetched page ${pageIndex}`);
 
         const systems = res.data.data;
-        this.db.bulkDocs(
-          systems.map((system) => ({ _id: system.symbol, ...system }))
-        );
+        console.log("adding " + systems.length + " systems");
+        this.db
+          .bulkDocs(
+            systems.map((system) => ({ _id: system.symbol, ...system }))
+          )
+          .then(() => {
+            console.log("done");
+          });
       })
       .catch((err) => {
         toast.error(`Failed to fetch page ${pageIndex}`);
@@ -117,15 +130,20 @@ class SystemData {
             // );
 
             const id = setInterval(() => {
-              toast.loading(`Fetching page ${currentPage} / ${total / 20}`, {
-                duration: 2000,
-              });
-              this.fetchPage(currentPage++);
-
               this.db.info().then((info) => {
                 if (info.doc_count >= total || currentPage >= total / 20 + 1) {
                   // toast.dismiss(progressBarToast);
                   clearInterval(id);
+                } else {
+                  toast.loading(
+                    `Fetching page ${currentPage} / ${total / 20}`,
+                    {
+                      duration: 2000,
+                    }
+                  );
+                  console.log(currentPage);
+                  this.fetchPage(currentPage);
+                  currentPage += 1;
                 }
               });
             }, 2000);
@@ -136,11 +154,22 @@ class SystemData {
   /**
    * Get all systems present in the local DB
    */
-  public getAll() {
-    return this.db.allDocs({ include_docs: true });
+  public getAll(
+    options?:
+      | PouchDB.Core.AllDocsWithKeyOptions
+      | PouchDB.Core.AllDocsWithinRangeOptions
+      | PouchDB.Core.AllDocsOptions
+  ) {
+    return this.db.allDocs({ include_docs: true, ...options });
   }
 
-  // Add a listener for changes to the system list
+  public find(req: PouchDB.Find.FindRequest<{}>) {
+    return this.db.find(req);
+  }
+
+  /**
+   * Add a listener for changes to the system list
+   */
   public addListener(callback: ListenerCallback) {
     // this.listeners.push(callback);
     return this.db
