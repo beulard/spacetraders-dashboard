@@ -260,7 +260,7 @@ const ContractList = (props: { setSelectedSystem: Function }) => {
             <Button
               appearance="primary"
               onClick={() => {
-                console.log("Accepting " + contract.id);
+                console.log(`Accepting  ${contract.id}?`);
                 setAcceptContractId(contract.id);
                 setModalOpen(true);
               }}

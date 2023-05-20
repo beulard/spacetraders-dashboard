@@ -1,32 +1,22 @@
-import { useEffect, useRef } from "react";
 import Button from "@atlaskit/button";
-import Select from "@atlaskit/select";
 import ProgressBar from "@atlaskit/progress-bar";
+import Select from "@atlaskit/select";
+import { useEffect } from "react";
 import "./index.css";
 
-import toast from "react-hot-toast";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import {
+  Market,
   Ship,
   ShipCargoItem,
   ShipNavRoute,
-  Market,
   TradeGood,
 } from "spacetraders-sdk";
 
 import api from "./api";
 
-import {
-  Accordion,
-  AccordionBody,
-  AccordionHeader,
-} from "./components/accordion";
-import { Color } from "excalibur";
-
-type Props = {
-  title: string;
-  children?: JSX.Element[] | JSX.Element;
-};
+import { Accordion } from "./components/accordion";
 
 const ColorSet = {
   "1": "#FC440F",
@@ -324,18 +314,17 @@ export default () => {
     <div>
       {fleet.map((ship) => {
         return (
-          <Accordion>
-            <AccordionHeader shown={true} setShown={() => {}}>
-              <div>{ship.symbol}</div>
-            </AccordionHeader>
-            <AccordionBody shown={false} setShown={() => {}}>
+          <Accordion
+            isOpen={false}
+            header={<div>{ship.symbol}</div>}
+            body={
               <div style={{ display: "flex" }}>
                 <Navigation ship={ship} refresh={refresh} />
                 <Inventory ship={ship} refresh={refresh} />
                 <MarketInfo ship={ship} refresh={refresh}></MarketInfo>
               </div>
-            </AccordionBody>
-          </Accordion>
+            }
+          />
         );
       })}
     </div>

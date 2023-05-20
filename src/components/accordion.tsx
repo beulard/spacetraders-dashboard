@@ -1,74 +1,70 @@
 import Button from "@atlaskit/button";
 import IconChevronDown from "@atlaskit/icon/glyph/chevron-down";
-import {
-  Children,
-  PropsWithChildren,
-  ReactElement,
-  cloneElement,
-  isValidElement,
-  useState,
-} from "react";
+import { ReactNode, useState } from "react";
 
-const Accordion = (props: PropsWithChildren<{}>) => {
-  const [shown, setShown] = useState(true);
+const Accordion = (props: {
+  isOpen: boolean;
+  header: ReactNode;
+  body: ReactNode;
+}) => {
+  const [isOpen, setIsOpen] = useState(props.isOpen);
   return (
     <div>
-      {Children.map(props.children, (child) => {
-        if (isValidElement(child)) {
-          return cloneElement(child as ReactElement, {
-            setShown: setShown,
-            shown: shown,
-          });
-        }
-      })}
+      <AccordionHeader isOpen={isOpen} setIsOpen={setIsOpen}>
+        {props.header}
+      </AccordionHeader>
+      <AccordionBody isOpen={isOpen}>{props.body}</AccordionBody>
     </div>
   );
 };
 
-interface AccordionProps {
-  setShown: Function;
-  shown: boolean;
-}
-
-const AccordionHeader = (props: PropsWithChildren<AccordionProps>) => {
+const AccordionHeader = (props: {
+  isOpen: boolean;
+  setIsOpen: Function;
+  children: ReactNode;
+}) => {
   return (
-    <Button
-      style={{
-        alignItems: "center",
-        width: "100%",
-      }}
-      appearance="default"
-      onClick={() => props.setShown(!props.shown)}
-      iconAfter={
-        <div
-          style={{
-            transform: props.shown ? "" : "rotate(-90deg)",
-            transition: "transform 150ms ease",
-          }}
-        >
-          <IconChevronDown label="" />
+    <div style={{ margin: "0.2em" }}>
+      <Button
+        style={{
+          alignItems: "center",
+          width: "100%",
+        }}
+        appearance="default"
+        onClick={() => props.setIsOpen(!props.isOpen)}
+        iconAfter={
+          <div
+            style={{
+              transform: props.isOpen ? "" : "rotate(-90deg)",
+              transition: "transform 150ms ease",
+            }}
+          >
+            <IconChevronDown label="" />
+          </div>
+        }
+      >
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span style={{ flexGrow: 5, textAlign: "left" }}>
+            {props.children}
+          </span>
+          <span
+            style={{
+              flexGrow: 1,
+              textAlign: "right",
+            }}
+          ></span>
         </div>
-      }
-    >
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <span style={{ flexGrow: 5, textAlign: "left" }}>{props.children}</span>
-        <span
-          style={{
-            flexGrow: 1,
-            textAlign: "right",
-          }}
-        ></span>
-      </div>
-    </Button>
+      </Button>
+    </div>
   );
 };
 
-const AccordionBody = (props: PropsWithChildren<AccordionProps>) => {
+const AccordionBody = (props: { isOpen: boolean; children: ReactNode }) => {
   return (
     <div
       style={{
-        display: props.shown ? "block" : "none",
-        margin: "0.5em",
+        display: props.isOpen ? "block" : "none",
+        padding: "1em",
       }}
     >
       {props.children}
@@ -76,4 +72,4 @@ const AccordionBody = (props: PropsWithChildren<AccordionProps>) => {
   );
 };
 
-export { Accordion, AccordionBody, AccordionHeader };
+export { Accordion };
