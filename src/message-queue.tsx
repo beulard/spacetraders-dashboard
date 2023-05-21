@@ -2,16 +2,14 @@ import { createContext } from "react";
 
 enum MessageType {
   Hi,
-  Locate,
+  LocateSystem,
 }
 
-// interface HiCallback {
-//   (payload: { message: string }): void;
-// }
-
-// interface LocateCallback {
-//   (payload: { x: number; y: number }): void;
-// }
+export interface LocateSystemPayload {
+  symbol: string;
+  x: number;
+  y: number;
+}
 
 // type MessageCallback = HiCallback | LocateCallback;
 interface MessageCallback {
@@ -19,10 +17,14 @@ interface MessageCallback {
 }
 
 class MessageQueue {
+  // private _instance: MessageQueue | null = null;
   private listeners: Map<MessageType, MessageCallback[]> = new Map();
+  private static _instance: MessageQueue = new MessageQueue();
 
-  public hi() {
-    console.log("hi from msg queue");
+  private constructor() {}
+
+  public static Instance() {
+    return this._instance;
   }
 
   public post(message: MessageType, payload: any) {
@@ -39,8 +41,16 @@ class MessageQueue {
     callbacks.push(callback);
     this.listeners.set(message, callbacks);
   }
+
+  public clear() {
+    this.listeners.clear();
+  }
 }
 
-const MessageContext = createContext<MessageQueue | null>(null);
+const msgQueue = MessageQueue.Instance();
+
+const MessageContext = createContext<{ msgQueue: MessageQueue }>({
+  msgQueue: msgQueue,
+});
 
 export { MessageQueue, MessageContext, MessageType };

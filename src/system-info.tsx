@@ -1,33 +1,18 @@
 import Badge from "@atlaskit/badge";
 import Button from "@atlaskit/button";
+import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
 import { CheckboxSelect, OptionType } from "@atlaskit/select";
 import Tooltip from "@atlaskit/tooltip";
-import { Ref, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { MultiValue } from "react-select";
 import { Ship, System, SystemWaypoint, Waypoint } from "spacetraders-sdk";
 import api from "./api";
 import { Accordion } from "./components/accordion";
-import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
-import toast from "react-hot-toast";
-import { MultiValue } from "react-select";
-import { SystemViewScene } from "./map";
-import { MessageContext, MessageQueue, MessageType } from "./message-queue";
+import { MessageContext, MessageType } from "./message-queue";
 
-const ShipSelector = (props: { destinationSymbol: string }) => {
-  const [fleet, setFleet] = useState<Array<Ship>>([]);
+const ShipSelector = (props: { destinationSymbol: string; fleet: Ship[] }) => {
   const [sendShips, setSendShips] = useState<MultiValue<OptionType>>([]);
-
-  // TODO replace by local DB?
-  useEffect(() => {
-    api.fleet
-      .getMyShips()
-      .then((res) => {
-        setFleet(res.data.data);
-        // console.log("ships", res.data.meta, res.data.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
 
   return (
     <>
@@ -37,7 +22,7 @@ const ShipSelector = (props: { destinationSymbol: string }) => {
           <CheckboxSelect
             inputId="checkbox-select-ship"
             placeholder="SH1P-1"
-            options={fleet.map((ship) => ({
+            options={props.fleet.map((ship) => ({
               label: ship.symbol,
               value: ship.symbol,
             }))}
@@ -85,6 +70,7 @@ const ShipSelector = (props: { destinationSymbol: string }) => {
 
 const SystemInfoActions = (props: {
   waypoint: SystemWaypoint;
+  fleet: Ship[];
   details: Waypoint; // TODO
 }) => {
   return (
@@ -97,7 +83,12 @@ const SystemInfoActions = (props: {
           </span>
         </>
       }
-      body={<ShipSelector destinationSymbol={props.waypoint.symbol} />}
+      body={
+        <ShipSelector
+          destinationSymbol={props.waypoint.symbol}
+          fleet={props.fleet}
+        />
+      }
     />
   );
 };
@@ -106,13 +97,23 @@ const SystemInfoActions = (props: {
  * Shows a list of waypoints in `props.system`. Each waypoint is a dropdown menu
  * which allows the user to pick an action (e.g. send ship, fetch market, ...)
  */
-const SystemInfo = (props: {
-  system: System | null;
-  systemViewRef: Ref<SystemViewScene | null>;
-}) => {
+const SystemInfo = (props: { system: System | null }) => {
   const system = props.system;
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
-  const msgQueue = useContext(MessageContext);
+  const [fleet, setFleet] = useState<Ship[]>([]);
+  const { msgQueue } = useContext(MessageContext);
+
+  // TODO replace by local DB?
+  useEffect(() => {
+    api.fleet
+      .getMyShips()
+      .then((res) => {
+        setFleet(res.data.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }, []);
 
   useEffect(() => {
     if (system) {
@@ -139,8 +140,12 @@ const SystemInfo = (props: {
                   {...tooltipProps}
                   onClick={() => {
                     // alert("TODO");
-                    msgQueue?.post(MessageType.Locate, system);
-                    msgQueue?.post(MessageType.Hi, "hello");
+                    msgQueue.post(MessageType.LocateSystem, {
+                      x: system.x,
+                      y: system.y,
+                      symbol: system.symbol,
+                    });
+                    msgQueue.post(MessageType.Hi, "hello");
                   }}
                   appearance="subtle"
                   style={{ display: "inline", height: "100%" }}
@@ -169,6 +174,7 @@ const SystemInfo = (props: {
                 <SystemInfoActions
                   key={idx}
                   waypoint={waypoint}
+                  fleet={fleet}
                   details={waypoints[idx]}
                 />
               ))

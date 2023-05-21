@@ -1,31 +1,22 @@
-import { Ref, createContext, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { System } from "spacetraders-sdk";
 import api from "./api";
 import { ContractList } from "./contract";
-import FleetList from "./fleet";
-import { MapView, SystemViewScene } from "./map";
+import { MapView } from "./map";
 import { Status } from "./status";
-import { getSystemSymbol, Systems } from "./system";
+import { Systems, getSystemSymbol } from "./system";
 import { SystemInfo } from "./system-info";
-import { MessageContext, MessageQueue, MessageType } from "./message-queue";
+import Toggle from "@atlaskit/toggle";
 
 function App() {
   const [selectedSystem, setSelectedSystem] = useState<System | null>(null);
-  const systemViewRef = useRef<SystemViewScene | null>(null);
-  const msgQueue = new MessageQueue();
 
   useEffect(() => {
     // Fetch systems
     // TODO button to start/pause fetching
     // Systems.fetchAll();
-    msgQueue.listen(MessageType.Hi, (payload: string) => {
-      console.log(`hi ${payload}`);
-    });
-    msgQueue.listen(MessageType.Locate, (payload: { x: number; y: number }) => {
-      console.log(`hi ${payload.x} ${payload.y}}`);
-    });
-    console.log(msgQueue);
+    Systems.fetchPages(1, 4);
 
     // Set default selected system to HQ
     api.agent.getMyAgent().then((res) => {
@@ -36,29 +27,33 @@ function App() {
     });
   }, []);
 
+  function onToggleFetchSystems(evt: ChangeEvent) {
+    // TODO
+    console.log(evt);
+  }
+
   return (
     <div className="App">
       <Toaster position="top-right" />
       <div id="dashboard">
         <Status />
+        <div style={{ display: "inline-block" }}>
+          <label htmlFor="fetch-systems-toggle">Fetch systems</label>
+          <Toggle
+            defaultChecked={false}
+            id="fetch-systems-toggle"
+            onChange={(evt) => onToggleFetchSystems(evt)}
+          ></Toggle>
+        </div>
         <div style={{ display: "inline-block", width: "100%" }}>
-          <MessageContext.Provider value={msgQueue}>
-            <SystemInfo system={selectedSystem} systemViewRef={systemViewRef} />
-            {/* // TODO trying to sneak a system view reference into SystemInfo... */}
-            <MapView
-              setSystemViewRef={(ref: SystemViewScene) => {
-                systemViewRef.current = ref;
-                console.log(systemViewRef.current);
-              }}
-              setSelectedSystem={setSelectedSystem}
-            />
-          </MessageContext.Provider>
+          <SystemInfo system={selectedSystem} />
+          <MapView setSelectedSystem={setSelectedSystem} />
           {/* TODO searchable list of systems <SystemList setSelectedSystem={setSelectedSystem} /> */}
         </div>
         <ContractList setSelectedSystem={setSelectedSystem} />
-        <FleetList />
+        {/* <FleetList /> */}
       </div>
-      <div style={{ minHeight: "300px" }}>Footer</div>
+      <div style={{ minHeight: "300px" }}></div>
     </div>
   );
 }

@@ -98,6 +98,34 @@ class SystemData {
   }
 
   /**
+   * Recursive fetch of system pages
+   */
+  public fetchNext(pageIndex: number) {
+    this.fetchPage(pageIndex)
+      .then((res) => {
+        console.log(res.data.meta);
+        this.fetchNext(pageIndex + 1);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  /**
+   * Fetch a given number of pages
+   */
+  public fetchPages(pageIndex: number, pageCount: number) {
+    if (pageCount <= 0) {
+      return;
+    } else {
+      this.fetchPage(pageIndex).then((res) => {
+        console.log(res.data.data);
+        this.fetchPages(pageIndex + 1, pageCount - 1);
+      });
+    }
+  }
+
+  /**
    * Fetch every system in the API and store it in the local DB if not yet present
    */
   public fetchAll() {

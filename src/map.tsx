@@ -1,17 +1,19 @@
 import * as ex from "excalibur";
 import { useContext, useEffect, useRef } from "react";
 import { System } from "spacetraders-sdk";
+import {
+  LocateSystemPayload,
+  MessageContext,
+  MessageQueue,
+  MessageType,
+} from "./message-queue";
 import { Systems } from "./system";
-import { MessageContext, MessageQueue } from "./message-queue";
 
 function clamp(x: number, xmin: number, xmax: number) {
   return Math.max(Math.min(x, xmax), xmin);
 }
 
-type SystemType = {
-  [id: string]: ex.Color;
-};
-const systemTypeColor: { [id: string]: ex.Color } = {
+const SystemTypeColor: { [id: string]: ex.Color } = {
   NEUTRON_STAR: ex.Color.Cyan,
   RED_STAR: ex.Color.Red,
   ORANGE_STAR: ex.Color.Orange,
@@ -35,7 +37,7 @@ class SystemGfx extends ex.Actor {
     super({ pos: pos });
     this.circle = new ex.Circle({
       radius: 15,
-      color: systemTypeColor[type],
+      color: SystemTypeColor[type],
     });
 
     this.labelFont = new ex.Font({
@@ -145,9 +147,25 @@ class SystemViewScene extends ex.Scene {
       if (dragging) {
         // Stopped dragging this frame
         this.updateDrawnSystems();
-        // console.log("ac", this.actors.length);
+        console.log("ac", this.actors.length);
       }
     });
+
+    // Handle system locate messages
+    msgQueue.listen(
+      MessageType.LocateSystem,
+      (payload: LocateSystemPayload) => {
+        this.camera
+          .move(
+            ex.vec(
+              payload.x * this.systemPositionScale,
+              payload.y * this.systemPositionScale
+            ),
+            1000
+          )
+          .then(() => this.updateDrawnSystems());
+      }
+    );
   }
 
   public updateDrawnSystems() {
@@ -173,7 +191,6 @@ class SystemViewScene extends ex.Scene {
         },
       },
     }).then((res) => {
-      // console.log(res.docs.length);
       this.drawSystems(res.docs.map((sys) => sys as unknown as System));
     });
   }
@@ -259,13 +276,10 @@ class MapData {
 /**
  * Map component. Holds a ref to the MapData object.
  */
-const MapView = (props: {
-  setSystemViewRef: Function;
-  setSelectedSystem: Function;
-}) => {
+const MapView = (props: { setSelectedSystem: Function }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const data = useRef<MapData | null>(null);
-  const msgQueue = useContext(MessageContext);
+  const { msgQueue } = useContext(MessageContext);
 
   // Initialise the game data
   useEffect(() => {
@@ -273,6 +287,7 @@ const MapView = (props: {
       // If we get here it means we got a hot reload on dev server, usually
       data.current.game.currentScene.clear();
       data.current.game.stop();
+      MessageQueue.Instance().clear();
     }
 
     data.current = new MapData(
@@ -283,10 +298,8 @@ const MapView = (props: {
         enableCanvasTransparency: true,
         backgroundColor: new ex.Color(0, 0, 0, 0.5),
       },
-      msgQueue!
+      msgQueue
     );
-
-    props.setSystemViewRef(data.current.systemViewScene);
 
     data.current.systemViewScene.addSelectedSystemListener(
       props.setSelectedSystem
