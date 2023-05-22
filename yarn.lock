@@ -439,6 +439,28 @@
     lodash "^4.17.21"
     prop-types "^15.5.10"
 
+"@atlaskit/tag-group@^10.2.2":
+  version "10.2.2"
+  resolved "https://registry.yarnpkg.com/@atlaskit/tag-group/-/tag-group-10.2.2.tgz#40c25956e8aea23ee6fab612808bbed171865912"
+  integrity sha512-qgjIVU9NVUp6cyjH1RV77E4S4osHiP+CYD7JNxTir7FlzOec/RtxeFWvHV85nq0G/MSbjXk1fgE+PJ7o06tnFg==
+  dependencies:
+    "@babel/runtime" "^7.0.0"
+    "@emotion/react" "^11.7.1"
+
+"@atlaskit/tag@^11.5.2":
+  version "11.5.2"
+  resolved "https://registry.yarnpkg.com/@atlaskit/tag/-/tag-11.5.2.tgz#6f02af80b54c2327b2cf8f98688837b585accd7b"
+  integrity sha512-5Hyf3ySZEXPSd6oek+JsR2vi32Z8FjOz5NUiSf48PPIea7Wa/b3LmIKCBfSBnP44bI4tgK9EQk/gAnmYoYUTzQ==
+  dependencies:
+    "@atlaskit/analytics-next" "^9.1.0"
+    "@atlaskit/ds-lib" "^2.2.0"
+    "@atlaskit/icon" "^21.12.0"
+    "@atlaskit/motion" "^1.4.0"
+    "@atlaskit/theme" "^12.5.0"
+    "@atlaskit/tokens" "^1.4.0"
+    "@babel/runtime" "^7.0.0"
+    "@emotion/react" "^11.7.1"
+
 "@atlaskit/theme@^12.5.0":
   version "12.5.3"
   resolved "https://registry.yarnpkg.com/@atlaskit/theme/-/theme-12.5.3.tgz#c791d27ea81eba54bfaad44ddf490705407dcaf3"
@@ -9791,6 +9813,9 @@ space-separated-tokens@^1.0.0:
 "spacetraders-sdk@file:api/packages/spacetraders-sdk":
   version "2.0.0"
   dependencies:
+    "@atlaskit/tag" "^11.5.2"
+    "@atlaskit/tag-group" "^10.2.2"
+    "@atlaskit/toggle" "^12.6.0"
     axios "^0.27.2"
 
 spark-md5@3.0.2:

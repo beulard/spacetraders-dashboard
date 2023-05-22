@@ -19,6 +19,8 @@
     "@atlaskit/progress-bar": "^0.6.2",
     "@atlaskit/select": "^16.2.3",
     "@atlaskit/table-tree": "^9.4.0",
+    "@atlaskit/tag": "^11.5.2",
+    "@atlaskit/tag-group": "^10.2.2",
     "@atlaskit/toggle": "^12.6.0",
     "@atlaskit/tokens": "^1.4.0",
     "@atlaskit/tooltip": "^17.8.2",
