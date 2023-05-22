@@ -2,7 +2,6 @@ import PouchDB from "pouchdb";
 import PouchFind from "pouchdb-find";
 import { toast } from "react-hot-toast";
 import api from "./api";
-import { MutableRefObject, Ref } from "react";
 
 // TODO on the right side of canvas:
 // + A searchable list of systems/waypoints which show the object on map + info when clicked
@@ -12,7 +11,7 @@ import { MutableRefObject, Ref } from "react";
  * e.g. get X1-ABCD from X1-ABCD-1337D
  * @param fullSymbol
  */
-export function getSystemSymbol(fullSymbol: string) {
+function getSystemSymbol(fullSymbol: string) {
   return fullSymbol.split("-").splice(0, 2).join("-");
 }
 
@@ -198,4 +197,4 @@ interface ListenerCallback {
 
 const Systems = new SystemData();
 
-export { Systems };
+export { Systems, getSystemSymbol };
