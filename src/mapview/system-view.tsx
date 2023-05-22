@@ -1,15 +1,13 @@
 import * as ex from "excalibur";
-import { useContext, useEffect, useRef } from "react";
 import { System } from "spacetraders-sdk";
 import {
   LocateSystemPayload,
-  MessageContext,
   MessageQueue,
   MessageType,
-} from "./message-queue";
-import { Systems } from "./system";
+} from "../message-queue";
+import { Systems } from "../system";
 
-function clamp(x: number, xmin: number, xmax: number) {
+export function clamp(x: number, xmin: number, xmax: number) {
   return Math.max(Math.min(x, xmax), xmin);
 }
 
@@ -26,7 +24,7 @@ const SystemTypeColor: { [id: string]: ex.Color } = {
   UNSTABLE: ex.Color.Rose,
 };
 
-class SystemGfx extends ex.Actor {
+export class SystemGfx extends ex.Actor {
   // Instantiate a font per label (for some reason)
   private labelFont;
   private labelFontBold;
@@ -84,25 +82,32 @@ class SystemGfx extends ex.Actor {
   }
 }
 
-class SystemViewScene extends ex.Scene {
+export class SystemViewScene extends ex.Scene {
+  // Pointer to game instance
+  private game: ex.Engine;
   // Min/max zoom scale
   private maxZoomScale = 1;
-  private minZoomScale = 0.05;
+  private minZoomScale = 0.025;
   // By how much to scale the system positions returned by the API into engine coordinates
-  private systemPositionScale = 40;
+  private systemPositionScale = 8;
   private systemsGfx: Map<string, SystemGfx>;
   private selectedSystemGfx: SystemGfx | null = null;
+  private msgQueue: MessageQueue | null = null;
 
-  constructor(input: ex.Input.EngineInput, msgQueue: MessageQueue) {
+  constructor(game: ex.Engine, msgQueue: MessageQueue) {
     super();
+
+    this.game = game;
 
     this.systemsGfx = new Map<string, SystemGfx>();
 
     this.camera.pos = ex.vec(0, 0);
     this.camera.zoom = this.minZoomScale;
 
+    this.msgQueue = msgQueue;
+
     // Set up user input
-    const pointers = input.pointers;
+    const pointers = game.input.pointers;
     // Mouse scroll zoom
     pointers.on("wheel", (evt) => {
       this.camera
@@ -227,9 +232,18 @@ class SystemViewScene extends ex.Scene {
         gfx.on("pointerdown", (evt) => {
           if (evt.button === "Left") {
             this.setSelectedSystem(gfx);
-            this.selectedSystemListeners.forEach((listener) =>
-              listener(system)
-            );
+
+            // Send a selected system message
+            this.msgQueue?.post(MessageType.SelectSystem, {
+              system: system,
+            });
+
+            // TODO
+            if (this.selectedSystemGfx === gfx) {
+              // Go to system view, show waypoints, ships, etc
+              // TODO (hold scene in this class?)
+              // this.game.goToScene("waypointview");
+            }
           }
         });
 
@@ -245,84 +259,4 @@ class SystemViewScene extends ex.Scene {
       }
     }
   }
-
-  private selectedSystemListeners: Function[] = [];
-  public addSelectedSystemListener(callback: Function) {
-    this.selectedSystemListeners.push(callback);
-  }
 }
-
-/**
- * Holds all the data (engine, scenes, actors) needed to draw the map
- */
-class MapData {
-  public systemViewScene: SystemViewScene;
-
-  public game: ex.Engine;
-
-  constructor(gameOptions: ex.EngineOptions, msgQueue: MessageQueue) {
-    this.game = new ex.Engine(gameOptions);
-    this.systemViewScene = new SystemViewScene(this.game.input, msgQueue);
-    this.game.addScene("systemview", this.systemViewScene);
-
-    this.game.start().then(() => {
-      this.game.goToScene("systemview");
-      this.systemViewScene.updateDrawnSystems();
-      this.systemViewScene.camera.zoomOverTime(0.4, 1000.0);
-    });
-  }
-}
-
-/**
- * Map component. Holds a ref to the MapData object.
- */
-const MapView = (props: { setSelectedSystem: Function }) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const data = useRef<MapData | null>(null);
-  const { msgQueue } = useContext(MessageContext);
-
-  // Initialise the game data
-  useEffect(() => {
-    if (data.current) {
-      // If we get here it means we got a hot reload on dev server, usually
-      data.current.game.currentScene.clear();
-      data.current.game.stop();
-      MessageQueue.Instance().clear();
-    }
-
-    data.current = new MapData(
-      {
-        width: 600,
-        height: 400,
-        canvasElement: canvasRef.current!,
-        enableCanvasTransparency: true,
-        backgroundColor: new ex.Color(0, 0, 0, 0.5),
-      },
-      msgQueue
-    );
-
-    data.current.systemViewScene.addSelectedSystemListener(
-      props.setSelectedSystem
-    );
-  }, []);
-
-  return (
-    <span style={{ display: "inline-block" }}>
-      <span id="mapContainer">
-        <img
-          id="mapBackground"
-          src="/assets/starbg_gen2_600x400.png"
-          alt="bg"
-        ></img>
-        <canvas
-          id="mapCanvas"
-          ref={canvasRef}
-          width={600}
-          height={400}
-        ></canvas>
-      </span>
-    </span>
-  );
-};
-
-export { MapView, SystemViewScene };

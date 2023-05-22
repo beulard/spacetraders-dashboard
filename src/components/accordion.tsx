@@ -64,7 +64,10 @@ const AccordionBody = (props: { isOpen: boolean; children: ReactNode }) => {
     <div
       style={{
         display: props.isOpen ? "block" : "none",
-        padding: "1em",
+        paddingLeft: "1em",
+        paddingRight: "1em",
+        paddingBottom: "1em",
+        // overflow: "hidden",
       }}
     >
       {props.children}

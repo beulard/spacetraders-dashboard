@@ -3,6 +3,7 @@ import { createContext } from "react";
 enum MessageType {
   Hi,
   LocateSystem,
+  SelectSystem,
 }
 
 export interface LocateSystemPayload {

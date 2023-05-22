@@ -1,7 +1,11 @@
 import Badge from "@atlaskit/badge";
 import Button from "@atlaskit/button";
+import { CodeBlock } from "@atlaskit/code";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
+import Popup from "@atlaskit/popup";
 import { CheckboxSelect, OptionType } from "@atlaskit/select";
+import { SimpleTag } from "@atlaskit/tag";
+import TagGroup from "@atlaskit/tag-group";
 import Tooltip from "@atlaskit/tooltip";
 import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -68,11 +72,13 @@ const ShipSelector = (props: { destinationSymbol: string; fleet: Ship[] }) => {
   );
 };
 
-const SystemInfoActions = (props: {
+const WaypointInfo = (props: {
   waypoint: SystemWaypoint;
   fleet: Ship[];
-  details: Waypoint; // TODO
+  details: Waypoint | null;
 }) => {
+  const [popupOpen, setPopupOpen] = useState(false);
+
   return (
     <Accordion
       isOpen={false}
@@ -84,10 +90,46 @@ const SystemInfoActions = (props: {
         </>
       }
       body={
-        <ShipSelector
-          destinationSymbol={props.waypoint.symbol}
-          fleet={props.fleet}
-        />
+        <>
+          {props.details && (
+            <TagGroup>
+              {props.details.traits.map((trait) => (
+                <Tooltip content={trait.description}>
+                  <SimpleTag key={trait.symbol} text={trait.name} />
+                </Tooltip>
+              ))}
+            </TagGroup>
+          )}
+          <ShipSelector
+            destinationSymbol={props.waypoint.symbol}
+            fleet={props.fleet}
+          />
+          <div className="pv-half">
+            <Popup
+              placement="auto"
+              isOpen={popupOpen}
+              onClose={() => setPopupOpen(false)}
+              content={() => (
+                <CodeBlock
+                  language="JSON"
+                  showLineNumbers={false}
+                  text={JSON.stringify(props.details, null, 2)}
+                />
+              )}
+              trigger={(triggerProps) => (
+                <Button
+                  // style={{ width: "4.5em" }}
+                  {...triggerProps}
+                  appearance="subtle"
+                  isSelected={popupOpen}
+                  onClick={() => setPopupOpen(!popupOpen)}
+                >
+                  {popupOpen ? "Hide JSON" : "Show JSON"}
+                </Button>
+              )}
+            ></Popup>
+          </div>
+        </>
       }
     />
   );
@@ -97,14 +139,20 @@ const SystemInfoActions = (props: {
  * Shows a list of waypoints in `props.system`. Each waypoint is a dropdown menu
  * which allows the user to pick an action (e.g. send ship, fetch market, ...)
  */
-const SystemInfo = (props: { system: System | null }) => {
-  const system = props.system;
+const SystemInfo = () => {
+  const [system, setSystem] = useState<System | null>(null);
+  // Detailed waypoint data, to be fetched at render
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [fleet, setFleet] = useState<Ship[]>([]);
   const { msgQueue } = useContext(MessageContext);
 
-  // TODO replace by local DB?
   useEffect(() => {
+    // Listen to select system messages
+    msgQueue.listen(MessageType.SelectSystem, (payload: { system: System }) => {
+      setSystem(payload.system);
+    });
+
+    // TODO replace by local DB?
     api.fleet
       .getMyShips()
       .then((res) => {
@@ -117,12 +165,14 @@ const SystemInfo = (props: { system: System | null }) => {
 
   useEffect(() => {
     if (system) {
+      // Get detailed waypoint data
       api.system.getSystemWaypoints(system.symbol).then((res) => {
         setWaypoints(res.data.data);
       });
     }
   }, [system]);
 
+  // TODO Menu instead of accordions?
   return (
     <span
       style={{
@@ -131,7 +181,7 @@ const SystemInfo = (props: { system: System | null }) => {
         width: "40%",
       }}
     >
-      {system && (
+      {system ? (
         <div>
           <div style={{ marginBottom: "0.25em", display: "inline-block" }}>
             <Tooltip content="Locate on map" delay={100} position="top">
@@ -139,13 +189,11 @@ const SystemInfo = (props: { system: System | null }) => {
                 <Button
                   {...tooltipProps}
                   onClick={() => {
-                    // alert("TODO");
                     msgQueue.post(MessageType.LocateSystem, {
                       x: system.x,
                       y: system.y,
                       symbol: system.symbol,
                     });
-                    msgQueue.post(MessageType.Hi, "hello");
                   }}
                   appearance="subtle"
                   style={{ display: "inline", height: "100%" }}
@@ -171,11 +219,11 @@ const SystemInfo = (props: { system: System | null }) => {
             body={
               system.waypoints.length > 0 &&
               system.waypoints.map((waypoint, idx) => (
-                <SystemInfoActions
-                  key={idx}
+                <WaypointInfo
+                  key={waypoint.symbol}
                   waypoint={waypoint}
                   fleet={fleet}
-                  details={waypoints[idx]}
+                  details={waypoints[idx] || null}
                 />
               ))
             }
@@ -191,6 +239,8 @@ const SystemInfo = (props: { system: System | null }) => {
             ></Accordion>
           )}
         </div>
+      ) : (
+        <div>No selected system</div>
       )}
     </span>
   );

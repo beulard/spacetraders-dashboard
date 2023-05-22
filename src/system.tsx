@@ -2,6 +2,7 @@ import PouchDB from "pouchdb";
 import PouchFind from "pouchdb-find";
 import { toast } from "react-hot-toast";
 import api from "./api";
+import { MutableRefObject, Ref } from "react";
 
 // TODO on the right side of canvas:
 // + A searchable list of systems/waypoints which show the object on map + info when clicked
@@ -17,6 +18,7 @@ export function getSystemSymbol(fullSymbol: string) {
 
 class SystemData {
   private db: PouchDB.Database;
+  private keepFetching: boolean = false;
 
   public constructor() {
     PouchDB.plugin(PouchFind);
@@ -81,13 +83,13 @@ class SystemData {
         // toast.success(`Fetched page ${pageIndex}`);
 
         const systems = res.data.data;
-        console.log("adding " + systems.length + " systems");
+        // console.log("adding " + systems.length + " systems");
         this.db
           .bulkDocs(
             systems.map((system) => ({ _id: system.symbol, ...system }))
           )
           .then(() => {
-            console.log("done");
+            // console.log("done");
           });
       })
       .catch((err) => {
@@ -111,6 +113,38 @@ class SystemData {
       });
   }
 
+  public fetchStart() {
+    this.keepFetching = true;
+  }
+
+  /**
+   * Keep fetching pages until asked to fetchStop
+   * @param pageIndex
+   * @returns Promise to next page index
+   */
+  public async fetchUntil(pageIndex: number): Promise<number> {
+    const promise = this.fetchPage(pageIndex).then(async (res) => {
+      if (this.keepFetching) {
+        // Wait for a couple of seconds
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        console.log(res.data.meta);
+        return await this.fetchUntil(pageIndex + 1);
+      } else {
+        return pageIndex + 1;
+      }
+    });
+
+    promise.catch((err) => {
+      console.log(err);
+    });
+
+    return promise;
+  }
+
+  public fetchStop() {
+    this.keepFetching = false;
+  }
+
   /**
    * Fetch a given number of pages
    */
@@ -119,64 +153,10 @@ class SystemData {
       return;
     } else {
       this.fetchPage(pageIndex).then((res) => {
-        console.log(res.data.data);
+        // console.log(res.data.data);
         this.fetchPages(pageIndex + 1, pageCount - 1);
       });
     }
-  }
-
-  /**
-   * Fetch every system in the API and store it in the local DB if not yet present
-   */
-  public fetchAll() {
-    // Determine how many systems we have stored so far
-    this.db
-      .info()
-      .then((info) => {
-        return info.doc_count;
-      })
-      .then((count) => {
-        console.log(count);
-
-        // Determine how many systems there are in total
-        api.system
-          .getSystems(1, 1)
-          .then((res) => {
-            return res.data.meta.total;
-          })
-          .then((total) => {
-            let currentPage = Math.floor(count / 20) + 1;
-            console.log(currentPage);
-
-            // TODO possible to update progress bar in toast ?
-            // const progressBarToast = toast(
-            //   <div style={{ width: "10em" }}>
-            //     Fetching systems...
-            //     <ProgressBar value={count / total} />
-            //   </div>,
-            //   { duration: 3000000 }
-            // );
-
-            const id = setInterval(() => {
-              this.db.info().then((info) => {
-                if (info.doc_count >= total || currentPage >= total / 20 + 1) {
-                  // toast.dismiss(progressBarToast);
-                  clearInterval(id);
-                } else {
-                  toast.loading(
-                    `Fetching page ${currentPage} / ${total / 20}`,
-                    {
-                      duration: 2000,
-                    }
-                  );
-                  console.log(currentPage);
-                  this.fetchPage(currentPage);
-                  currentPage += 1;
-                }
-              });
-            }, 2000);
-          });
-      });
   }
 
   /**

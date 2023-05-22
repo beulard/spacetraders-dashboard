@@ -9,12 +9,13 @@ import Modal, {
   ModalTransition,
 } from "@atlaskit/modal-dialog";
 import Popup from "@atlaskit/popup";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Contract, ContractDeliverGood } from "spacetraders-sdk";
 import api from "./api";
 import { RefreshButton } from "./components/refresh-button";
-import { getSystemSymbol, Systems } from "./system";
+import { MessageContext, MessageType } from "./message-queue";
+import { Systems, getSystemSymbol } from "./system";
 
 function getTotalPayment(contract: Contract) {
   return contract.terms.payment.onAccepted + contract.terms.payment.onFulfilled;
@@ -45,10 +46,7 @@ const Deadline = (props: { deadline: Date }) => {
   return <span>{getTimeLeftString()}</span>;
 };
 
-const ContractDescription = (props: {
-  contract: Contract;
-  setSelectedSystem: Function;
-}) => {
+const ContractDescription = (props: { contract: Contract }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Popup
@@ -58,7 +56,6 @@ const ContractDescription = (props: {
       content={(popupProps) => (
         <ContractBody
           contract={props.contract}
-          setSelectedSystem={props.setSelectedSystem}
           onUpdate={popupProps.update}
           close={() => setIsOpen(false)}
         />
@@ -80,11 +77,11 @@ const ContractDescription = (props: {
 
 const ContractBody = (props: {
   contract: Contract;
-  setSelectedSystem: Function;
   onUpdate: Function;
   close: Function;
 }) => {
   const [showJSON, setShowJSON] = useState(false);
+  const { msgQueue } = useContext(MessageContext);
 
   const contract = props.contract;
   const deadline = new Date(contract.terms.deadline);
@@ -138,7 +135,9 @@ const ContractBody = (props: {
                 onClick={() => {
                   Systems.get(getSystemSymbol(d.destinationSymbol)).then(
                     (system) => {
-                      props.setSelectedSystem(system);
+                      msgQueue.post(MessageType.SelectSystem, {
+                        system: system,
+                      });
                       props.close();
                     }
                   );
@@ -175,7 +174,7 @@ const ContractBody = (props: {
   );
 };
 
-const ContractList = (props: { setSelectedSystem: Function }) => {
+const ContractList = () => {
   const [contracts, setContracts] = useState(Array<Contract>());
   const [modalOpen, setModalOpen] = useState(false);
   const [acceptContractId, setAcceptContractId] = useState("");
@@ -242,12 +241,7 @@ const ContractList = (props: { setSelectedSystem: Function }) => {
       { key: "payment", content: `$${getTotalPayment(contract)}` },
       {
         key: "info",
-        content: (
-          <ContractDescription
-            contract={contract}
-            setSelectedSystem={props.setSelectedSystem}
-          />
-        ),
+        content: <ContractDescription contract={contract} />,
       },
       {
         key: "acceptButton",
