@@ -1,8 +1,9 @@
 import * as ex from "excalibur";
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { MessageContext, MessageQueue } from "../message-queue";
 import { SystemViewScene } from "./system-view";
 import { WaypointViewScene } from "./waypoint-view";
+import { Button } from "antd";
 
 /**
  * Holds all the data (engine, scenes, actors) needed to draw the map
@@ -35,6 +36,9 @@ const MapView = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const data = useRef<MapData | null>(null);
   const { msgQueue } = useContext(MessageContext);
+  const [testState, setTestState] = useState(0);
+
+  console.log("render");
 
   // Initialise the game data
   useEffect(() => {
@@ -58,7 +62,13 @@ const MapView = () => {
   }, []);
 
   return (
-    <span style={{ display: "inline-block" }}>
+    <span
+      style={{
+        display: "inline-block",
+        paddingTop: "40px",
+        paddingBottom: "20px",
+      }}
+    >
       <span id="mapContainer">
         <img
           id="mapBackground"

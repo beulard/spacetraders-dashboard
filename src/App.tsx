@@ -64,7 +64,9 @@ function App() {
             onChange={() => onToggleFetchSystems(!fetchSystems)}
           ></Toggle>
         </div>
-        <div style={{ display: "inline-block", width: "100%" }}>
+        <div
+          style={{ display: "inline-block", width: "100%", height: "450px" }}
+        >
           <SystemInfo />
           <MapView />
           {/* TODO searchable list of systems <SystemList setSelectedSystem={setSelectedSystem} /> */}

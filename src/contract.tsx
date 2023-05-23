@@ -1,14 +1,7 @@
-import Button from "@atlaskit/button";
 import { CodeBlock } from "@atlaskit/code";
 import DynamicTable from "@atlaskit/dynamic-table";
-import Modal, {
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-  ModalTitle,
-  ModalTransition,
-} from "@atlaskit/modal-dialog";
 import Popup from "@atlaskit/popup";
+import { Button, Popconfirm, Popover } from "antd";
 import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Contract, ContractDeliverGood } from "spacetraders-sdk";
@@ -47,40 +40,17 @@ const Deadline = (props: { deadline: Date }) => {
 };
 
 const ContractDescription = (props: { contract: Contract }) => {
-  const [isOpen, setIsOpen] = useState(false);
   return (
-    <Popup
-      placement="auto"
-      isOpen={isOpen}
-      onClose={() => setIsOpen(false)}
-      content={(popupProps) => (
-        <ContractBody
-          contract={props.contract}
-          onUpdate={popupProps.update}
-          close={() => setIsOpen(false)}
-        />
-      )}
-      trigger={(triggerProps) => (
-        <Button
-          style={{ width: "4.5em" }}
-          {...triggerProps}
-          appearance="primary"
-          isSelected={isOpen}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? "Hide" : "Show"}
-        </Button>
-      )}
-    ></Popup>
+    <Popover
+      trigger="click"
+      content={<ContractBody contract={props.contract} />}
+    >
+      <Button>Show</Button>
+    </Popover>
   );
 };
 
-const ContractBody = (props: {
-  contract: Contract;
-  onUpdate: Function;
-  close: Function;
-}) => {
-  const [showJSON, setShowJSON] = useState(false);
+const ContractBody = (props: { contract: Contract }) => {
   const { msgQueue } = useContext(MessageContext);
 
   const contract = props.contract;
@@ -138,7 +108,6 @@ const ContractBody = (props: {
                       msgQueue.post(MessageType.SelectSystem, {
                         system: system,
                       });
-                      props.close();
                     }
                   );
                 }}
@@ -150,25 +119,19 @@ const ContractBody = (props: {
           );
         })}
       </ul>
-      {showJSON && (
-        <div style={{ margin: "1em 0em 1em 0em" }}>
-          <CodeBlock
-            language="json"
-            text={JSON.stringify(contract, null, 2)}
-            showLineNumbers={false}
-          />
-        </div>
-      )}
-      <div style={{}}>
-        <Button
-          appearance="subtle"
-          onClick={() => {
-            setShowJSON(!showJSON);
-            props.onUpdate();
-          }}
+      <div style={{ paddingTop: "0.5em" }}>
+        <Popover
+          mouseEnterDelay={0.3}
+          content={
+            <CodeBlock
+              language="json"
+              text={JSON.stringify(contract, null, 2)}
+              showLineNumbers={false}
+            />
+          }
         >
-          {showJSON ? "Hide JSON" : "Show JSON"}
-        </Button>
+          <Button type="dashed">Show JSON</Button>
+        </Popover>
       </div>
     </div>
   );
@@ -176,7 +139,6 @@ const ContractBody = (props: {
 
 const ContractList = () => {
   const [contracts, setContracts] = useState(Array<Contract>());
-  const [modalOpen, setModalOpen] = useState(false);
   const [acceptContractId, setAcceptContractId] = useState("");
 
   const refresh = (onDone: Function = () => {}) => {
@@ -245,23 +207,35 @@ const ContractList = () => {
       },
       {
         key: "acceptButton",
-        content: contract.accepted ? (
-          <Button appearance="primary" isDisabled={true}>
-            Accepted
-          </Button>
-        ) : (
-          <>
-            <Button
-              appearance="primary"
-              onClick={() => {
-                console.log(`Accepting  ${contract.id}?`);
-                setAcceptContractId(contract.id);
-                setModalOpen(true);
-              }}
-            >
+        content: (
+          <Popconfirm
+            disabled={contract.accepted}
+            title="Accept contract?"
+            onConfirm={() => {
+              const promise = api.contract.acceptContract(contract.id);
+              setContracts(
+                contracts.map((c) =>
+                  c.id === acceptContractId ? { ...c, accepted: true } : c
+                )
+              );
+              toast.promise(promise, {
+                loading: "Accepting...",
+                success: "Accepted contract. Good luck!",
+                error: "Error!",
+              });
+              promise
+                .then((_) => {
+                  refresh();
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+            }}
+          >
+            <Button disabled={contract.accepted} type="primary">
               Accept
             </Button>
-          </>
+          </Popconfirm>
         ),
       },
     ],
@@ -289,57 +263,6 @@ const ContractList = () => {
           rows={tableRows}
           isRankable={true}
         ></DynamicTable>
-
-        <ModalTransition>
-          {modalOpen && (
-            <Modal onClose={() => setModalOpen(false)}>
-              <ModalHeader>
-                <ModalTitle>Accept contract</ModalTitle>
-              </ModalHeader>
-              <ModalBody>U sure?</ModalBody>
-              <ModalFooter>
-                <Button
-                  appearance="subtle"
-                  onClick={() => {
-                    setAcceptContractId("");
-                    setModalOpen(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  appearance="primary"
-                  onClick={() => {
-                    const promise =
-                      api.contract.acceptContract(acceptContractId);
-                    setContracts(
-                      contracts.map((c) =>
-                        c.id === acceptContractId ? { ...c, accepted: true } : c
-                      )
-                    );
-                    setModalOpen(false);
-                    setAcceptContractId("");
-                    toast.promise(promise, {
-                      loading: "Accepting...",
-                      success: "Accepted contract. Good luck!",
-                      error: "Error!",
-                    });
-                    promise
-                      .then((_) => {
-                        refresh();
-                      })
-                      .catch((err) => {
-                        console.log(err);
-                      });
-                  }}
-                  autoFocus
-                >
-                  Accept
-                </Button>
-              </ModalFooter>
-            </Modal>
-          )}
-        </ModalTransition>
       </div>
     </div>
   );

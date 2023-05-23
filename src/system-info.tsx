@@ -1,74 +1,68 @@
-import Badge from "@atlaskit/badge";
-import Button from "@atlaskit/button";
 import { CodeBlock } from "@atlaskit/code";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
-import Popup from "@atlaskit/popup";
-import { CheckboxSelect, OptionType } from "@atlaskit/select";
-import { SimpleTag } from "@atlaskit/tag";
-import TagGroup from "@atlaskit/tag-group";
-import Tooltip from "@atlaskit/tooltip";
+import {
+  Button,
+  Collapse,
+  Popover,
+  Select,
+  Space,
+  Tag,
+  Tooltip,
+  notification,
+} from "antd";
 import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { MultiValue } from "react-select";
 import { Ship, System, SystemWaypoint, Waypoint } from "spacetraders-sdk";
 import api from "./api";
 import { Accordion } from "./components/accordion";
 import { MessageContext, MessageType } from "./message-queue";
+const { Panel } = Collapse;
 
 const ShipSelector = (props: { destinationSymbol: string; fleet: Ship[] }) => {
-  const [sendShips, setSendShips] = useState<MultiValue<OptionType>>([]);
+  const [sendShips, setSendShips] = useState<string[]>([]);
 
   return (
-    <>
-      <label htmlFor="checkbox-select-ship">Send ships</label>
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <div style={{ flexGrow: 1 }}>
-          <CheckboxSelect
-            inputId="checkbox-select-ship"
-            placeholder="SH1P-1"
-            options={props.fleet.map((ship) => ({
-              label: ship.symbol,
-              value: ship.symbol,
-            }))}
-            onChange={(ships) => {
-              // console.log(ships);
-              // console.log(ships.map((ship) => ship.value));
-              setSendShips(ships);
-            }}
-            value={sendShips}
-          />
-        </div>
-        <div style={{ width: "3em", padding: "0 0 0 0.5em" }}>
-          <Button
-            shouldFitContainer={true}
-            iconAfter={<ArrowRightIcon label="" />}
-            onClick={() => {
-              sendShips.forEach((ship) => {
-                console.log(
-                  `Navigating ${ship.label} to ${props.destinationSymbol}`
-                );
-                api.fleet
-                  .navigateShip(ship.label, {
-                    waypointSymbol: props.destinationSymbol,
-                  })
-                  .then((res) => {
-                    // TODO properly process, store, display response (ETA, fuel, nav)
-                    console.log(res);
-                    toast.success(
-                      `Navigating ${ship.label} to ${props.destinationSymbol}`
-                    );
-                  })
-                  .catch((err) => {
-                    console.log(err);
-                    toast.error(err.response.data.error.message);
-                  });
-              });
-              setSendShips([]);
-            }}
-          ></Button>
-        </div>
+    <div style={{ display: "flex", alignItems: "center" }}>
+      <div style={{ flexGrow: 1 }}>
+        <Select
+          mode="multiple"
+          allowClear
+          style={{ width: "100%" }}
+          placeholder="Navigate ships"
+          onChange={(value) => setSendShips(value)}
+          options={props.fleet.map((ship) => ({
+            label: ship.symbol,
+            value: ship.symbol,
+          }))}
+        />
       </div>
-    </>
+      <div style={{ width: "3em", padding: "0 0 0 0.5em" }}>
+        <Button
+          icon={<ArrowRightIcon label="" />}
+          onClick={() => {
+            sendShips.forEach((ship) => {
+              console.log(`Navigating ${ship} to ${props.destinationSymbol}`);
+              api.fleet
+                .navigateShip(ship, {
+                  waypointSymbol: props.destinationSymbol,
+                })
+                .then((res) => {
+                  // TODO properly process, store, display response (ETA, fuel, nav)
+                  console.log(res);
+                  toast.success(
+                    `Navigating ${ship} to ${props.destinationSymbol}`
+                  );
+                })
+                .catch((err) => {
+                  console.log(err);
+                  toast.error(err.response.data.error.message);
+                });
+            });
+            setSendShips([]);
+          }}
+        ></Button>
+      </div>
+    </div>
   );
 };
 
@@ -77,61 +71,44 @@ const WaypointInfo = (props: {
   fleet: Ship[];
   details: Waypoint | null;
 }) => {
-  const [popupOpen, setPopupOpen] = useState(false);
-
   return (
-    <Accordion
-      isOpen={false}
-      header={
-        <>
-          <span>
-            {props.waypoint.symbol} [{props.waypoint.type}]
-          </span>
-        </>
-      }
-      body={
-        <>
-          {props.details && (
-            <TagGroup>
-              {props.details.traits.map((trait) => (
-                <Tooltip content={trait.description}>
-                  <SimpleTag key={trait.symbol} text={trait.name} />
-                </Tooltip>
-              ))}
-            </TagGroup>
-          )}
-          <ShipSelector
-            destinationSymbol={props.waypoint.symbol}
-            fleet={props.fleet}
+    <Space direction="vertical" size="small" style={{ width: "100%" }}>
+      {props.details && (
+        <div>
+          <Space wrap size={[0, 2]}>
+            {props.details.traits.map((trait) => (
+              <Tooltip
+                key={trait.symbol}
+                title={trait.description}
+                mouseEnterDelay={0.3}
+              >
+                <Tag>
+                  <small>{trait.name}</small>
+                </Tag>
+              </Tooltip>
+            ))}
+          </Space>
+        </div>
+      )}
+
+      <ShipSelector
+        destinationSymbol={props.waypoint.symbol}
+        fleet={props.fleet}
+      />
+      <Popover
+        trigger="click"
+        mouseEnterDelay={0.3}
+        content={
+          <CodeBlock
+            language="json"
+            text={JSON.stringify(props.details, null, 2)}
+            showLineNumbers={false}
           />
-          <div className="pv-half">
-            <Popup
-              placement="auto"
-              isOpen={popupOpen}
-              onClose={() => setPopupOpen(false)}
-              content={() => (
-                <CodeBlock
-                  language="JSON"
-                  showLineNumbers={false}
-                  text={JSON.stringify(props.details, null, 2)}
-                />
-              )}
-              trigger={(triggerProps) => (
-                <Button
-                  // style={{ width: "4.5em" }}
-                  {...triggerProps}
-                  appearance="subtle"
-                  isSelected={popupOpen}
-                  onClick={() => setPopupOpen(!popupOpen)}
-                >
-                  {popupOpen ? "Hide JSON" : "Show JSON"}
-                </Button>
-              )}
-            ></Popup>
-          </div>
-        </>
-      }
-    />
+        }
+      >
+        <Button type="dashed">Show JSON</Button>
+      </Popover>
+    </Space>
   );
 };
 
@@ -179,55 +156,65 @@ const SystemInfo = () => {
         float: "left",
         textAlign: "left",
         width: "40%",
+        paddingRight: "2%",
       }}
     >
       {system ? (
         <div>
-          <div style={{ marginBottom: "0.25em", display: "inline-block" }}>
-            <Tooltip content="Locate on map" delay={100} position="top">
-              {(tooltipProps) => (
-                <Button
-                  {...tooltipProps}
-                  onClick={() => {
-                    msgQueue.post(MessageType.LocateSystem, {
-                      x: system.x,
-                      y: system.y,
-                      symbol: system.symbol,
-                    });
-                  }}
-                  appearance="subtle"
-                  style={{ display: "inline", height: "100%" }}
-                >
-                  <big>
-                    {system.symbol} [{system.type}]
-                  </big>
-                </Button>
-              )}
+          <div
+            style={{
+              marginBottom: "0.25em",
+              width: "100%",
+              display: "inline-block",
+            }}
+          >
+            <Tooltip
+              title="Locate on map"
+              mouseEnterDelay={0.1}
+              placement="top"
+            >
+              <Button
+                onClick={() => {
+                  msgQueue.post(MessageType.LocateSystem, {
+                    x: system.x,
+                    y: system.y,
+                    symbol: system.symbol,
+                  });
+                }}
+                type="text"
+                style={{
+                  display: "inline",
+                  width: "100%",
+                  height: "100%",
+                  textAlign: "center",
+                }}
+              >
+                <big>
+                  {system.symbol} [{system.type}]
+                </big>
+              </Button>
             </Tooltip>
           </div>
 
-          <Accordion
-            isOpen={true}
-            header={
-              <h6 style={{ display: "inline" }}>
-                Waypoints
-                <span className="waypoint-count">
-                  <Badge>{system.waypoints.length}</Badge>
-                </span>
-              </h6>
-            }
-            body={
-              system.waypoints.length > 0 &&
+          <Collapse
+            size="small"
+            style={{ maxHeight: "400px", overflow: "auto" }}
+          >
+            {system.waypoints.length > 0 &&
               system.waypoints.map((waypoint, idx) => (
-                <WaypointInfo
+                <Panel
                   key={waypoint.symbol}
-                  waypoint={waypoint}
-                  fleet={fleet}
-                  details={waypoints[idx] || null}
-                />
-              ))
-            }
-          />
+                  header={`${waypoint.symbol} [${waypoint.type}]`}
+                >
+                  <WaypointInfo
+                    key={waypoint.symbol}
+                    waypoint={waypoint}
+                    fleet={fleet}
+                    details={waypoints[idx] || null}
+                  />
+                </Panel>
+              ))}
+          </Collapse>
 
           {system.factions.length > 0 && (
             <Accordion
