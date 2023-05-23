@@ -1,4 +1,3 @@
-import Toggle from "@atlaskit/toggle";
 import { useContext, useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import api from "./api";
@@ -8,6 +7,8 @@ import { MessageContext, MessageType } from "./message-queue";
 import { Status } from "./status";
 import { Systems, getSystemSymbol } from "./system";
 import { SystemInfo } from "./system-info";
+import { ShipList } from "./fleet";
+import { Space, Switch } from "antd";
 
 function App() {
   const [fetchSystems, setFetchSystems] = useState(false);
@@ -50,20 +51,14 @@ function App() {
       <Toaster position="top-right" />
       <div id="dashboard">
         <Status />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <label htmlFor="fetch-systems-toggle">Fetch systems</label>
-          <Toggle
+        <Space size="middle">
+          <p>Fetch systems</p>
+          <Switch
             defaultChecked={false}
             id="fetch-systems-toggle"
             onChange={() => onToggleFetchSystems(!fetchSystems)}
-          ></Toggle>
-        </div>
+          ></Switch>
+        </Space>
         <div
           style={{ display: "inline-block", width: "100%", height: "450px" }}
         >
@@ -71,8 +66,8 @@ function App() {
           <MapView />
           {/* TODO searchable list of systems <SystemList setSelectedSystem={setSelectedSystem} /> */}
         </div>
+        <ShipList />
         <ContractList />
-        {/* <FleetList /> */}
       </div>
     </div>
   );

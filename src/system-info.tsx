@@ -1,15 +1,6 @@
 import { CodeBlock } from "@atlaskit/code";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
-import {
-  Button,
-  Collapse,
-  Popover,
-  Select,
-  Space,
-  Tag,
-  Tooltip,
-  notification,
-} from "antd";
+import { Button, Collapse, Popover, Select, Space, Tag, Tooltip } from "antd";
 import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Ship, System, SystemWaypoint, Waypoint } from "spacetraders-sdk";
@@ -30,10 +21,13 @@ const ShipSelector = (props: { destinationSymbol: string; fleet: Ship[] }) => {
           style={{ width: "100%" }}
           placeholder="Navigate ships"
           onChange={(value) => setSendShips(value)}
-          options={props.fleet.map((ship) => ({
-            label: ship.symbol,
-            value: ship.symbol,
-          }))}
+          value={sendShips}
+          options={props.fleet
+            .filter((ship) => !sendShips.includes(ship.symbol)) // Filter out already selected ships
+            .map((ship) => ({
+              label: ship.symbol,
+              value: ship.symbol,
+            }))}
         />
       </div>
       <div style={{ width: "3em", padding: "0 0 0 0.5em" }}>
@@ -71,6 +65,11 @@ const WaypointInfo = (props: {
   fleet: Ship[];
   details: Waypoint | null;
 }) => {
+  // Ships in orbit, docked, etc
+  const localShips = props.fleet.filter(
+    (ship) => ship.nav.waypointSymbol === props.waypoint.symbol
+  );
+
   return (
     <Space direction="vertical" size="small" style={{ width: "100%" }}>
       {props.details && (
@@ -90,7 +89,16 @@ const WaypointInfo = (props: {
           </Space>
         </div>
       )}
-
+      {localShips.length > 0 && (
+        <p>
+          Ships:{" "}
+          {localShips.map((ship) => (
+            <Tag>
+              {ship.symbol} ({ship.nav.status})
+            </Tag>
+          ))}
+        </p>
+      )}
       <ShipSelector
         destinationSymbol={props.waypoint.symbol}
         fleet={props.fleet}
@@ -130,6 +138,7 @@ const SystemInfo = () => {
     });
 
     // TODO replace by local DB?
+    // TODO listen to changes in ship positions/nav status
     api.fleet
       .getMyShips()
       .then((res) => {
@@ -198,7 +207,11 @@ const SystemInfo = () => {
 
           <Collapse
             size="small"
-            style={{ maxHeight: "400px", overflow: "auto" }}
+            style={{
+              maxHeight: "400px",
+              overflowY: "auto",
+              scrollbarWidth: "thin",
+            }}
           >
             {system.waypoints.length > 0 &&
               system.waypoints.map((waypoint, idx) => (
