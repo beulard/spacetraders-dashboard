@@ -1,16 +1,24 @@
 import { CodeBlock } from "@atlaskit/code";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
 import { Button, Collapse, Popover, Select, Space, Tag, Tooltip } from "antd";
+import { AxiosError } from "axios";
 import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Ship, System, SystemWaypoint, Waypoint } from "spacetraders-sdk";
 import api from "./api";
 import { Accordion } from "./components/accordion";
+import { FleetContext } from "./fleet-context";
 import { MessageContext, MessageType } from "./message-queue";
 const { Panel } = Collapse;
 
-const ShipSelector = (props: { destinationSymbol: string; fleet: Ship[] }) => {
+const ShipPurchase = () => {
+  return <Button type="primary">Purchase ship</Button>;
+};
+
+const ShipSelector = (props: { destinationSymbol: string }) => {
   const [sendShips, setSendShips] = useState<string[]>([]);
+  const [fleet, setFleet] = useContext(FleetContext);
+  const { msgQueue } = useContext(MessageContext);
 
   return (
     <div style={{ display: "flex", alignItems: "center" }}>
@@ -22,7 +30,7 @@ const ShipSelector = (props: { destinationSymbol: string; fleet: Ship[] }) => {
           placeholder="Navigate ships"
           onChange={(value) => setSendShips(value)}
           value={sendShips}
-          options={props.fleet
+          options={fleet
             .filter((ship) => !sendShips.includes(ship.symbol)) // Filter out already selected ships
             .map((ship) => ({
               label: ship.symbol,
@@ -46,10 +54,19 @@ const ShipSelector = (props: { destinationSymbol: string; fleet: Ship[] }) => {
                   toast.success(
                     `Navigating ${ship} to ${props.destinationSymbol}`
                   );
+                  const updatedShip = {
+                    ...fleet.find((s) => s.symbol === ship),
+                    nav: res.data.data.nav,
+                    fuel: res.data.data.fuel,
+                  };
+                  const updatedFleet = fleet.map((s) =>
+                    s.symbol === ship ? (updatedShip as Ship) : s
+                  );
+                  setFleet(updatedFleet);
                 })
-                .catch((err) => {
+                .catch((err: AxiosError<any>) => {
                   console.log(err);
-                  toast.error(err.response.data.error.message);
+                  toast.error(err.response?.data.error.message);
                 });
             });
             setSendShips([]);
@@ -62,11 +79,11 @@ const ShipSelector = (props: { destinationSymbol: string; fleet: Ship[] }) => {
 
 const WaypointInfo = (props: {
   waypoint: SystemWaypoint;
-  fleet: Ship[];
   details: Waypoint | null;
 }) => {
+  const [fleet] = useContext(FleetContext);
   // Ships in orbit, docked, etc
-  const localShips = props.fleet.filter(
+  const localShips = fleet.filter(
     (ship) => ship.nav.waypointSymbol === props.waypoint.symbol
   );
 
@@ -99,10 +116,20 @@ const WaypointInfo = (props: {
           ))}
         </p>
       )}
-      <ShipSelector
-        destinationSymbol={props.waypoint.symbol}
-        fleet={props.fleet}
-      />
+      {/* Navigate ships */}
+      <ShipSelector destinationSymbol={props.waypoint.symbol} />
+      {/* Purchase ships (shipyard trait) */}
+      {props.details?.traits
+        .map((trait) => trait.symbol)
+        .includes("SHIPYARD") && <ShipPurchase />}
+
+      {/* Get market */}
+
+      {/* Get shipyard */}
+
+      {/* Get jump gate (connected systems) */}
+
+      {/* (debug) Show JSON */}
       <Popover
         trigger="click"
         mouseEnterDelay={0.3}
@@ -128,7 +155,6 @@ const SystemInfo = () => {
   const [system, setSystem] = useState<System | null>(null);
   // Detailed waypoint data, to be fetched at render
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
-  const [fleet, setFleet] = useState<Ship[]>([]);
   const { msgQueue } = useContext(MessageContext);
 
   useEffect(() => {
@@ -136,17 +162,6 @@ const SystemInfo = () => {
     msgQueue.listen(MessageType.SelectSystem, (payload: { system: System }) => {
       setSystem(payload.system);
     });
-
-    // TODO replace by local DB?
-    // TODO listen to changes in ship positions/nav status
-    api.fleet
-      .getMyShips()
-      .then((res) => {
-        setFleet(res.data.data);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
   }, []);
 
   useEffect(() => {
@@ -158,7 +173,6 @@ const SystemInfo = () => {
     }
   }, [system]);
 
-  // TODO Menu instead of accordions?
   return (
     <span
       style={{
@@ -222,7 +236,6 @@ const SystemInfo = () => {
                   <WaypointInfo
                     key={waypoint.symbol}
                     waypoint={waypoint}
-                    fleet={fleet}
                     details={waypoints[idx] || null}
                   />
                 </Panel>

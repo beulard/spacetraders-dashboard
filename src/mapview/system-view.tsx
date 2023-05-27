@@ -6,23 +6,7 @@ import {
   MessageType,
 } from "../message-queue";
 import { Systems } from "../system";
-
-export function clamp(x: number, xmin: number, xmax: number) {
-  return Math.max(Math.min(x, xmax), xmin);
-}
-
-const SystemTypeColor: { [id: string]: ex.Color } = {
-  NEUTRON_STAR: ex.Color.Cyan,
-  RED_STAR: ex.Color.Red,
-  ORANGE_STAR: ex.Color.Orange,
-  BLUE_STAR: ex.Color.Blue,
-  YOUNG_STAR: ex.Color.ExcaliburBlue,
-  WHITE_DWARF: ex.Color.White,
-  BLACK_HOLE: ex.Color.Black,
-  HYPERGIANT: ex.Color.Violet,
-  NEBULA: ex.Color.Green,
-  UNSTABLE: ex.Color.Rose,
-};
+import { SystemTypeColor } from "./gfx-common";
 
 export class SystemGfx extends ex.Actor {
   // Instantiate a font per label (for some reason)
@@ -35,7 +19,9 @@ export class SystemGfx extends ex.Actor {
     super({ pos: pos });
     this.circle = new ex.Circle({
       radius: 15,
-      color: SystemTypeColor[type],
+      color: SystemTypeColor[type].darken(0.3),
+      strokeColor: SystemTypeColor[type].lighten(0.6),
+      lineWidth: 3,
     });
 
     this.labelFont = new ex.Font({
@@ -49,17 +35,31 @@ export class SystemGfx extends ex.Actor {
       bold: true,
     });
 
-    this.label = new ex.Label({
-      pos: ex.vec(15, 10),
+    this.label = new ex.Text({
       text: symbol,
       color: ex.Color.White.darken(0.1),
       font: this.labelFont,
     });
-    this.addChild(this.label);
 
-    this.graphics.use(this.circle);
-    this.label.pointer.useGraphicsBounds = true;
-    this.events.wire(this.label.events);
+    this.graphics.add("circle", this.circle);
+    this.graphics.show("circle");
+    this.graphics.add("label", this.label);
+    this.graphics.show("label", { offset: ex.vec(50, -10) });
+    this.graphics.recalculateBounds();
+
+    this.on("pointerenter", () => {
+      this.circle.color = this.circle.color.lighten(0.3);
+      this.circle.radius += 5;
+      // this.labelFont.scale = ex.vec(2, 2);
+      // this.labelFontBold.scale = ex.vec(2, 2);
+    });
+    this.on("pointerleave", () => {
+      this.circle.color = this.circle.color.darken(0.3);
+      this.circle.radius = 15;
+      // this.labelFont.scale = ex.vec(1, 1);
+      // this.labelFontBold.scale = ex.vec(1, 1);
+    });
+
     this.pointer.useGraphicsBounds = true;
   }
 
@@ -83,8 +83,6 @@ export class SystemGfx extends ex.Actor {
 }
 
 export class SystemViewScene extends ex.Scene {
-  // Pointer to game instance
-  private game: ex.Engine;
   // Min/max zoom scale
   private maxZoomScale = 1;
   private minZoomScale = 0.025;
@@ -93,26 +91,50 @@ export class SystemViewScene extends ex.Scene {
   private systemsGfx: Map<string, SystemGfx>;
   private selectedSystemGfx: SystemGfx | null = null;
   private msgQueue: MessageQueue | null = null;
+  // Keep track of the zoom scale before transition to waypoint view
+  private lastZoomScale = 0.025;
 
-  constructor(game: ex.Engine, msgQueue: MessageQueue) {
+  constructor(msgQueue: MessageQueue) {
     super();
 
-    this.game = game;
+    this.msgQueue = msgQueue;
 
     this.systemsGfx = new Map<string, SystemGfx>();
 
     this.camera.pos = ex.vec(0, 0);
-    this.camera.zoom = this.minZoomScale;
+    this.camera.zoom = this.minZoomScale * 2;
 
-    this.msgQueue = msgQueue;
+    // Handle system locate messages
+    msgQueue.listen(
+      MessageType.LocateSystem,
+      (payload: LocateSystemPayload) => {
+        this.camera
+          .move(
+            ex.vec(
+              payload.x * this.systemPositionScale,
+              payload.y * this.systemPositionScale
+            ),
+            1000
+          )
+          .then(() => this.updateDrawnSystems());
+      }
+    );
+  }
+
+  public onActivate() {
+    this.camera.zoomOverTime(
+      this.lastZoomScale,
+      300,
+      ex.EasingFunctions.EaseOutCubic
+    );
 
     // Set up user input
-    const pointers = game.input.pointers;
+    const pointers = this.engine.input.pointers;
     // Mouse scroll zoom
     pointers.on("wheel", (evt) => {
       this.camera
         .zoomOverTime(
-          clamp(
+          ex.clamp(
             this.camera.zoom * 0.66 ** Math.sign(evt.deltaY),
             this.minZoomScale,
             this.maxZoomScale
@@ -155,22 +177,11 @@ export class SystemViewScene extends ex.Scene {
         console.log("ac", this.actors.length);
       }
     });
+  }
 
-    // Handle system locate messages
-    msgQueue.listen(
-      MessageType.LocateSystem,
-      (payload: LocateSystemPayload) => {
-        this.camera
-          .move(
-            ex.vec(
-              payload.x * this.systemPositionScale,
-              payload.y * this.systemPositionScale
-            ),
-            1000
-          )
-          .then(() => this.updateDrawnSystems());
-      }
-    );
+  public onDeactivate() {
+    this.engine.input.pointers.off("wheel");
+    this.engine.input.pointers.off("move");
   }
 
   public updateDrawnSystems() {
@@ -231,19 +242,30 @@ export class SystemViewScene extends ex.Scene {
 
         gfx.on("pointerdown", (evt) => {
           if (evt.button === "Left") {
+            if (this.selectedSystemGfx === gfx) {
+              this.lastZoomScale = this.camera.zoom;
+              this.camera.move(
+                this.selectedSystemGfx.pos,
+                400,
+                ex.EasingFunctions.EaseOutCubic
+              );
+              this.camera
+                .zoomOverTime(
+                  Math.max(0.2, this.camera.zoom),
+                  300,
+                  ex.EasingFunctions.EaseInCubic
+                )
+                .then(() =>
+                  this.engine.goToScene("waypointview", { system: system })
+                );
+            }
+
             this.setSelectedSystem(gfx);
 
             // Send a selected system message
             this.msgQueue?.post(MessageType.SelectSystem, {
               system: system,
             });
-
-            // TODO
-            if (this.selectedSystemGfx === gfx) {
-              // Go to system view, show waypoints, ships, etc
-              // TODO (hold scene in this class?)
-              // this.game.goToScene("waypointview");
-            }
           }
         });
 
@@ -251,7 +273,7 @@ export class SystemViewScene extends ex.Scene {
         gfx.on("preupdate", () => {
           gfx.scale = ex
             .vec(1, 1)
-            .scale(1.0 / clamp(this.camera.zoom, 0.2, this.maxZoomScale));
+            .scale(1.0 / ex.clamp(this.camera.zoom, 0.2, this.maxZoomScale));
         });
 
         this.systemsGfx.set(system.symbol, gfx);

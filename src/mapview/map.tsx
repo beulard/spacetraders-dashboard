@@ -4,6 +4,7 @@ import { MessageContext, MessageQueue } from "../message-queue";
 import { SystemViewScene } from "./system-view";
 import { WaypointViewScene } from "./waypoint-view";
 import { Button } from "antd";
+import { DevTool } from "@excaliburjs/dev-tools";
 
 /**
  * Holds all the data (engine, scenes, actors) needed to draw the map
@@ -16,7 +17,8 @@ class MapData {
 
   constructor(gameOptions: ex.EngineOptions, msgQueue: MessageQueue) {
     this.game = new ex.Engine(gameOptions);
-    this.systemViewScene = new SystemViewScene(this.game, msgQueue);
+    // const devtool = new DevTool(this.game);
+    this.systemViewScene = new SystemViewScene(msgQueue);
     this.waypointViewScene = new WaypointViewScene();
     this.game.addScene("systemview", this.systemViewScene);
     this.game.addScene("waypointview", this.waypointViewScene);
@@ -36,19 +38,9 @@ const MapView = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const data = useRef<MapData | null>(null);
   const { msgQueue } = useContext(MessageContext);
-  const [testState, setTestState] = useState(0);
-
-  console.log("render");
 
   // Initialise the game data
   useEffect(() => {
-    if (data.current) {
-      // If we get here it means we got a hot reload on dev server, usually
-      data.current.game.currentScene.clear();
-      data.current.game.stop();
-      MessageQueue.Instance().clear();
-    }
-
     data.current = new MapData(
       {
         width: 600,
@@ -56,9 +48,22 @@ const MapView = () => {
         canvasElement: canvasRef.current!,
         enableCanvasTransparency: true,
         backgroundColor: new ex.Color(0, 0, 0, 0.5),
+        // Disable canvas2d fallback:
+        // configurePerformanceCanvas2DFallback: {
+        //   allow: false
+        // }
       },
       msgQueue
     );
+
+    // Clean up on unmount
+    return () => {
+      if (data.current) {
+        data.current.game.currentScene.clear();
+        data.current.game.stop();
+      }
+      MessageQueue.Instance().clear();
+    };
   }, []);
 
   return (
@@ -67,6 +72,7 @@ const MapView = () => {
         display: "inline-block",
         paddingTop: "40px",
         paddingBottom: "20px",
+        maxWidth: "60%",
       }}
     >
       <span id="mapContainer">

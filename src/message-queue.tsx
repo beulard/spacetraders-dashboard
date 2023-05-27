@@ -4,6 +4,8 @@ enum MessageType {
   Hi,
   LocateSystem,
   SelectSystem,
+  UpdateFleet,
+  UpdateShip,
 }
 
 export interface LocateSystemPayload {

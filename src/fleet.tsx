@@ -1,90 +1,369 @@
 import {
-  Badge,
+  DownOutlined,
+  InfoCircleOutlined,
+  LoginOutlined,
+  WifiOutlined,
+} from "@ant-design/icons";
+import type { MenuProps } from "antd";
+import {
   Button,
-  List,
+  Divider,
+  Dropdown,
+  Popover,
   Progress,
   Space,
+  Table,
   Tag,
-  Tooltip,
-  Typography,
 } from "antd";
-import { useEffect, useState } from "react";
-import { Ship } from "spacetraders-sdk";
-import api from "./api";
-import { RefreshButton } from "./components/refresh-button";
+import { useContext, useEffect, useState } from "react";
+import {
+  Ship,
+  ShipCargo,
+  ShipFuel,
+  ShipMount,
+  ShipReactor,
+} from "spacetraders-sdk";
+import { FleetContext } from "./fleet-context";
+import { MessageContext } from "./message-queue";
+const { Column } = Table;
 
-const ShipList = () => {
-  const [ships, setShips] = useState<Ship[]>([]);
+const ReactorDescription = (props: { reactor: ShipReactor }) => (
+  <Space>
+    Reactor
+    <Popover content={props.reactor.description}>
+      <Tag className="ship-tag">{props.reactor.name}</Tag>
+    </Popover>
+  </Space>
+);
 
-  async function getShipPage(index: number) {
-    const page = await api.fleet.getMyShips(index);
-    return page;
-  }
+const MountTag = (props: { mount: ShipMount }) => (
+  <Popover content={props.mount.description}>
+    <Tag className="ship-tag">{props.mount.name}</Tag>
+  </Popover>
+);
 
-  async function fetchShipsRecursive(index: number = 1): Promise<Ship[]> {
-    const page = await getShipPage(index);
-    console.log(page.data.meta);
-    if (index * page.data.meta.limit >= page.data.meta.total) {
-      return page.data.data;
-    }
-    return [...page.data.data, ...(await fetchShipsRecursive(++index))];
-  }
+const CargoInventory = (props: { cargo: ShipCargo }) => (
+  <div>
+    {props.cargo.inventory.map((item) => (
+      <Popover content={item.description}>
+        <Tag>{item.name}</Tag>
+        <Tag>{item.units}</Tag>
+      </Popover>
+    ))}
+  </div>
+);
 
-  function refresh(onDone: Function = () => {}) {
-    fetchShipsRecursive().then((shipList) => {
-      setShips(shipList);
-      console.log(shipList);
-      onDone();
-    });
-  }
+const ShipDescription = (props: { ship: Ship }) => (
+  <Space direction="vertical">
+    {/* Symbol */}
+    <Space>
+      <big>
+        <b>{props.ship.symbol}</b> <Tag>{props.ship.registration.role}</Tag>
+      </big>
+    </Space>
 
-  useEffect(refresh, []);
+    <Divider style={{ padding: 0, margin: 0 }} />
+
+    {/* Crew */}
+    <Space>
+      <span>
+        Crew{" "}
+        <Tag>
+          {props.ship.crew.capacity} / {props.ship.crew.required}
+        </Tag>
+      </span>
+      <Tag>{props.ship.crew.rotation}</Tag>
+    </Space>
+
+    <Divider style={{ padding: 0, margin: 0 }} />
+
+    {/* Frame */}
+    <Space>
+      Frame
+      <Popover content={props.ship.frame.description}>
+        <Tag className="ship-tag">{props.ship.frame.name}</Tag>
+      </Popover>
+    </Space>
+
+    <Divider style={{ padding: 0, margin: 0 }} />
+
+    {/* Reactor */}
+    <ReactorDescription reactor={props.ship.reactor} />
+
+    <Divider style={{ padding: 0, margin: 0 }} />
+
+    {/* Engine */}
+    <Space>
+      Engine{" "}
+      <Popover content={props.ship.engine.description}>
+        <Tag className="ship-tag">{props.ship.engine.name}</Tag>
+      </Popover>
+    </Space>
+
+    <Divider style={{ padding: 0, margin: 0 }} />
+
+    {/* Modules */}
+    <div style={{ width: "300px" }}>
+      <p>Modules</p>
+      {props.ship.modules.map((module) => (
+        <Space wrap size="small">
+          <Popover content={module.description}>
+            <Tag className="ship-tag">{module.name}</Tag>
+          </Popover>
+        </Space>
+      ))}
+    </div>
+
+    <Divider style={{ padding: 0, margin: 0 }} />
+
+    {/* Mounts */}
+    <div style={{ width: "300px" }}>
+      <p>Mounts</p>
+      {props.ship.mounts.map((mount) => (
+        <Space wrap size={[6, 16]}>
+          <MountTag mount={mount} />
+        </Space>
+      ))}
+    </div>
+
+    <Divider style={{ padding: 0, margin: 0 }} />
+
+    {/* Cargo */}
+    <div>
+      Cargo{" "}
+      <Popover content={<CargoInventory cargo={props.ship.cargo} />}>
+        <Tag>
+          {props.ship.cargo.units} / {props.ship.cargo.capacity}
+        </Tag>
+      </Popover>
+    </div>
+
+    <Divider style={{ padding: 0, margin: 0 }} />
+
+    {/* Fuel */}
+    <div>
+      Fuel{" "}
+      <Tag>
+        {props.ship.fuel.current} / {props.ship.fuel.capacity}
+      </Tag>
+    </div>
+  </Space>
+);
+
+// Convert milliseconds to a string like "1h 20m 55s"
+function msToHMS(ms: number) {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+}
+
+function getTimeLeft(arrivalDate: string) {
+  const date = new Date(arrivalDate);
+  const diff = date.getTime() - Date.now();
+  return diff;
+}
+
+const NavColumn = (props: { ship: Ship }) => {
+  const [fleet, setFleet] = useContext(FleetContext);
+  const [timeLeft, setTimeLeft] = useState(
+    getTimeLeft(props.ship.nav.route.arrival)
+  );
+  const { msgQueue } = useContext(MessageContext);
+
+  // Update every second
+  useEffect(() => {
+    setTimeLeft(getTimeLeft(props.ship.nav.route.arrival));
+    const interval = setInterval(() => {
+      setTimeLeft((timeLeft) => {
+        // Check if we've arrived at destination
+        if (timeLeft - 1000 < 0) {
+          if (props.ship.nav.status === "IN_TRANSIT") {
+            // Update ship manually (no fetch)
+            setFleet(
+              fleet.map((s) =>
+                s.symbol === props.ship.symbol
+                  ? { ...s, nav: { ...s.nav, status: "IN_ORBIT" } }
+                  : s
+              )
+            );
+          }
+          return timeLeft;
+        }
+        return timeLeft - 1000;
+      });
+    }, 1000);
+    // Clear on unmount
+    return () => {
+      clearInterval(interval);
+    };
+  }, [props.ship]);
 
   return (
-    <div>
-      <List
-        header={
-          <Space size="middle" style={{ height: "30px" }}>
-            <h4>Fleet</h4>
-            <RefreshButton onClick={refresh} />
-          </Space>
-        }
-        itemLayout="horizontal"
+    <>
+      <Tag>{props.ship.nav.status}</Tag>
+      {props.ship.nav.waypointSymbol}
+      {props.ship.nav.status === "IN_TRANSIT" && (
+        <> (ETA: {msToHMS(timeLeft)})</>
+      )}
+    </>
+  );
+};
+
+const ShipActions = (props: { ship: Ship }) => {
+  // [Exploration]
+  //  Create chart
+  // Refine
+  // Orbit ?
+  // Dock !
+  // Survey resources
+  // Extract resources
+  // Jettison cargo (confirm)
+  // Jump
+  // Navigate
+  // Sell
+  // Warp
+  // Scan -> Systems
+  //      -> Waypoints
+  // Refuel [docked]
+  // Purchase [docked]
+  // Transfer
+  // Negotiate contract (?)
+  const actions: MenuProps["items"] = [
+    {
+      key: "dock",
+      label: (
+        <Button type="link" icon={<LoginOutlined />}>
+          Dock
+        </Button>
+      ),
+    },
+    // TODO factor scan
+    {
+      key: "scan-systems",
+      label: (
+        <Button type="link" icon={<WifiOutlined />}>
+          Scan systems
+        </Button>
+      ),
+    },
+    {
+      key: "scan-waypoints",
+      label: (
+        <Button type="link" icon={<WifiOutlined />}>
+          Scan waypoints
+        </Button>
+      ),
+    },
+  ];
+
+  return (
+    <Dropdown trigger={["click"]} menu={{ items: actions }} placement="top">
+      <Button icon={<DownOutlined />} type="primary">
+        Actions
+      </Button>
+    </Dropdown>
+  );
+};
+
+const ShipList = () => {
+  const [fleet] = useContext(FleetContext);
+  console.log(fleet);
+  const { msgQueue } = useContext(MessageContext);
+
+  // Refresh every 3s
+  // useEffect(() => {
+  //   const interval = setInterval(refresh, 3000);
+  //   // Clear on unmount
+  //   return () => {
+  //     clearInterval(interval);
+  //   };
+  // }, []);
+
+  return (
+    <>
+      <div style={{ margin: "auto", marginTop: "1em", width: "40em" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-evenly",
+            margin: "auto",
+            alignItems: "center",
+            height: "2.4em",
+          }}
+        >
+          <h4 style={{ flex: "5 5 auto" }}>Ships</h4>
+          {/* <RefreshButton onClick={refresh} /> */}
+        </div>
+      </div>
+      <Table
+        dataSource={fleet}
+        size="small"
+        pagination={false}
+        style={{ width: "60%", margin: "auto" }}
       >
-        {ships.map((ship) => (
-          <List.Item actions={[<Button>qwe</Button>, <a href="..">qwes</a>]}>
-            <List.Item.Meta
-              title={ship.symbol}
-              description={`${ship.nav.waypointSymbol} (${ship.nav.status})`}
-            />
-            {ship.cargo.inventory.map((item) => (
-              <Space size="large">
-                <Tooltip title={item.description}>
-                  <Tag>
-                    {item.name}
-                    <Badge count={item.units} color="blue" offset={[5, -5]} />
-                  </Tag>
-                </Tooltip>
-                <p>
-                  Fuel: {ship.fuel.current} / {ship.fuel.capacity}
-                </p>
-                {/* <div style={{ paddingTop: "5px", width: 160 }}> */}
-                <Progress
-                  style={{ width: 160, paddingTop: 6 }}
-                  size="small"
-                  percent={
-                    Math.round(
-                      (ship.fuel.current / ship.fuel.capacity) * 100 * 10
-                    ) / 10
-                  }
-                />
-                {/* </div> */}
+        <Column
+          title="Ship"
+          dataIndex="symbol"
+          key="symbol"
+          render={(symbol, ship: Ship) => (
+            <Popover content={<ShipDescription ship={ship} />}>
+              <Space>
+                <b>{symbol}</b>
+                <InfoCircleOutlined />
               </Space>
-            ))}
-          </List.Item>
-        ))}
-      </List>
-    </div>
+            </Popover>
+          )}
+        />
+        <Column
+          title="Status"
+          dataIndex="nav"
+          key="status"
+          render={(_, ship: Ship) => <NavColumn ship={ship} />}
+        />
+        <Column
+          title="Cargo"
+          dataIndex="cargo"
+          key="cargo"
+          render={(cargo: ShipCargo) => (
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <Popover content={<CargoInventory cargo={cargo} />}>
+                <Space>
+                  <p>
+                    {cargo.units} / {cargo.capacity}
+                  </p>
+                  <InfoCircleOutlined />
+                </Space>
+              </Popover>
+            </div>
+          )}
+        />
+        <Column
+          title="Fuel"
+          width={"10%"}
+          dataIndex="fuel"
+          key="fuel"
+          render={(fuel: ShipFuel) => (
+            <Popover content={`${fuel.current} / ${fuel.capacity}`}>
+              <Progress
+                size="small"
+                type="line"
+                percent={
+                  Math.round((fuel.current / fuel.capacity) * 100 * 10) / 10
+                }
+              />
+            </Popover>
+          )}
+        />
+        <Column
+          title="Actions"
+          dataIndex=""
+          key="actions"
+          render={(_, ship: Ship) => <ShipActions ship={ship} />}
+        />
+      </Table>
+    </>
   );
 };
 

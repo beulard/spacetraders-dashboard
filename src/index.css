@@ -90,6 +90,11 @@ canvas {
   padding-bottom: 0.5em;
 }
 
+.ship-tag:hover {
+  background-color: lightgray;
+  cursor: help;
+}
+
 /* 
 .accordion-body {
   overflow: hidden;

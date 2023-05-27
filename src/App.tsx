@@ -1,18 +1,20 @@
+import { Space, Switch } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import api from "./api";
 import { ContractList } from "./contract";
+import { ShipList } from "./fleet";
+import { Fleet, FleetContext, fetchShipsRecursive } from "./fleet-context";
 import { MapView } from "./mapview/map";
 import { MessageContext, MessageType } from "./message-queue";
 import { Status } from "./status";
 import { Systems, getSystemSymbol } from "./system";
 import { SystemInfo } from "./system-info";
-import { ShipList } from "./fleet";
-import { Space, Switch } from "antd";
 
 function App() {
   const [fetchSystems, setFetchSystems] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [fleet, setFleet] = useState<Fleet>([]);
   const { msgQueue } = useContext(MessageContext);
 
   useEffect(() => {
@@ -32,6 +34,11 @@ function App() {
         });
       });
     });
+
+    // Fetch ships
+    fetchShipsRecursive().then((shipList) => {
+      setFleet(shipList);
+    });
   }, []);
 
   function onToggleFetchSystems(value: boolean) {
@@ -50,24 +57,32 @@ function App() {
     <div className="App">
       <Toaster position="top-right" />
       <div id="dashboard">
-        <Status />
-        <Space size="middle">
-          <p>Fetch systems</p>
-          <Switch
-            defaultChecked={false}
-            id="fetch-systems-toggle"
-            onChange={() => onToggleFetchSystems(!fetchSystems)}
-          ></Switch>
-        </Space>
-        <div
-          style={{ display: "inline-block", width: "100%", height: "450px" }}
-        >
-          <SystemInfo />
-          <MapView />
-          {/* TODO searchable list of systems <SystemList setSelectedSystem={setSelectedSystem} /> */}
-        </div>
-        <ShipList />
-        <ContractList />
+        <FleetContext.Provider value={[fleet, setFleet]}>
+          <Space direction="vertical" size="small" style={{ width: "100%" }}>
+            <Status />
+            {/* <Space size="middle"> */}
+            <p>Fetch systems</p>
+            <Switch
+              defaultChecked={false}
+              id="fetch-systems-toggle"
+              onChange={() => onToggleFetchSystems(!fetchSystems)}
+            ></Switch>
+            {/* </Space> */}
+            <div
+              style={{
+                display: "inline-block",
+                width: "100%",
+                height: "450px",
+              }}
+            >
+              <SystemInfo />
+              <MapView />
+              {/* TODO searchable list of systems <SystemList setSelectedSystem={setSelectedSystem} /> */}
+            </div>
+            <ShipList />
+            <ContractList />
+          </Space>
+        </FleetContext.Provider>
       </div>
     </div>
   );

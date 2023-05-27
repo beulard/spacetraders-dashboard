@@ -1,6 +1,5 @@
 import { CodeBlock } from "@atlaskit/code";
 import DynamicTable from "@atlaskit/dynamic-table";
-import Popup from "@atlaskit/popup";
 import { Button, Popconfirm, Popover } from "antd";
 import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
