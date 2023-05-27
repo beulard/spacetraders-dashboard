@@ -256,7 +256,11 @@ export class SystemViewScene extends ex.Scene {
                   ex.EasingFunctions.EaseInCubic
                 )
                 .then(() =>
-                  this.engine.goToScene("waypointview", { system: system })
+                  this.engine.goToScene("waypointview", {
+                    system: system,
+                    ships: [],
+                    waypoints: [],
+                  })
                 );
             }
 

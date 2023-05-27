@@ -1,10 +1,17 @@
 import * as ex from "excalibur";
-import { System, SystemWaypoint, WaypointType } from "spacetraders-sdk";
+import {
+  Ship,
+  System,
+  SystemWaypoint,
+  Waypoint,
+  WaypointType,
+} from "spacetraders-sdk";
 import { SystemTypeColor, WaypointTypeStyle } from "./gfx-common";
-import api from "../api";
 
 interface SystemData {
   system: System;
+  waypoints: Waypoint[];
+  ships: Ship[];
 }
 
 const OrbitterTypes: WaypointType[] = ["MOON", "ORBITAL_STATION"];
@@ -37,8 +44,8 @@ class WaypointGfx extends ex.Actor {
     }
     this.graphics.show(circle);
     this.graphics.show(label, {
-      // anchor: ex.vec(0.5, -1),
-      // offset: ex.vec(0, 3 * style.size),
+      anchor: ex.vec(0.5, 0.5),
+      // offset: ex.vec(0, 10 * style.size),
     });
     label.showDebug = true;
 
@@ -93,7 +100,8 @@ export class WaypointViewScene extends ex.Scene {
 
     this.camera.pos = ex.vec(0, 0);
     this.camera.zoom = this.minZoomScale;
-    this.drawSystem(context.data!.system);
+    this.drawSystem(context.data!.system, context.data!.waypoints);
+    this.drawShips(context.data!.ships);
     this.camera.zoomOverTime(
       this.maxZoomScale / 2,
       300,
@@ -157,6 +165,8 @@ export class WaypointViewScene extends ex.Scene {
     this.engine.input.pointers.off("move");
   }
 
+  private drawShips(ships: Ship[]) {}
+
   private drawOrbit(waypoint: SystemWaypoint) {
     if (!OrbitterTypes.includes(waypoint.type)) {
       const orbit = new ex.Circle({
@@ -172,7 +182,7 @@ export class WaypointViewScene extends ex.Scene {
     }
   }
 
-  public drawSystem(system: System) {
+  public drawSystem(system: System, waypoints: Waypoint[]) {
     // Draw the stellar object
     const gfx = new ex.Actor({ x: 0, y: 0 });
     const circle = new ex.Circle({
@@ -185,7 +195,7 @@ export class WaypointViewScene extends ex.Scene {
     this.add(gfx);
 
     // Draw each waypoint
-    for (const waypoint of system.waypoints) {
+    for (const waypoint of waypoints) {
       this.drawOrbit(waypoint);
 
       const gfx = new WaypointGfx(waypoint, {

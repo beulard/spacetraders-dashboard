@@ -1,41 +1,57 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { config } from "process";
 import {
   AgentsApi,
   Configuration,
   ContractsApi,
   FleetApi,
   SystemsApi,
+  DefaultApi,
 } from "spacetraders-sdk";
 
 const configuration = new Configuration({
-  accessToken: process.env.REACT_APP_API_TOKEN,
+  accessToken: localStorage.getItem("access-token") || "",
 });
 
 export const instance = axios.create({});
 
 // Retry logic for 429 rate-limit errors
-instance.interceptors.response.use(undefined, async (error) => {
-  const apiError = error.response?.data?.error;
-  console.log(apiError);
+instance.interceptors.response.use(
+  // response interceptor
+  (res) => res,
+  // error interceptor
+  async (error) => {
+    // console.log(JSON.stringify(error.config));
+    // console.log(JSON.stringify(error.response.status));
+    if (error.response.status === 401) {
+      console.log("Bad token");
 
-  if (error.response?.status === 429) {
-    const retryAfter = error.response.headers["retry-after"];
+      window.location.href = "/login";
+    }
 
-    await new Promise((resolve) => {
-      setTimeout(resolve, retryAfter * 1000);
-    });
+    const apiError = error.response?.data?.error;
+    console.log(apiError);
 
-    return instance.request(error.config);
+    if (error.response?.status === 429) {
+      const retryAfter = error.response.headers["retry-after"];
+
+      await new Promise((resolve) => {
+        setTimeout(resolve, retryAfter * 1000);
+      });
+
+      return instance.request(error.config);
+    }
+
+    throw error;
   }
-
-  throw error;
-});
+);
 
 const api = {
   system: new SystemsApi(configuration, undefined, instance),
   contract: new ContractsApi(configuration, undefined, instance),
   fleet: new FleetApi(configuration, undefined, instance),
   agent: new AgentsApi(configuration, undefined, instance),
+  default: new DefaultApi(configuration, undefined, instance),
 };
 
 export default api;
