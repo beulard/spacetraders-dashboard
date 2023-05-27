@@ -48,6 +48,9 @@ const MapView = () => {
         canvasElement: canvasRef.current!,
         enableCanvasTransparency: true,
         backgroundColor: new ex.Color(0, 0, 0, 0.5),
+        // Careful, this might mean that buttons created on the DOM will not
+        // absorb click events and we might clash with in-engine UI elements
+        pointerScope: ex.Input.PointerScope.Canvas,
         // Disable canvas2d fallback:
         // configurePerformanceCanvas2DFallback: {
         //   allow: false
@@ -62,12 +65,13 @@ const MapView = () => {
         data.current.game.currentScene.clear();
         data.current.game.stop();
       }
+      // Bit dangerous...
       MessageQueue.Instance().clear();
     };
   }, []);
 
   return (
-    <span
+    <div
       style={{
         display: "inline-block",
         paddingTop: "40px",
@@ -75,20 +79,21 @@ const MapView = () => {
         maxWidth: "60%",
       }}
     >
-      <span id="mapContainer">
+      <div id="map-container">
         <img
-          id="mapBackground"
+          id="map-background"
           src="/assets/starbg_gen2_600x400.png"
           alt="bg"
         ></img>
         <canvas
-          id="mapCanvas"
+          id="map-canvas"
           ref={canvasRef}
           width={600}
           height={400}
         ></canvas>
-      </span>
-    </span>
+        <div id="map-ui"></div>
+      </div>
+    </div>
   );
 };
 

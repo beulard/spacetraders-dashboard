@@ -6,7 +6,9 @@ import {
   MessageType,
 } from "../message-queue";
 import { Systems } from "../system";
+import WaypointDB from "../waypoint-db";
 import { SystemTypeColor } from "./gfx-common";
+import FleetDB from "../fleet-db";
 
 export class SystemGfx extends ex.Actor {
   // Instantiate a font per label (for some reason)
@@ -19,19 +21,23 @@ export class SystemGfx extends ex.Actor {
     super({ pos: pos });
     this.circle = new ex.Circle({
       radius: 15,
-      color: SystemTypeColor[type].darken(0.3),
-      strokeColor: SystemTypeColor[type].lighten(0.6),
-      lineWidth: 3,
+      strokeColor: SystemTypeColor[type]
+        .desaturate(0.3)
+        .multiply(ex.Color.fromRGB(255, 255, 255, 0.5)),
+      color: SystemTypeColor[type].saturate(0.3),
+      lineWidth: 5,
     });
 
     this.labelFont = new ex.Font({
-      family: "Roboto",
+      family: "OpenSans",
       size: 16,
+      unit: ex.FontUnit.Pt,
     });
 
     this.labelFontBold = new ex.Font({
-      family: "Roboto",
+      family: "OpenSans",
       size: 16,
+      unit: ex.FontUnit.Pt,
       bold: true,
     });
 
@@ -93,9 +99,12 @@ export class SystemViewScene extends ex.Scene {
   private msgQueue: MessageQueue | null = null;
   // Keep track of the zoom scale before transition to waypoint view
   private lastZoomScale = 0.025;
+  private uiElement: HTMLElement | null = null;
 
   constructor(msgQueue: MessageQueue) {
     super();
+
+    this.uiElement = document.getElementById("map-ui")!;
 
     this.msgQueue = msgQueue;
 
@@ -244,6 +253,19 @@ export class SystemViewScene extends ex.Scene {
           if (evt.button === "Left") {
             if (this.selectedSystemGfx === gfx) {
               this.lastZoomScale = this.camera.zoom;
+              // Fetch waypoint data
+              const waypointFetch = WaypointDB.getSystemWaypoints(
+                system.symbol
+              );
+              const fleetFetch = FleetDB.update();
+              // const loading = new ex.Label({
+              //   text: "Loading system...",
+              //   color: ex.Color.White,
+              //   scale: ex.vec(16, 16),
+              //   pos: this.engine.screenToWorldCoordinates(ex.vec(300, 200)),
+              // });
+              // this.add(loading);
+
               this.camera.move(
                 this.selectedSystemGfx.pos,
                 400,
@@ -252,16 +274,30 @@ export class SystemViewScene extends ex.Scene {
               this.camera
                 .zoomOverTime(
                   Math.max(0.2, this.camera.zoom),
-                  300,
+                  400,
                   ex.EasingFunctions.EaseInCubic
                 )
-                .then(() =>
+                .then(async () => {
+                  // Show message to let user know waypoints request is still ongoing
+                  const loading_label = document.createElement("p");
+                  loading_label.className = "loading-label";
+                  loading_label.innerHTML = "Fetching system data...";
+                  this.uiElement?.appendChild(loading_label);
+
+                  const waypoints = await waypointFetch;
+                  const ships = await fleetFetch;
+
+                  // Remove message
+                  loading_label.remove();
+
                   this.engine.goToScene("waypointview", {
                     system: system,
-                    ships: [],
-                    waypoints: [],
-                  })
-                );
+                    ships: ships.filter(
+                      (s) => s.nav.systemSymbol === system.symbol
+                    ),
+                    waypoints: waypoints,
+                  });
+                });
             }
 
             this.setSelectedSystem(gfx);

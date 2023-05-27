@@ -44,8 +44,8 @@ const MountTag = (props: { mount: ShipMount }) => (
 
 const CargoInventory = (props: { cargo: ShipCargo }) => (
   <div>
-    {props.cargo.inventory.map((item) => (
-      <Popover content={item.description}>
+    {props.cargo.inventory.map((item, idx) => (
+      <Popover key={idx} content={item.description}>
         <Tag>{item.name}</Tag>
         <Tag>{item.units}</Tag>
       </Popover>
@@ -105,8 +105,8 @@ const ShipDescription = (props: { ship: Ship }) => (
     {/* Modules */}
     <div style={{ width: "300px" }}>
       <p>Modules</p>
-      {props.ship.modules.map((module) => (
-        <Space wrap size="small">
+      {props.ship.modules.map((module, idx) => (
+        <Space key={idx} wrap size="small">
           <Popover content={module.description}>
             <Tag className="ship-tag">{module.name}</Tag>
           </Popover>
@@ -119,8 +119,8 @@ const ShipDescription = (props: { ship: Ship }) => (
     {/* Mounts */}
     <div style={{ width: "300px" }}>
       <p>Mounts</p>
-      {props.ship.mounts.map((mount) => (
-        <Space wrap size={[6, 16]}>
+      {props.ship.mounts.map((mount, idx) => (
+        <Space key={idx} wrap size={[6, 16]}>
           <MountTag mount={mount} />
         </Space>
       ))}
@@ -269,7 +269,6 @@ const ShipActions = (props: { ship: Ship }) => {
 
 const ShipList = () => {
   const [fleet] = useContext(FleetContext);
-  console.log(fleet);
   const { msgQueue } = useContext(MessageContext);
 
   // Refresh every 3s
@@ -298,7 +297,7 @@ const ShipList = () => {
         </div>
       </div>
       <Table
-        dataSource={fleet}
+        dataSource={fleet.map((ship) => ({ ...ship, key: ship.symbol }))}
         size="small"
         pagination={false}
         style={{ width: "60%", margin: "auto" }}

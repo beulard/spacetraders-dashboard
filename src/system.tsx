@@ -125,7 +125,8 @@ class SystemData {
     const promise = this.fetchPage(pageIndex).then(async (res) => {
       if (this.keepFetching) {
         // Wait for a couple of seconds
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        // await new Promise((resolve) => setTimeout(resolve, 100));
         console.log(res.data.meta);
         return await this.fetchUntil(pageIndex + 1);
       } else {

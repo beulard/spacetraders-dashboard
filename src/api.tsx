@@ -30,7 +30,15 @@ instance.interceptors.response.use(
     }
 
     const apiError = error.response?.data?.error;
-    console.log(apiError);
+
+    if (!apiError) {
+      // No error data, wait for 10s and retry
+      await new Promise((resolve) => {
+        setTimeout(resolve, 10 * 1000);
+      });
+
+      return instance.request(error.config);
+    }
 
     if (error.response?.status === 429) {
       const retryAfter = error.response.headers["retry-after"];

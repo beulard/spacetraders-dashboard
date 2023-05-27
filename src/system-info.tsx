@@ -9,6 +9,7 @@ import api from "./api";
 import { Accordion } from "./components/accordion";
 import { FleetContext } from "./fleet-context";
 import { MessageContext, MessageType } from "./message-queue";
+import WaypointDB from "./waypoint-db";
 const { Panel } = Collapse;
 
 const ShipPurchase = () => {
@@ -92,9 +93,9 @@ const WaypointInfo = (props: {
       {props.details && (
         <div>
           <Space wrap size={[0, 2]}>
-            {props.details.traits.map((trait) => (
+            {props.details.traits.map((trait, idx) => (
               <Tooltip
-                key={trait.symbol}
+                key={idx}
                 title={trait.description}
                 mouseEnterDelay={0.3}
               >
@@ -167,9 +168,12 @@ const SystemInfo = () => {
   useEffect(() => {
     if (system) {
       // Get detailed waypoint data
-      api.system.getSystemWaypoints(system.symbol).then((res) => {
-        setWaypoints(res.data.data);
-      });
+      // WaypointDB.getSystemWaypoints(system.symbol).then((res) => {
+      //   setWaypoints(res.data.data);
+      // });
+      WaypointDB.getSystemWaypoints(system.symbol).then((wps) =>
+        setWaypoints(wps)
+      );
     }
   }, [system]);
 
