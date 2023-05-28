@@ -197,6 +197,7 @@ interface ListenerCallback {
   (changes: PouchDB.Core.ChangesResponseChange<{}>): void;
 }
 
+// TODO rename to SystemDB, align api with FleetDB and WaypointDB
 const Systems = new SystemData();
 
 // Global event emitter for system selection in react UI or map view

@@ -175,9 +175,9 @@ export class WaypointViewScene extends ex.Scene {
           Math.sqrt(waypoint.x ** 2 + waypoint.y ** 2) * WaypointPositionScale,
         color: ex.Color.Transparent,
         strokeColor: WaypointTypeStyle[waypoint.type].color.darken(0.4),
-        lineWidth: 2,
+        lineWidth: 3,
       });
-      const actor = new ex.Actor({ x: 0, y: 0, z: 1 });
+      const actor = new ex.Actor({ x: 0, y: 0, z: 0 });
       actor.graphics.use(orbit);
       this.add(actor);
     }
@@ -214,7 +214,10 @@ export class WaypointViewScene extends ex.Scene {
           orbitalWaypoints.set(o.symbol, {
             parent: w.symbol,
             index: idx,
-            angle: startAngle + ex.TwoPI / w.orbitals.length,
+            angle:
+              startAngle +
+              (ex.TwoPI / w.orbitals.length) * idx +
+              random.floating(-0.1, 0.1), // some random fluctuation
           });
         });
       }
@@ -235,7 +238,8 @@ export class WaypointViewScene extends ex.Scene {
 
       // Offset position if orbital
       if (orbitalInfo) {
-        const dist = ex.randomInRange(1.5, 5) * WaypointPositionScale;
+        const dist = ex.randomInRange(2, 5) * WaypointPositionScale;
+        console.log(orbitalInfo.angle);
         pos.x += dist * Math.cos(orbitalInfo.angle);
         pos.y += dist * Math.sin(orbitalInfo.angle);
       }

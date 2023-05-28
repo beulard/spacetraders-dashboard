@@ -2,6 +2,9 @@ import * as ex from "excalibur";
 import { useEffect, useRef } from "react";
 import { SystemViewScene } from "./system-view";
 import { WaypointViewScene } from "./waypoint-view";
+import { Systems } from "../system";
+import WaypointDB from "../waypoint-db";
+import FleetDB from "../fleet-db";
 
 /**
  * Holds all the data (engine, scenes, actors) needed to draw the map
@@ -20,10 +23,15 @@ class MapData {
     this.game.addScene("systemview", this.systemViewScene);
     this.game.addScene("waypointview", this.waypointViewScene);
 
-    this.game.start().then(() => {
-      this.game.goToScene("systemview");
-      this.systemViewScene.updateDrawnSystems();
-      // this.systemViewScene.camera.zoomOverTime(0.4, 1000.0);
+    this.game.start().then(async () => {
+      // Debug waypoint view
+      this.game.goToScene("waypointview", {
+        system: await Systems.get("X1-VS75"),
+        ships: FleetDB.getMyShips(),
+        waypoints: await WaypointDB.getSystemWaypoints("X1-VS75"),
+      });
+      // Normal mode
+      // this.game.goToScene("systemview");
     });
   }
 }
@@ -43,8 +51,6 @@ const MapView = () => {
       canvasElement: canvasRef.current!,
       enableCanvasTransparency: true,
       backgroundColor: new ex.Color(0, 0, 0, 0.5),
-      // Careful, this might mean that buttons created on the DOM will not
-      // absorb click events and we might clash with in-engine UI elements
       pointerScope: ex.Input.PointerScope.Canvas,
       // Disable canvas2d fallback:
       // configurePerformanceCanvas2DFallback: {

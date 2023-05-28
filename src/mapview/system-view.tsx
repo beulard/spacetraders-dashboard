@@ -102,9 +102,6 @@ export class SystemViewScene extends ex.Scene {
 
     this.systemsGfx = new Map<string, SystemGfx>();
 
-    this.camera.pos = ex.vec(0, 0);
-    this.camera.zoom = this.minZoomScale * 2;
-
     // Update selected system gfx on select events
     SystemEvent.on("select", (system: System) => {
       this.selectedSystemGfx = this.systemsGfx.get(system.symbol) || null;
@@ -251,13 +248,6 @@ export class SystemViewScene extends ex.Scene {
                 system.symbol
               );
               const fleetFetch = FleetDB.update();
-              // const loading = new ex.Label({
-              //   text: "Loading system...",
-              //   color: ex.Color.White,
-              //   scale: ex.vec(16, 16),
-              //   pos: this.engine.screenToWorldCoordinates(ex.vec(300, 200)),
-              // });
-              // this.add(loading);
 
               this.camera.move(
                 this.selectedSystemGfx.pos,
