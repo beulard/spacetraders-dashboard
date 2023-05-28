@@ -23,7 +23,7 @@ import {
   ShipMount,
   ShipReactor,
 } from "spacetraders-sdk";
-import { FleetContext } from "./fleet-context";
+import FleetDB from "./fleet-db";
 import { MessageContext } from "./message-queue";
 const { Column } = Table;
 
@@ -166,11 +166,9 @@ function getTimeLeft(arrivalDate: string) {
 }
 
 const NavColumn = (props: { ship: Ship }) => {
-  const [fleet, setFleet] = useContext(FleetContext);
   const [timeLeft, setTimeLeft] = useState(
     getTimeLeft(props.ship.nav.route.arrival)
   );
-  const { msgQueue } = useContext(MessageContext);
 
   // Update every second
   useEffect(() => {
@@ -180,14 +178,7 @@ const NavColumn = (props: { ship: Ship }) => {
         // Check if we've arrived at destination
         if (timeLeft - 1000 < 0) {
           if (props.ship.nav.status === "IN_TRANSIT") {
-            // Update ship manually (no fetch)
-            setFleet(
-              fleet.map((s) =>
-                s.symbol === props.ship.symbol
-                  ? { ...s, nav: { ...s.nav, status: "IN_ORBIT" } }
-                  : s
-              )
-            );
+            FleetDB.update();
           }
           return timeLeft;
         }
@@ -268,17 +259,22 @@ const ShipActions = (props: { ship: Ship }) => {
 };
 
 const ShipList = () => {
-  const [fleet] = useContext(FleetContext);
-  const { msgQueue } = useContext(MessageContext);
+  const [fleet, setFleet] = useState<Ship[]>(FleetDB.getMyShips());
 
-  // Refresh every 3s
-  // useEffect(() => {
-  //   const interval = setInterval(refresh, 3000);
-  //   // Clear on unmount
-  //   return () => {
-  //     clearInterval(interval);
-  //   };
-  // }, []);
+  useEffect(() => {
+    // Initial fetch
+    FleetDB.update().then((ships) => setFleet(ships));
+
+    const updateCallback = (ships: Ship[]) => {
+      setFleet(ships);
+    };
+    FleetDB.on("update", updateCallback);
+
+    // Unsubscribe on unmount
+    return () => {
+      FleetDB.off("update", updateCallback);
+    };
+  }, []);
 
   return (
     <>
@@ -297,7 +293,10 @@ const ShipList = () => {
         </div>
       </div>
       <Table
-        dataSource={fleet.map((ship) => ({ ...ship, key: ship.symbol }))}
+        dataSource={fleet.map((ship) => ({
+          ...ship,
+          key: ship.symbol,
+        }))}
         size="small"
         pagination={false}
         style={{ width: "60%", margin: "auto" }}

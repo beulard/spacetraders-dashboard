@@ -7,6 +7,7 @@ import {
   WaypointType,
 } from "spacetraders-sdk";
 import { SystemTypeColor, WaypointTypeStyle } from "./gfx-common";
+import FleetDB from "../fleet-db";
 
 interface SystemData {
   system: System;
@@ -65,28 +66,12 @@ export class WaypointViewScene extends ex.Scene {
   // Min/max zoom scale
   private maxZoomScale = 1;
   private minZoomScale = 0.125;
-  private waypoints: Waypoint[] = [];
+  private shipGfx: ex.Actor[] = [];
+  // Keep track of where we placed the waypoints in game coords
+  private waypointPositions = new Map<string, ex.Vector>();
 
   public onInitialize(engine: ex.Engine): void {
-    const backButton = new ex.ScreenElement({
-      width: 100,
-      height: 50,
-      color: ex.Color.White,
-      pos: ex.vec(0, 0),
-    });
-    // const rect = new ex.Rectangle({
-    //   width: 100,
-    //   height: 50,
-    //   strokeColor: ex.Color.Blue,
-    //   color: ex.Color.Transparent,
-    // });
-    // backButton.graphics.use(rect);
-
-    backButton.on("pointerdown", () => {
-      this.exit();
-    });
-
-    // this.add(backButton);
+    FleetDB.on("update", (ships) => this.drawShips(ships));
   }
 
   public onActivate(context: ex.SceneActivationContext<SystemData>) {
@@ -161,12 +146,12 @@ export class WaypointViewScene extends ex.Scene {
   }
 
   private drawShips(ships: Ship[]) {
+    this.shipGfx.forEach((g) => g.kill());
     for (const ship of ships) {
       // Calculate the interpolated position
       const dest = ship.nav.route.destination;
       const gfx = new ex.Actor({
-        x: dest.x * WaypointPositionScale,
-        y: dest.y * WaypointPositionScale,
+        pos: this.waypointPositions.get(dest.symbol)?.add(ex.vec(0, 25)),
       });
       // Draw above waypoints
       gfx.z = 3;
@@ -179,11 +164,17 @@ export class WaypointViewScene extends ex.Scene {
 
       const name = new ex.Text({
         text: ship.symbol,
-        font: new ex.Font({ family: "Roboto", size: 16, bold: true }),
+        font: new ex.Font({
+          family: "OpenSans",
+          size: 16,
+          bold: true,
+          smoothing: true,
+        }),
         color: ex.Color.White,
       });
       gfx.graphics.show(name, { offset: ex.vec(0, 30) });
 
+      this.shipGfx.push(gfx);
       this.add(gfx);
     }
   }
@@ -225,6 +216,7 @@ export class WaypointViewScene extends ex.Scene {
         orbitalWaypoints.set(o.symbol, w.symbol);
       }
     }
+    // Need a structure to make it easy to find how many total orbitals there are
 
     // Draw each waypoint
     for (const waypoint of waypoints) {
@@ -239,86 +231,8 @@ export class WaypointViewScene extends ex.Scene {
         y: waypoint.y * WaypointPositionScale,
       });
 
-      // C'est un bordel ici...
-      const waypointUi = new ex.Actor({ pos: gfx.pos });
-      const label = new ex.Text({
-        text: `${shorten(waypoint.symbol)}\n[${waypoint.type}]`,
-        color: ex.Color.White,
-        font: new ex.Font({
-          family: "OpenSans",
-          size: 10,
-          unit: ex.FontUnit.Pt,
-          textAlign: ex.TextAlign.Center,
-          smoothing: true,
-        }),
-      });
-      const traits = new ex.Text({
-        text: waypoint.traits.map((t) => t.name).join("\n"),
-        font: new ex.Font({
-          family: "Ubuntu Mono",
-          size: 10,
-          unit: ex.FontUnit.Pt,
-          textAlign: ex.TextAlign.Left,
-          smoothing: true,
-        }),
-        color: ex.Color.White,
-      });
-
-      const hasTraits = waypoint.traits.length > 0;
-      const padding = 10;
-
-      const style = WaypointTypeStyle[waypoint.type];
-
-      const traitsBg = new ex.Rectangle({
-        height: traits.height + padding,
-        width: traits.width + padding,
-        color: ex.Color.DarkGray.multiply(ex.Color.fromRGB(255, 255, 255, 0.2)),
-        strokeColor: ex.Color.Gray,
-        lineWidth: 2,
-      });
-
-      waypointUi.z = 3;
-
-      waypointUi.graphics.add("traits", traits);
-      waypointUi.graphics.add("traitsBg", traitsBg);
-      waypointUi.on("pointerenter", () => {
-        if (hasTraits) {
-          waypointUi.graphics.show("traitsBg", {
-            offset: ex.vec(
-              label.width / 2 + traits.width / 2 + 10,
-              -6 * style.size - traits.height / waypoint.traits.length / 2
-            ),
-          });
-          waypointUi.graphics.show("traits", {
-            offset: ex.vec(
-              label.width / 2 + traits.width / 2 + 10,
-              -6 * style.size
-            ),
-          });
-        }
-      });
-      waypointUi.graphics.show(label, {
-        anchor: ex.vec(0, 0.5),
-        offset: ex.vec(0, -6 * style.size),
-      });
-
-      waypointUi.on("pointerleave", () => {
-        if (hasTraits) {
-          waypointUi.graphics.hide("traits");
-          waypointUi.graphics.hide("traitsBg");
-        }
-      });
-      waypointUi.on("preupdate", (evt) => {
-        waypointUi.scale = ex
-          .vec(1, 1)
-          .scale(1.0 / evt.engine.currentScene.camera.zoom);
-      });
-
-      // Pointer events
-      waypointUi.pointer.useGraphicsBounds = true;
+      const waypointUi = this.drawWaypointUi(waypoint, gfx.pos);
       waypointUi.events.wire(gfx.events);
-
-      this.add(waypointUi);
 
       // If orbital, draw a line between waypoint and its parent
       if (parent) {
@@ -335,8 +249,92 @@ export class WaypointViewScene extends ex.Scene {
         lineActor.graphics.use(line, { anchor: ex.vec(0, 0) });
         this.add(lineActor);
       }
+      this.waypointPositions.set(waypoint.symbol, gfx.pos);
 
       this.add(gfx);
     }
+  }
+
+  private drawWaypointUi(waypoint: Waypoint, pos: ex.Vector) {
+    const waypointUi = new ex.Actor({ pos: pos });
+    const label = new ex.Text({
+      text: `${shorten(waypoint.symbol)}\n[${waypoint.type}]`,
+      color: ex.Color.White,
+      font: new ex.Font({
+        family: "OpenSans",
+        size: 10,
+        unit: ex.FontUnit.Pt,
+        textAlign: ex.TextAlign.Center,
+        smoothing: true,
+      }),
+    });
+    const traits = new ex.Text({
+      text: waypoint.traits.map((t) => t.name).join("\n"),
+      font: new ex.Font({
+        family: "Ubuntu Mono",
+        size: 10,
+        unit: ex.FontUnit.Pt,
+        textAlign: ex.TextAlign.Left,
+        smoothing: true,
+      }),
+      color: ex.Color.White,
+    });
+
+    const hasTraits = waypoint.traits.length > 0;
+    const padding = 10;
+
+    const style = WaypointTypeStyle[waypoint.type];
+
+    const traitsBg = new ex.Rectangle({
+      height: traits.height + padding,
+      width: traits.width + padding,
+      color: ex.Color.DarkGray.multiply(ex.Color.fromRGB(255, 255, 255, 0.2)),
+      strokeColor: ex.Color.Gray,
+      lineWidth: 5,
+    });
+
+    waypointUi.z = 4;
+
+    waypointUi.graphics.add("traits", traits);
+    waypointUi.graphics.add("traitsBg", traitsBg);
+    waypointUi.on("pointerenter", () => {
+      if (hasTraits) {
+        waypointUi.graphics.show("traitsBg", {
+          offset: ex.vec(
+            label.width / 2 + traits.width / 2 + 20,
+            -6 * style.size - traits.height / waypoint.traits.length / 2
+          ),
+        });
+        waypointUi.graphics.show("traits", {
+          offset: ex.vec(
+            label.width / 2 + traits.width / 2 + 20,
+            -6 * style.size
+          ),
+        });
+      }
+    });
+    waypointUi.graphics.show(label, {
+      anchor: ex.vec(0, 0.5),
+      offset: ex.vec(0, -6 * style.size),
+    });
+
+    waypointUi.on("pointerleave", () => {
+      if (hasTraits) {
+        waypointUi.graphics.hide("traits");
+        waypointUi.graphics.hide("traitsBg");
+      }
+    });
+    waypointUi.on("preupdate", (evt) => {
+      waypointUi.scale = ex
+        .vec(1, 1)
+        .scale(1.0 / evt.engine.currentScene.camera.zoom);
+    });
+
+    // Pointer events
+    waypointUi.pointer.useGraphicsBounds = true;
+
+    this.add(waypointUi);
+
+    return waypointUi;
   }
 }

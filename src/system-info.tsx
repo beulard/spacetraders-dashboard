@@ -4,12 +4,19 @@ import { Button, Collapse, Popover, Select, Space, Tag, Tooltip } from "antd";
 import { AxiosError } from "axios";
 import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Ship, System, SystemWaypoint, Waypoint } from "spacetraders-sdk";
+import {
+  Ship,
+  System,
+  SystemWaypoint,
+  Waypoint,
+  WaypointTraitSymbolEnum,
+} from "spacetraders-sdk";
 import api from "./api";
 import { Accordion } from "./components/accordion";
 import { FleetContext } from "./fleet-context";
 import { MessageContext, MessageType } from "./message-queue";
 import WaypointDB from "./waypoint-db";
+import FleetDB from "./fleet-db";
 const { Panel } = Collapse;
 
 const ShipPurchase = () => {
@@ -18,8 +25,8 @@ const ShipPurchase = () => {
 
 const ShipSelector = (props: { destinationSymbol: string }) => {
   const [sendShips, setSendShips] = useState<string[]>([]);
-  const [fleet, setFleet] = useContext(FleetContext);
-  const { msgQueue } = useContext(MessageContext);
+
+  const fleet = FleetDB.getMyShips();
 
   return (
     <div style={{ display: "flex", alignItems: "center" }}>
@@ -55,15 +62,16 @@ const ShipSelector = (props: { destinationSymbol: string }) => {
                   toast.success(
                     `Navigating ${ship} to ${props.destinationSymbol}`
                   );
-                  const updatedShip = {
-                    ...fleet.find((s) => s.symbol === ship),
-                    nav: res.data.data.nav,
-                    fuel: res.data.data.fuel,
-                  };
-                  const updatedFleet = fleet.map((s) =>
-                    s.symbol === ship ? (updatedShip as Ship) : s
-                  );
-                  setFleet(updatedFleet);
+                  // const updatedShip = {
+                  //   ...fleet.find((s) => s.symbol === ship),
+                  //   nav: res.data.data.nav,
+                  //   fuel: res.data.data.fuel,
+                  // };
+                  // const updatedFleet = fleet.map((s) =>
+                  //   s.symbol === ship ? (updatedShip as Ship) : s
+                  // );
+                  // setFleet(updatedFleet);
+                  FleetDB.update();
                 })
                 .catch((err: AxiosError<any>) => {
                   console.log(err);
@@ -82,11 +90,29 @@ const WaypointInfo = (props: {
   waypoint: SystemWaypoint;
   details: Waypoint | null;
 }) => {
-  const [fleet] = useContext(FleetContext);
+  const [fleet, setFleet] = useState<Ship[]>(FleetDB.getMyShips());
+
   // Ships in orbit, docked, etc
   const localShips = fleet.filter(
     (ship) => ship.nav.waypointSymbol === props.waypoint.symbol
   );
+
+  useEffect(() => {
+    // Subscribe to fleet update events
+    const updateCallback = (ships: Ship[]) => {
+      setFleet(ships);
+    };
+    FleetDB.on("update", updateCallback);
+
+    // Unsubscribe on unmount
+    return () => {
+      FleetDB.off("update", updateCallback);
+    };
+  }, []);
+
+  // TODO market info popover
+  const hasMarket = true;
+  // const hasMarket = props.details?.traits.includes(WaypointTraitSymbolEnum.Marketplace)
 
   return (
     <Space direction="vertical" size="small" style={{ width: "100%" }}>
@@ -110,8 +136,8 @@ const WaypointInfo = (props: {
       {localShips.length > 0 && (
         <p>
           Ships:{" "}
-          {localShips.map((ship) => (
-            <Tag>
+          {localShips.map((ship, idx) => (
+            <Tag key={idx}>
               {ship.symbol} ({ship.nav.status})
             </Tag>
           ))}
@@ -125,8 +151,17 @@ const WaypointInfo = (props: {
         .includes("SHIPYARD") && <ShipPurchase />}
 
       {/* Get market */}
+      {hasMarket && (
+        <Popover
+          trigger="click"
+          // disabled={localShips.length === 0}
+          // onClick={toggleMarketInfo}
+        >
+          <Button type="primary">Market</Button>
+        </Popover>
+      )}
 
-      {/* Get shipyard */}
+      {/* Get shipyard -> TODO merge with ShipPurchase */}
 
       {/* Get jump gate (connected systems) */}
 
