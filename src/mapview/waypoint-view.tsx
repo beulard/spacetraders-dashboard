@@ -1,4 +1,6 @@
+import { Button, Popover, Tag } from "antd";
 import * as ex from "excalibur";
+import ReactDOM from "react-dom";
 import {
   Ship,
   System,
@@ -6,8 +8,8 @@ import {
   Waypoint,
   WaypointType,
 } from "spacetraders-sdk";
-import { SystemTypeColor, WaypointTypeStyle } from "./gfx-common";
 import FleetDB from "../fleet-db";
+import { SystemTypeColor, WaypointTypeStyle } from "./gfx-common";
 
 interface SystemData {
   system: System;

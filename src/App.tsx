@@ -7,7 +7,8 @@ import { ShipList } from "./fleet";
 import { Fleet, FleetContext, fetchShipsRecursive } from "./fleet-context";
 import { MapView } from "./mapview/map";
 import { Status } from "./status";
-import { SystemEvent, Systems, getSystemSymbol } from "./system";
+import { SystemEvent, Systems } from "./system";
+import { getSystemSymbol } from "./utils";
 import { SystemInfo } from "./system-info";
 
 function App() {

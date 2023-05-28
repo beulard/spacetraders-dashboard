@@ -1,19 +1,209 @@
+import { RightOutlined } from "@ant-design/icons";
 import { CodeBlock } from "@atlaskit/code";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
-import { Button, Collapse, Popover, Select, Space, Tag, Tooltip } from "antd";
+import type { TabsProps } from "antd";
+import {
+  Button,
+  Col,
+  Collapse,
+  List,
+  Popover,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Tabs,
+  Tag,
+  Tooltip,
+} from "antd";
 import { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Ship, System, SystemWaypoint, Waypoint } from "spacetraders-sdk";
+import {
+  Market,
+  MarketTradeGood,
+  Ship,
+  Shipyard,
+  System,
+  SystemWaypoint,
+  TradeGood,
+  Waypoint,
+  WaypointTraitSymbolEnum,
+  WaypointType,
+} from "spacetraders-sdk";
 import api from "./api";
 import { Accordion } from "./components/accordion";
 import FleetDB from "./fleet-db";
 import { SystemEvent } from "./system";
+import { getSystemSymbol } from "./utils";
 import WaypointDB from "./waypoint-db";
+import { HoverTag } from "./components/hover-tag";
 const { Panel } = Collapse;
 
-const ShipPurchase = () => {
-  return <Button type="primary">Purchase ship</Button>;
+const ShipyardInfo = (props: { waypoint: SystemWaypoint }) => {
+  const [shipyard, setShipyard] = useState<Shipyard | null>(null);
+
+  useEffect(() => {
+    api.system
+      .getShipyard(
+        getSystemSymbol(props.waypoint.symbol),
+        props.waypoint.symbol
+      )
+      .then((s) => setShipyard(s.data.data));
+  }, []);
+
+  if (shipyard) {
+    return <div>Shipyard {shipyard.symbol}</div>;
+  } else {
+    return <Spin />;
+  }
+};
+
+const TradeGoodInfo = (props: { tradegood: MarketTradeGood }) => {
+  return <p>{props.tradegood.symbol}</p>;
+};
+
+const MarketInfo = (props: { waypoint: SystemWaypoint }) => {
+  const [market, setMarket] = useState<Market | null>(null);
+  useEffect(() => {
+    api.system
+      .getMarket(getSystemSymbol(props.waypoint.symbol), props.waypoint.symbol)
+      .then((s) => {
+        setMarket(s.data.data);
+      });
+  }, []);
+
+  if (market) {
+    const items: TabsProps["items"] = [
+      {
+        key: "imports",
+        label: "Import/export",
+        children: (
+          <div>
+            <table>
+              <thead>
+                <tr>
+                  <td>Imports</td>
+                  <td>Exports</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    {market.imports.map((i, idx) => (
+                      <HoverTag
+                        color="blue"
+                        key={idx}
+                        tooltip={i.description}
+                        text={i.name}
+                      />
+                    ))}
+                  </td>
+                  <td>
+                    {market.exports.map((i, idx) => (
+                      <HoverTag
+                        color="green"
+                        key={idx}
+                        tooltip={i.description}
+                        text={i.name}
+                      />
+                    ))}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ),
+      },
+      {
+        key: "exchange",
+        label: "Exchange",
+        children: (
+          <div>
+            {market.exchange.map((i, idx) => (
+              <HoverTag key={idx} tooltip={i.description} text={i.name} />
+            ))}
+          </div>
+        ),
+      },
+    ];
+
+    if (market.tradeGoods) {
+      items.unshift({
+        key: "goods",
+        label: "Goods",
+        children: (
+          <>
+            {/* TODO use <Table> for sortable columns ? */}
+            <table
+              style={{
+                fontSize: 10,
+              }}
+            >
+              <thead>
+                <tr>
+                  <td>Item</td>
+                  <td>Supply</td>
+                  <td>Sell</td>
+                  <td>Buy</td>
+                  <td>Volume</td>
+                </tr>
+              </thead>
+              <tbody>
+                {market.tradeGoods.map((g, idx) => (
+                  <tr key={idx}>
+                    <td>
+                      <b>{g.symbol}</b>
+                    </td>
+                    <td>{g.supply}</td>
+                    <td>{g.sellPrice}</td>
+                    <td>{g.purchasePrice}</td>
+                    <td>{g.tradeVolume}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <List
+              size="small"
+              dataSource={market.tradeGoods}
+              renderItem={(item) => (
+                <List.Item
+                  style={{
+                    fontSize: 10,
+                    margin: 0,
+                    padding: 0,
+                  }}
+                  actions={[<small>qwe</small>, <small>owdk</small>]}
+                >
+                  <span>{item.symbol}</span>
+                  <span>{item.supply}</span>
+                  <span>{item.sellPrice}</span>
+                  <span>{item.purchasePrice}</span>
+                  <span>{item.tradeVolume}</span>
+                </List.Item>
+              )}
+            />
+          </>
+        ),
+      });
+    }
+
+    return (
+      <Tabs
+        tabBarStyle={{
+          fontSize: 9,
+          marginTop: -10,
+          marginBottom: 5,
+        }}
+        // renderTabBar={() => <div>qwe</div>}
+        style={{ fontSize: 11 }}
+        size="small"
+        items={items}
+      ></Tabs>
+    );
+  } else {
+    return <Spin />;
+  }
 };
 
 const ShipSelector = (props: { destinationSymbol: string }) => {
@@ -55,15 +245,6 @@ const ShipSelector = (props: { destinationSymbol: string }) => {
                   toast.success(
                     `Navigating ${ship} to ${props.destinationSymbol}`
                   );
-                  // const updatedShip = {
-                  //   ...fleet.find((s) => s.symbol === ship),
-                  //   nav: res.data.data.nav,
-                  //   fuel: res.data.data.fuel,
-                  // };
-                  // const updatedFleet = fleet.map((s) =>
-                  //   s.symbol === ship ? (updatedShip as Ship) : s
-                  // );
-                  // setFleet(updatedFleet);
                   FleetDB.update();
                 })
                 .catch((err: AxiosError<any>) => {
@@ -103,9 +284,19 @@ const WaypointInfo = (props: {
     };
   }, []);
 
-  // TODO market info popover
-  const hasMarket = true;
-  // const hasMarket = props.details?.traits.includes(WaypointTraitSymbolEnum.Marketplace)
+  const hasMarket = props.details?.traits.reduce(
+    (pHas, v) => pHas || v.symbol === WaypointTraitSymbolEnum.Marketplace,
+    false
+  );
+
+  const hasShipyard = props.details?.traits.reduce(
+    (pHas, v) => pHas || v.symbol === WaypointTraitSymbolEnum.Shipyard,
+    false
+  );
+
+  const isJumpgate = props.waypoint.type === WaypointType.JumpGate;
+
+  console.log(props.waypoint.type);
 
   return (
     <Space direction="vertical" size="small" style={{ width: "100%" }}>
@@ -127,36 +318,45 @@ const WaypointInfo = (props: {
         </div>
       )}
       {localShips.length > 0 && (
-        <p>
-          Ships:{" "}
+        <Space>
+          Ships:
           {localShips.map((ship, idx) => (
             <Tag key={idx}>
               {ship.symbol} ({ship.nav.status})
             </Tag>
           ))}
-        </p>
+        </Space>
       )}
       {/* Navigate ships */}
       <ShipSelector destinationSymbol={props.waypoint.symbol} />
-      {/* Purchase ships (shipyard trait) */}
-      {props.details?.traits
-        .map((trait) => trait.symbol)
-        .includes("SHIPYARD") && <ShipPurchase />}
 
-      {/* Get market */}
-      {hasMarket && (
-        <Popover
-          trigger="click"
-          // disabled={localShips.length === 0}
-          // onClick={toggleMarketInfo}
-        >
-          <Button type="primary">Market</Button>
-        </Popover>
+      {(hasMarket || hasShipyard || isJumpgate) && (
+        <Collapse size="small">
+          {/* Get market */}
+          {hasMarket && (
+            <Panel key="market" header="Market">
+              <MarketInfo waypoint={props.waypoint} />
+            </Panel>
+          )}
+
+          {/* Get shipyard */}
+          {hasShipyard && (
+            <Panel key="shipyard" header="Shipyard">
+              <Popover
+                trigger="click"
+                // disabled={localShips.length === 0}
+                // onClick={toggleMarketInfo}
+                content={<ShipyardInfo waypoint={props.waypoint} />}
+              >
+                <Button type="primary">Shipyard</Button>
+              </Popover>
+            </Panel>
+          )}
+
+          {/* Get jump gate (connected systems) */}
+          {isJumpgate && <Panel key="jumpgate" header="Jumpgate"></Panel>}
+        </Collapse>
       )}
-
-      {/* Get shipyard -> TODO merge with ShipPurchase */}
-
-      {/* Get jump gate (connected systems) */}
 
       {/* (debug) Show JSON */}
       <Popover

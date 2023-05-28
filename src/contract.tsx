@@ -6,7 +6,8 @@ import toast from "react-hot-toast";
 import { Contract, ContractDeliverGood } from "spacetraders-sdk";
 import api from "./api";
 import { RefreshButton } from "./components/refresh-button";
-import { SystemEvent, Systems, getSystemSymbol } from "./system";
+import { SystemEvent, Systems } from "./system";
+import { getSystemSymbol } from "./utils";
 
 function getTotalPayment(contract: Contract) {
   return contract.terms.payment.onAccepted + contract.terms.payment.onFulfilled;

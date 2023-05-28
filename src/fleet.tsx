@@ -24,21 +24,18 @@ import {
   ShipReactor,
 } from "spacetraders-sdk";
 import FleetDB from "./fleet-db";
+import { HoverTag } from "./components/hover-tag";
 const { Column } = Table;
 
 const ReactorDescription = (props: { reactor: ShipReactor }) => (
   <Space>
     Reactor
-    <Popover content={props.reactor.description}>
-      <Tag className="ship-tag">{props.reactor.name}</Tag>
-    </Popover>
+    <HoverTag tooltip={props.reactor.description} text={props.reactor.name} />
   </Space>
 );
 
 const MountTag = (props: { mount: ShipMount }) => (
-  <Popover content={props.mount.description}>
-    <Tag className="ship-tag">{props.mount.name}</Tag>
-  </Popover>
+  <HoverTag tooltip={props.mount.description} text={props.mount.name} />
 );
 
 const CargoInventory = (props: { cargo: ShipCargo }) => (
@@ -79,9 +76,10 @@ const ShipDescription = (props: { ship: Ship }) => (
     {/* Frame */}
     <Space>
       Frame
-      <Popover content={props.ship.frame.description}>
-        <Tag className="ship-tag">{props.ship.frame.name}</Tag>
-      </Popover>
+      <HoverTag
+        tooltip={props.ship.frame.description}
+        text={props.ship.frame.name}
+      />
     </Space>
 
     <Divider style={{ padding: 0, margin: 0 }} />
@@ -93,10 +91,11 @@ const ShipDescription = (props: { ship: Ship }) => (
 
     {/* Engine */}
     <Space>
-      Engine{" "}
-      <Popover content={props.ship.engine.description}>
-        <Tag className="ship-tag">{props.ship.engine.name}</Tag>
-      </Popover>
+      Engine
+      <HoverTag
+        tooltip={props.ship.engine.description}
+        text={props.ship.engine.name}
+      />
     </Space>
 
     <Divider style={{ padding: 0, margin: 0 }} />
@@ -106,9 +105,7 @@ const ShipDescription = (props: { ship: Ship }) => (
       <p>Modules</p>
       {props.ship.modules.map((module, idx) => (
         <Space key={idx} wrap size="small">
-          <Popover content={module.description}>
-            <Tag className="ship-tag">{module.name}</Tag>
-          </Popover>
+          <HoverTag tooltip={module.description} text={module.name} />
         </Space>
       ))}
     </div>
@@ -128,24 +125,24 @@ const ShipDescription = (props: { ship: Ship }) => (
     <Divider style={{ padding: 0, margin: 0 }} />
 
     {/* Cargo */}
-    <div>
-      Cargo{" "}
+    <Space>
+      Cargo
       <Popover content={<CargoInventory cargo={props.ship.cargo} />}>
         <Tag>
           {props.ship.cargo.units} / {props.ship.cargo.capacity}
         </Tag>
       </Popover>
-    </div>
+    </Space>
 
     <Divider style={{ padding: 0, margin: 0 }} />
 
     {/* Fuel */}
-    <div>
-      Fuel{" "}
+    <Space>
+      Fuel
       <Tag>
         {props.ship.fuel.current} / {props.ship.fuel.capacity}
       </Tag>
-    </div>
+    </Space>
   </Space>
 );
 

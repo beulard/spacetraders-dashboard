@@ -4,18 +4,6 @@ import { toast } from "react-hot-toast";
 import api from "./api";
 import { EventEmitter } from "eventemitter3";
 
-// TODO on the right side of canvas:
-// + A searchable list of systems/waypoints which show the object on map + info when clicked
-
-/**
- * Get the system symbol from the full symbol
- * e.g. get X1-ABCD from X1-ABCD-1337D
- * @param fullSymbol
- */
-function getSystemSymbol(fullSymbol: string) {
-  return fullSymbol.split("-").splice(0, 2).join("-");
-}
-
 class SystemData {
   private db: PouchDB.Database;
   private keepFetching: boolean = false;
@@ -203,4 +191,4 @@ const Systems = new SystemData();
 // Global event emitter for system selection in react UI or map view
 const SystemEvent = new EventEmitter();
 
-export { Systems, getSystemSymbol, SystemEvent };
+export { Systems, SystemEvent };

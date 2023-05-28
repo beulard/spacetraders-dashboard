@@ -136,7 +136,7 @@ code {
   padding-bottom: 0.5em;
 }
 
-.ship-tag:hover {
+.hover-tag:hover {
   background-color: lightgray;
   cursor: help;
 }
