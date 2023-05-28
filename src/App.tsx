@@ -6,16 +6,14 @@ import { ContractList } from "./contract";
 import { ShipList } from "./fleet";
 import { Fleet, FleetContext, fetchShipsRecursive } from "./fleet-context";
 import { MapView } from "./mapview/map";
-import { MessageContext, MessageType } from "./message-queue";
 import { Status } from "./status";
-import { Systems, getSystemSymbol } from "./system";
+import { SystemEvent, Systems, getSystemSymbol } from "./system";
 import { SystemInfo } from "./system-info";
 
 function App() {
   const [fetchSystems, setFetchSystems] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [fleet, setFleet] = useState<Fleet>([]);
-  const { msgQueue } = useContext(MessageContext);
 
   useEffect(() => {
     // Fetch systems
@@ -26,12 +24,8 @@ function App() {
     api.agent.getMyAgent().then((res) => {
       const hq = res.data.data.headquarters;
       Systems.get(getSystemSymbol(hq)).then((res) => {
-        msgQueue.post(MessageType.SelectSystem, { system: res });
-        msgQueue.post(MessageType.LocateSystem, {
-          symbol: res.symbol,
-          x: res.x,
-          y: res.y,
-        });
+        SystemEvent.emit("select", res);
+        SystemEvent.emit("locate", res);
       });
     });
 

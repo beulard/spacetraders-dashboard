@@ -1,10 +1,7 @@
 import * as ex from "excalibur";
-import { useContext, useEffect, useRef, useState } from "react";
-import { MessageContext, MessageQueue } from "../message-queue";
+import { useEffect, useRef } from "react";
 import { SystemViewScene } from "./system-view";
 import { WaypointViewScene } from "./waypoint-view";
-import { Button } from "antd";
-import { DevTool } from "@excaliburjs/dev-tools";
 
 /**
  * Holds all the data (engine, scenes, actors) needed to draw the map
@@ -15,10 +12,10 @@ class MapData {
 
   public game: ex.Engine;
 
-  constructor(gameOptions: ex.EngineOptions, msgQueue: MessageQueue) {
+  constructor(gameOptions: ex.EngineOptions) {
     this.game = new ex.Engine(gameOptions);
     // const devtool = new DevTool(this.game);
-    this.systemViewScene = new SystemViewScene(msgQueue);
+    this.systemViewScene = new SystemViewScene();
     this.waypointViewScene = new WaypointViewScene();
     this.game.addScene("systemview", this.systemViewScene);
     this.game.addScene("waypointview", this.waypointViewScene);
@@ -37,27 +34,23 @@ class MapData {
 const MapView = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const data = useRef<MapData | null>(null);
-  const { msgQueue } = useContext(MessageContext);
 
   // Initialise the game data
   useEffect(() => {
-    data.current = new MapData(
-      {
-        width: 600,
-        height: 400,
-        canvasElement: canvasRef.current!,
-        enableCanvasTransparency: true,
-        backgroundColor: new ex.Color(0, 0, 0, 0.5),
-        // Careful, this might mean that buttons created on the DOM will not
-        // absorb click events and we might clash with in-engine UI elements
-        pointerScope: ex.Input.PointerScope.Canvas,
-        // Disable canvas2d fallback:
-        // configurePerformanceCanvas2DFallback: {
-        //   allow: false
-        // }
-      },
-      msgQueue
-    );
+    data.current = new MapData({
+      width: 600,
+      height: 400,
+      canvasElement: canvasRef.current!,
+      enableCanvasTransparency: true,
+      backgroundColor: new ex.Color(0, 0, 0, 0.5),
+      // Careful, this might mean that buttons created on the DOM will not
+      // absorb click events and we might clash with in-engine UI elements
+      pointerScope: ex.Input.PointerScope.Canvas,
+      // Disable canvas2d fallback:
+      // configurePerformanceCanvas2DFallback: {
+      //   allow: false
+      // }
+    });
 
     // Clean up on unmount
     return () => {
@@ -65,8 +58,6 @@ const MapView = () => {
         data.current.game.currentScene.clear();
         data.current.game.stop();
       }
-      // Bit dangerous...
-      MessageQueue.Instance().clear();
     };
   }, []);
 

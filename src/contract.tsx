@@ -1,13 +1,12 @@
 import { CodeBlock } from "@atlaskit/code";
 import DynamicTable from "@atlaskit/dynamic-table";
 import { Button, Popconfirm, Popover } from "antd";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Contract, ContractDeliverGood } from "spacetraders-sdk";
 import api from "./api";
 import { RefreshButton } from "./components/refresh-button";
-import { MessageContext, MessageType } from "./message-queue";
-import { Systems, getSystemSymbol } from "./system";
+import { SystemEvent, Systems, getSystemSymbol } from "./system";
 
 function getTotalPayment(contract: Contract) {
   return contract.terms.payment.onAccepted + contract.terms.payment.onFulfilled;
@@ -50,8 +49,6 @@ const ContractDescription = (props: { contract: Contract }) => {
 };
 
 const ContractBody = (props: { contract: Contract }) => {
-  const { msgQueue } = useContext(MessageContext);
-
   const contract = props.contract;
   const deadline = new Date(contract.terms.deadline);
   const expires = new Date(contract.expiration);
@@ -104,9 +101,7 @@ const ContractBody = (props: { contract: Contract }) => {
                 onClick={() => {
                   Systems.get(getSystemSymbol(d.destinationSymbol)).then(
                     (system) => {
-                      msgQueue.post(MessageType.SelectSystem, {
-                        system: system,
-                      });
+                      SystemEvent.emit("select", system);
                     }
                   );
                 }}

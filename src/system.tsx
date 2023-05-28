@@ -2,6 +2,7 @@ import PouchDB from "pouchdb";
 import PouchFind from "pouchdb-find";
 import { toast } from "react-hot-toast";
 import api from "./api";
+import { EventEmitter } from "eventemitter3";
 
 // TODO on the right side of canvas:
 // + A searchable list of systems/waypoints which show the object on map + info when clicked
@@ -198,4 +199,7 @@ interface ListenerCallback {
 
 const Systems = new SystemData();
 
-export { Systems, getSystemSymbol };
+// Global event emitter for system selection in react UI or map view
+const SystemEvent = new EventEmitter();
+
+export { Systems, getSystemSymbol, SystemEvent };

@@ -15,7 +15,7 @@ import {
   Table,
   Tag,
 } from "antd";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Ship,
   ShipCargo,
@@ -24,7 +24,6 @@ import {
   ShipReactor,
 } from "spacetraders-sdk";
 import FleetDB from "./fleet-db";
-import { MessageContext } from "./message-queue";
 const { Column } = Table;
 
 const ReactorDescription = (props: { reactor: ShipReactor }) => (

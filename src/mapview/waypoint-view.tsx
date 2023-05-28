@@ -38,17 +38,6 @@ class WaypointGfx extends ex.Actor {
       smoothing: true,
     });
 
-    if (OrbitterTypes.includes(waypoint.type)) {
-      // Offset by a random direction
-      // TODO distribute orbitals evenly around parent
-      // Use symbol as seed so we get same angles every time
-      const angle = ex.randomInRange(0, ex.TwoPI);
-      const dist = ex.randomInRange(2.5, 5) * WaypointPositionScale;
-      this.pos.x += dist * Math.cos(angle);
-      this.pos.y += dist * Math.sin(angle);
-      this.z += 1;
-    }
-
     this.graphics.show(circle);
     this.on("pointerenter", () => {
       circle.color = circle.color.lighten(0.5);
@@ -83,7 +72,7 @@ export class WaypointViewScene extends ex.Scene {
     this.drawSystem(context.data!.system, context.data!.waypoints);
     this.drawShips(context.data!.ships);
     this.camera.zoomOverTime(
-      this.maxZoomScale / 2,
+      this.maxZoomScale / 4,
       300,
       ex.EasingFunctions.EaseOutCubic
     );
@@ -210,38 +199,64 @@ export class WaypointViewScene extends ex.Scene {
     this.add(gfx);
 
     // Determine which waypoints are orbitals of others
-    const orbitalWaypoints = new Map<string, string>(); // map<orbital -> parent>
+    const orbitalWaypoints = new Map<
+      string,
+      { parent: string; index: number; angle: number }
+    >(); // map<orbital -> {parent, index, angle}>
     for (const w of waypoints) {
-      for (const o of w.orbitals) {
-        orbitalWaypoints.set(o.symbol, w.symbol);
+      if (w.orbitals.length > 0) {
+        const enc = new TextEncoder();
+        const symbolBytes = enc.encode(w.symbol);
+        const sum = symbolBytes.reduce((pSum, x) => pSum + x, 0);
+        const random = new ex.Random(sum); // Seed using parent symbol bytes
+        const startAngle = random.floating(0, ex.TwoPI);
+        w.orbitals.forEach((o, idx) => {
+          orbitalWaypoints.set(o.symbol, {
+            parent: w.symbol,
+            index: idx,
+            angle: startAngle + ex.TwoPI / w.orbitals.length,
+          });
+        });
       }
     }
-    // Need a structure to make it easy to find how many total orbitals there are
 
     // Draw each waypoint
     for (const waypoint of waypoints) {
       this.drawOrbit(waypoint);
 
-      const parent = waypoints.find(
-        (w) => w.symbol === orbitalWaypoints.get(waypoint.symbol)
+      const orbitalInfo = orbitalWaypoints.get(waypoint.symbol);
+
+      const parent = waypoints.find((w) => w.symbol === orbitalInfo?.parent);
+
+      let pos = ex.vec(
+        waypoint.x * WaypointPositionScale,
+        waypoint.y * WaypointPositionScale
       );
 
+      // Offset position if orbital
+      if (orbitalInfo) {
+        const dist = ex.randomInRange(1.5, 5) * WaypointPositionScale;
+        pos.x += dist * Math.cos(orbitalInfo.angle);
+        pos.y += dist * Math.sin(orbitalInfo.angle);
+      }
+
       const gfx = new WaypointGfx(waypoint, {
-        x: waypoint.x * WaypointPositionScale,
-        y: waypoint.y * WaypointPositionScale,
+        pos: pos,
+        z: parent ? 1 : 0,
       });
 
       const waypointUi = this.drawWaypointUi(waypoint, gfx.pos);
-      waypointUi.events.wire(gfx.events);
+      // waypointUi.events.wire(gfx.events);
+      gfx.events.wire(waypointUi.events);
 
       // If orbital, draw a line between waypoint and its parent
-      if (parent) {
+      if (orbitalInfo) {
         const lineActor = new ex.Actor({ pos: gfx.pos });
         const line = new ex.Line({
           start: ex.vec(0, 0),
           end: ex.vec(
-            parent.x * WaypointPositionScale - gfx.pos.x,
-            parent.y * WaypointPositionScale - gfx.pos.y
+            parent!.x * WaypointPositionScale - gfx.pos.x,
+            parent!.y * WaypointPositionScale - gfx.pos.y
           ),
           color: ex.Color.White.multiply(ex.Color.fromRGB(255, 255, 255, 0.85)),
           thickness: 2,

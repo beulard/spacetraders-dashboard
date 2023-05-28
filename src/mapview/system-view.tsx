@@ -1,14 +1,9 @@
 import * as ex from "excalibur";
 import { System } from "spacetraders-sdk";
-import {
-  LocateSystemPayload,
-  MessageQueue,
-  MessageType,
-} from "../message-queue";
-import { Systems } from "../system";
+import FleetDB from "../fleet-db";
+import { SystemEvent, Systems } from "../system";
 import WaypointDB from "../waypoint-db";
 import { SystemTypeColor } from "./gfx-common";
-import FleetDB from "../fleet-db";
 
 export class SystemGfx extends ex.Actor {
   // Instantiate a font per label (for some reason)
@@ -96,38 +91,36 @@ export class SystemViewScene extends ex.Scene {
   private systemPositionScale = 8;
   private systemsGfx: Map<string, SystemGfx>;
   private selectedSystemGfx: SystemGfx | null = null;
-  private msgQueue: MessageQueue | null = null;
   // Keep track of the zoom scale before transition to waypoint view
   private lastZoomScale = 0.025;
   private uiElement: HTMLElement | null = null;
 
-  constructor(msgQueue: MessageQueue) {
+  constructor() {
     super();
 
     this.uiElement = document.getElementById("map-ui")!;
-
-    this.msgQueue = msgQueue;
 
     this.systemsGfx = new Map<string, SystemGfx>();
 
     this.camera.pos = ex.vec(0, 0);
     this.camera.zoom = this.minZoomScale * 2;
 
-    // Handle system locate messages
-    msgQueue.listen(
-      MessageType.LocateSystem,
-      (payload: LocateSystemPayload) => {
-        this.camera
-          .move(
-            ex.vec(
-              payload.x * this.systemPositionScale,
-              payload.y * this.systemPositionScale
-            ),
-            1000
-          )
-          .then(() => this.updateDrawnSystems());
-      }
-    );
+    // Update selected system gfx on select events
+    SystemEvent.on("select", (system: System) => {
+      this.selectedSystemGfx = this.systemsGfx.get(system.symbol) || null;
+    });
+    // Handle system locate events
+    SystemEvent.on("locate", (system: System) => {
+      this.camera
+        .move(
+          ex.vec(
+            system.x * this.systemPositionScale,
+            system.y * this.systemPositionScale
+          ),
+          1000
+        )
+        .then(() => this.updateDrawnSystems());
+    });
   }
 
   public onActivate() {
@@ -303,9 +296,7 @@ export class SystemViewScene extends ex.Scene {
             this.setSelectedSystem(gfx);
 
             // Send a selected system message
-            this.msgQueue?.post(MessageType.SelectSystem, {
-              system: system,
-            });
+            SystemEvent.emit("select", system);
           }
         });
 

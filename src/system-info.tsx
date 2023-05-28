@@ -2,21 +2,14 @@ import { CodeBlock } from "@atlaskit/code";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
 import { Button, Collapse, Popover, Select, Space, Tag, Tooltip } from "antd";
 import { AxiosError } from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import {
-  Ship,
-  System,
-  SystemWaypoint,
-  Waypoint,
-  WaypointTraitSymbolEnum,
-} from "spacetraders-sdk";
+import { Ship, System, SystemWaypoint, Waypoint } from "spacetraders-sdk";
 import api from "./api";
 import { Accordion } from "./components/accordion";
-import { FleetContext } from "./fleet-context";
-import { MessageContext, MessageType } from "./message-queue";
-import WaypointDB from "./waypoint-db";
 import FleetDB from "./fleet-db";
+import { SystemEvent } from "./system";
+import WaypointDB from "./waypoint-db";
 const { Panel } = Collapse;
 
 const ShipPurchase = () => {
@@ -191,13 +184,18 @@ const SystemInfo = () => {
   const [system, setSystem] = useState<System | null>(null);
   // Detailed waypoint data, to be fetched at render
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
-  const { msgQueue } = useContext(MessageContext);
 
   useEffect(() => {
     // Listen to select system messages
-    msgQueue.listen(MessageType.SelectSystem, (payload: { system: System }) => {
-      setSystem(payload.system);
-    });
+    const selectCallback = (system: System) => {
+      setSystem(system);
+    };
+    SystemEvent.on("select", selectCallback);
+
+    // Clean up
+    return () => {
+      SystemEvent.off("select", selectCallback);
+    };
   }, []);
 
   useEffect(() => {
@@ -237,11 +235,7 @@ const SystemInfo = () => {
             >
               <Button
                 onClick={() => {
-                  msgQueue.post(MessageType.LocateSystem, {
-                    x: system.x,
-                    y: system.y,
-                    symbol: system.symbol,
-                  });
+                  SystemEvent.emit("locate", system);
                 }}
                 type="text"
                 style={{
