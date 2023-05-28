@@ -239,7 +239,6 @@ export class WaypointViewScene extends ex.Scene {
       // Offset position if orbital
       if (orbitalInfo) {
         const dist = ex.randomInRange(2, 5) * WaypointPositionScale;
-        console.log(orbitalInfo.angle);
         pos.x += dist * Math.cos(orbitalInfo.angle);
         pos.y += dist * Math.sin(orbitalInfo.angle);
       }
