@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/static/css/main.f3b6a7ed.css",
+    "main.js": "/static/js/main.1a775b6c.js",
+    "@atlaskit-internal_refractor-import.js": "/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js",
+    "static/media/UbuntuMono-BoldItalic.ttf": "/static/media/UbuntuMono-BoldItalic.fc5d4735a7d43374879c.ttf",
+    "static/media/UbuntuMono-Italic.ttf": "/static/media/UbuntuMono-Italic.62c035af965c44841510.ttf",
+    "static/media/UbuntuMono-Regular.ttf": "/static/media/UbuntuMono-Regular.b36e40ad575cc6d61071.ttf",
+    "static/media/UbuntuMono-Bold.ttf": "/static/media/UbuntuMono-Bold.ce64ac46c0be73653412.ttf",
+    "static/media/Roboto-Regular.ttf": "/static/media/Roboto-Regular.160d7a6ac26376e5e977.ttf",
+    "static/media/Roboto-Bold.ttf": "/static/media/Roboto-Bold.35eab922fdbe4b5324d4.ttf",
+    "static/media/OpenSans-Regular.ttf": "/static/media/OpenSans-Regular.a5fe783dd47c116806f9.ttf",
+    "index.html": "/index.html",
+    "main.f3b6a7ed.css.map": "/static/css/main.f3b6a7ed.css.map",
+    "main.1a775b6c.js.map": "/static/js/main.1a775b6c.js.map",
+    "@atlaskit-internal_refractor-import.0aff1115.chunk.js.map": "/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.f3b6a7ed.css",
+    "static/js/main.1a775b6c.js"
+  ]
+}
