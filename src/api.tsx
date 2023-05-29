@@ -15,6 +15,8 @@ const configuration = new Configuration({
 
 export const instance = axios.create({});
 
+// TODO use rate limiter instead of retry logic
+
 // Retry logic for 429 rate-limit errors
 instance.interceptors.response.use(
   // response interceptor

@@ -141,16 +141,39 @@ code {
   cursor: help;
 }
 
-/* 
-.accordion-body {
-  overflow: hidden;
-  padding-left: 1em;
-  padding-right: 1em;
-  max-height: 1000px;
-  transition: max-height 0.5s ease-in-out;
+
+.tradegoods-table th {
+  font-size: 9pt;
 }
 
-.accordion-body[aria-expanded="true"] {
-  max-height: 0px;
-  transition: max-height 0.2s cubic-bezier(0, 1, 0, 1);
-} */
+td.ant-table-cell {
+  padding: 0px;
+}
+
+
+.tradegoods-table td {
+  font-size: 8pt;
+  padding: 0px;
+  line-height: 5px;
+}
+
+.tradegoods-table .ant-btn {
+  font-size: 8pt;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.table-row td {
+  padding: 1px !important;
+}
+
+.ant-statistic-title {
+  font-size: 9pt !important;
+}
+
+.clickable-tag:hover {
+  cursor: pointer;
+  background-color: lightgray;
+}
