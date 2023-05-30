@@ -1,22 +1,22 @@
 {
   "files": {
-    "main.css": "/static/css/main.4d7ccda3.css",
-    "main.js": "/static/js/main.a0c53384.js",
-    "@atlaskit-internal_refractor-import.js": "/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js",
-    "static/media/UbuntuMono-BoldItalic.ttf": "/static/media/UbuntuMono-BoldItalic.fc5d4735a7d43374879c.ttf",
-    "static/media/UbuntuMono-Italic.ttf": "/static/media/UbuntuMono-Italic.62c035af965c44841510.ttf",
-    "static/media/UbuntuMono-Regular.ttf": "/static/media/UbuntuMono-Regular.b36e40ad575cc6d61071.ttf",
-    "static/media/UbuntuMono-Bold.ttf": "/static/media/UbuntuMono-Bold.ce64ac46c0be73653412.ttf",
-    "static/media/Roboto-Regular.ttf": "/static/media/Roboto-Regular.160d7a6ac26376e5e977.ttf",
-    "static/media/Roboto-Bold.ttf": "/static/media/Roboto-Bold.35eab922fdbe4b5324d4.ttf",
-    "static/media/OpenSans-Regular.ttf": "/static/media/OpenSans-Regular.a5fe783dd47c116806f9.ttf",
-    "index.html": "/index.html",
-    "main.4d7ccda3.css.map": "/static/css/main.4d7ccda3.css.map",
-    "main.a0c53384.js.map": "/static/js/main.a0c53384.js.map",
-    "@atlaskit-internal_refractor-import.0aff1115.chunk.js.map": "/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js.map"
+    "main.css": "/spacetraders-dashboard/static/css/main.21af8231.css",
+    "main.js": "/spacetraders-dashboard/static/js/main.84bb4206.js",
+    "@atlaskit-internal_refractor-import.js": "/spacetraders-dashboard/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js",
+    "static/media/UbuntuMono-BoldItalic.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-BoldItalic.fc5d4735a7d43374879c.ttf",
+    "static/media/UbuntuMono-Italic.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-Italic.62c035af965c44841510.ttf",
+    "static/media/UbuntuMono-Regular.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-Regular.b36e40ad575cc6d61071.ttf",
+    "static/media/UbuntuMono-Bold.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-Bold.ce64ac46c0be73653412.ttf",
+    "static/media/Roboto-Regular.ttf": "/spacetraders-dashboard/static/media/Roboto-Regular.160d7a6ac26376e5e977.ttf",
+    "static/media/Roboto-Bold.ttf": "/spacetraders-dashboard/static/media/Roboto-Bold.35eab922fdbe4b5324d4.ttf",
+    "static/media/OpenSans-Regular.ttf": "/spacetraders-dashboard/static/media/OpenSans-Regular.a5fe783dd47c116806f9.ttf",
+    "index.html": "/spacetraders-dashboard/index.html",
+    "main.21af8231.css.map": "/spacetraders-dashboard/static/css/main.21af8231.css.map",
+    "main.84bb4206.js.map": "/spacetraders-dashboard/static/js/main.84bb4206.js.map",
+    "@atlaskit-internal_refractor-import.0aff1115.chunk.js.map": "/spacetraders-dashboard/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.4d7ccda3.css",
-    "static/js/main.a0c53384.js"
+    "static/css/main.21af8231.css",
+    "static/js/main.84bb4206.js"
   ]
 }
