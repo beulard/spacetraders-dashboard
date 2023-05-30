@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import api from "./api";
+import { Agent } from "spacetraders-sdk";
+import AgentDB from "./agent-db";
 import { RefreshButton } from "./components/refresh-button";
 
 const Status = () => {
@@ -8,30 +8,18 @@ const Status = () => {
   const [credits, setCredits] = useState(-1);
   const [home, setHome] = useState("");
 
-  const refresh = (onDone: Function = () => {}) => {
-    const promise = api.agent.getMyAgent();
-    toast.promise(promise, {
-      loading: "Fetching agent info",
-      success: "Fetched agent",
-      error: "Error, check console",
-    });
-
-    promise
-      .then((res) => {
-        const data = res.data.data;
-        setName(data.symbol);
-        setCredits(data.credits);
-        setHome(data.headquarters);
-        onDone();
-      })
-      .catch((err) => {
-        console.log(err);
-        onDone();
-      });
-  };
-
   useEffect(() => {
-    refresh();
+    const onAgentUpdate = (agent: Agent) => {
+      setName(agent.symbol);
+      setCredits(agent.credits);
+      setHome(agent.headquarters);
+    };
+
+    AgentDB.on("update", onAgentUpdate);
+
+    return () => {
+      AgentDB.off("update", onAgentUpdate);
+    };
   }, []);
 
   return (
@@ -54,7 +42,11 @@ const Status = () => {
           {name} from {home}
         </h4>
       </div>
-      <RefreshButton onClick={refresh} />
+      <RefreshButton
+        onClick={(onDone) => {
+          AgentDB.update().then(() => onDone());
+        }}
+      />
     </div>
   );
 };

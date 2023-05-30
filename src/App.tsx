@@ -10,6 +10,7 @@ import { Status } from "./status";
 import { SystemEvent, Systems } from "./system";
 import { getSystemSymbol } from "./utils";
 import { SystemInfo } from "./system-info";
+import AgentDB from "./agent-db";
 
 function App() {
   const [fetchSystems, setFetchSystems] = useState(false);
@@ -22,9 +23,8 @@ function App() {
     setCurrentPage(currentPage + 1);
 
     // Set default selected system to HQ
-    api.agent.getMyAgent().then((res) => {
-      const hq = res.data.data.headquarters;
-      Systems.get(getSystemSymbol(hq)).then((res) => {
+    AgentDB.update().then((agent) => {
+      Systems.get(getSystemSymbol(agent!.headquarters)).then((res) => {
         SystemEvent.emit("select", res);
         SystemEvent.emit("locate", res);
       });

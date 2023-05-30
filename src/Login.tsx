@@ -86,10 +86,10 @@ const Login = () => {
                     faction: agentFaction as RegisterRequestFactionEnum,
                   })
                   .then((res) => {
-                    toast.success(`${res.data.data.agent} created`);
+                    toast.success(`${res.data.data.agent.symbol} created`);
                     console.log(res);
                     localStorage.setItem("access-token", res.data.data.token);
-                    //   window.location.href = "/";
+                    window.location.href = "/";
                   })
                   .catch((err) => {
                     console.log(err.response);

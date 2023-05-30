@@ -61,7 +61,7 @@ const api = {
   contract: new ContractsApi(configuration, undefined, instance),
   fleet: new FleetApi(configuration, undefined, instance),
   agent: new AgentsApi(configuration, undefined, instance),
-  default: new DefaultApi(configuration, undefined, instance),
+  default: new DefaultApi(undefined, undefined, instance), // No config (token not needed)
 };
 
 export default api;

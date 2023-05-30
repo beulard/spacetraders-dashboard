@@ -7,4 +7,10 @@ function getSystemSymbol(fullSymbol: string) {
   return fullSymbol.split("-").splice(0, 2).join("-");
 }
 
-export { getSystemSymbol };
+function alphabeticSorter(a: string, b: string) {
+  if (a > b) return 1;
+  if (b > a) return -1;
+  return 0;
+}
+
+export { getSystemSymbol, alphabeticSorter };

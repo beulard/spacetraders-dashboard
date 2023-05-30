@@ -5,7 +5,7 @@ import {
   Ship,
   SystemWaypoint,
 } from "spacetraders-sdk";
-import { getSystemSymbol } from "./utils";
+import { alphabeticSorter, getSystemSymbol } from "./utils";
 import api from "./api";
 import {
   Button,
@@ -21,6 +21,8 @@ import {
 import { HoverTag } from "./components/hover-tag";
 import Table, { ColumnsType } from "antd/es/table";
 import toast from "react-hot-toast";
+import FleetDB from "./fleet-db";
+import AgentDB from "./agent-db";
 
 const SellGoodShipSelect = (props: {
   sellGood: MarketTradeGood;
@@ -53,14 +55,25 @@ const SellGoodShipSelect = (props: {
         }))}
         onChange={(v) => setSelectedShip(props.ships[v])}
       />
-      <Slider
-        disabled={selectedShip === null || amountInCargo === 0}
-        // disabled={selectedShip === null || amountInCargo !== 0}
-        // max={100}
-        min={amountInCargo > 0 ? 1 : 0}
-        max={amountInCargo}
-        onChange={(val) => setAmount(val)}
-      ></Slider>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Slider
+          style={{ width: "80%" }}
+          disabled={selectedShip === null || amountInCargo === 0}
+          // disabled={selectedShip === null || amountInCargo !== 0}
+          // max={100}
+          min={amountInCargo > 0 ? 1 : 0}
+          max={amountInCargo}
+          onChange={(val) => setAmount(val)}
+        ></Slider>
+        <div style={{ width: "20%", textAlign: "center" }}>{amount}</div>
+      </div>
 
       <div
         style={{
@@ -110,6 +123,8 @@ const PurchaseGoodShipSelect = (props: {
       toast.success(
         `Purchased ${transaction.units} units of ${transaction.tradeSymbol} for $${transaction.totalPrice}`
       );
+      FleetDB.update();
+      AgentDB.update();
     } catch (error) {
       const apiError = (error as any).response?.data?.error;
       if (apiError) {
@@ -136,14 +151,24 @@ const PurchaseGoodShipSelect = (props: {
         }))}
         onChange={(v) => setSelectedShip(props.ships[v])}
       />
-      <Slider
-        disabled={selectedShip === null || spaceInCargo === 0}
-        // disabled={selectedShip === null || amountInCargo !== 0}
-        // max={100}
-        min={spaceInCargo > 0 ? 1 : 0}
-        max={spaceInCargo}
-        onChange={(val) => setAmount(val)}
-      ></Slider>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <Slider
+          style={{ width: "80%" }}
+          disabled={selectedShip === null || spaceInCargo === 0}
+          // disabled={selectedShip === null || amountInCargo !== 0}
+          // max={100}
+          min={spaceInCargo > 0 ? 1 : 0}
+          max={spaceInCargo}
+          onChange={(val) => setAmount(val)}
+        ></Slider>
+        <div style={{ width: "20%", textAlign: "center" }}>{amount}</div>
+      </div>
 
       <div
         style={{
@@ -238,6 +263,21 @@ const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
           </div>
         ),
       },
+      {
+        key: "transactions",
+        label: "Transactions",
+        children: (
+          <>
+            TODO
+            <Table
+              dataSource={market.transactions}
+              // {market.exchange.map((i, idx) => (
+              //   <HoverTag key={idx} tooltip={i.description} text={i.name} />
+              // ))}
+            />
+          </>
+        ),
+      },
     ];
 
     if (market.tradeGoods) {
@@ -247,11 +287,7 @@ const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
           dataIndex: "symbol",
           key: "item",
           className: "bold small",
-          sorter: (a, b) => {
-            if (a.symbol > b.symbol) return 1;
-            if (b.symbol > a.symbol) return -1;
-            return 0;
-          },
+          sorter: (a, b) => alphabeticSorter(a.symbol, b.symbol),
         },
         {
           title: "Supply",
@@ -317,15 +353,14 @@ const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
           <>
             <Table
               className="tradegoods-table"
+              rowClassName="table-row"
               size="small"
               columns={columns}
               dataSource={market.tradeGoods.map((g, idx) => ({
                 ...g,
                 key: idx,
               }))}
-              rowClassName="table-row"
               pagination={false}
-              style={{ fontSize: 6 }}
             ></Table>
           </>
         ),

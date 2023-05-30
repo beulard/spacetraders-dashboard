@@ -33,11 +33,14 @@
     "@openapitools/openapi-generator-cli": "^2.6.0",
     "@types/lokijs": "^1.5.8",
     "@types/pouchdb": "^6.4.0",
+    "gh-pages": "^5.0.0",
+    "serve": "^14.2.0",
     "typescript": "^5.0.4"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "deploy": "gh-pages -d build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

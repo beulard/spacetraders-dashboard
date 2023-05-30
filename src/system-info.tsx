@@ -1,21 +1,11 @@
 import { CodeBlock } from "@atlaskit/code";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
-import {
-  Button,
-  Collapse,
-  Popover,
-  Select,
-  Space,
-  Spin,
-  Tag,
-  Tooltip,
-} from "antd";
+import { Button, Collapse, Popover, Select, Space, Tag, Tooltip } from "antd";
 import { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
   Ship,
-  Shipyard,
   System,
   SystemWaypoint,
   Waypoint,
@@ -26,29 +16,10 @@ import api from "./api";
 import { Accordion } from "./components/accordion";
 import FleetDB from "./fleet-db";
 import { MarketInfo } from "./market-info";
+import { ShipyardInfo } from "./shipyard-info";
 import { SystemEvent } from "./system";
-import { getSystemSymbol } from "./utils";
 import WaypointDB from "./waypoint-db";
 const { Panel } = Collapse;
-
-const ShipyardInfo = (props: { waypoint: SystemWaypoint }) => {
-  const [shipyard, setShipyard] = useState<Shipyard | null>(null);
-
-  useEffect(() => {
-    api.system
-      .getShipyard(
-        getSystemSymbol(props.waypoint.symbol),
-        props.waypoint.symbol
-      )
-      .then((s) => setShipyard(s.data.data));
-  }, []);
-
-  if (shipyard) {
-    return <div>Shipyard {shipyard.symbol}</div>;
-  } else {
-    return <Spin />;
-  }
-};
 
 const ShipSelector = (props: { destinationSymbol: string }) => {
   const [sendShips, setSendShips] = useState<string[]>([]);
@@ -216,14 +187,7 @@ const WaypointInfo = (props: {
           {/* Get shipyard */}
           {hasShipyard && (
             <Panel key="shipyard" header="Shipyard">
-              <Popover
-                trigger="click"
-                // disabled={localShips.length === 0}
-                // onClick={toggleMarketInfo}
-                content={<ShipyardInfo waypoint={props.waypoint} />}
-              >
-                <Button type="primary">Shipyard</Button>
-              </Popover>
+              <ShipyardInfo waypoint={props.waypoint} ships={localShips} />
             </Panel>
           )}
 
@@ -283,6 +247,8 @@ const SystemInfo = () => {
       );
     }
   }, [system]);
+
+  // TODO More practical to add a browsable list of markets and shipyards in the system?
 
   return (
     <span

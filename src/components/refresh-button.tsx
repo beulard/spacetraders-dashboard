@@ -1,9 +1,9 @@
 import Button from "@atlaskit/button";
 import RefreshIcon from "@atlaskit/icon/glyph/refresh";
-import Spinner from "@atlaskit/spinner";
+import { Spin } from "antd";
 import { useState } from "react";
 
-const RefreshButton = (props: { onClick: Function }) => {
+const RefreshButton = (props: { onClick: (onDone: Function) => any }) => {
   const [loading, setLoading] = useState(false);
 
   function click() {
@@ -14,7 +14,7 @@ const RefreshButton = (props: { onClick: Function }) => {
   return (
     <div style={{ width: "3em", textAlign: "center", display: "inline-block" }}>
       {loading ? (
-        <Spinner />
+        <Spin />
       ) : (
         <Button onClick={click} iconBefore={<RefreshIcon label="" />}></Button>
       )}
