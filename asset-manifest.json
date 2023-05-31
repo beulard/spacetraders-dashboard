@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/spacetraders-dashboard/static/css/main.21af8231.css",
-    "main.js": "/spacetraders-dashboard/static/js/main.84bb4206.js",
+    "main.js": "/spacetraders-dashboard/static/js/main.aef9ea77.js",
     "@atlaskit-internal_refractor-import.js": "/spacetraders-dashboard/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js",
     "static/media/UbuntuMono-BoldItalic.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-BoldItalic.fc5d4735a7d43374879c.ttf",
     "static/media/UbuntuMono-Italic.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-Italic.62c035af965c44841510.ttf",
@@ -10,13 +10,14 @@
     "static/media/Roboto-Regular.ttf": "/spacetraders-dashboard/static/media/Roboto-Regular.160d7a6ac26376e5e977.ttf",
     "static/media/Roboto-Bold.ttf": "/spacetraders-dashboard/static/media/Roboto-Bold.35eab922fdbe4b5324d4.ttf",
     "static/media/OpenSans-Regular.ttf": "/spacetraders-dashboard/static/media/OpenSans-Regular.a5fe783dd47c116806f9.ttf",
+    "static/media/starbg_gen3_600x400.png": "/spacetraders-dashboard/static/media/starbg_gen3_600x400.4c2c57e463e0fddbc650.png",
     "index.html": "/spacetraders-dashboard/index.html",
     "main.21af8231.css.map": "/spacetraders-dashboard/static/css/main.21af8231.css.map",
-    "main.84bb4206.js.map": "/spacetraders-dashboard/static/js/main.84bb4206.js.map",
+    "main.aef9ea77.js.map": "/spacetraders-dashboard/static/js/main.aef9ea77.js.map",
     "@atlaskit-internal_refractor-import.0aff1115.chunk.js.map": "/spacetraders-dashboard/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.21af8231.css",
-    "static/js/main.84bb4206.js"
+    "static/js/main.aef9ea77.js"
   ]
 }
