@@ -51,7 +51,11 @@ class SystemData {
         fetchPromise.then((system) => {
           toast.success(`${symbol} found in API`);
           // Store it in the local db
-          this.db.put({ _id: symbol, ...system }, { force: true });
+          this.db
+            .put({ _id: symbol, ...system }, { force: true })
+            .catch((err) => {
+              console.log("DB error:", err);
+            });
           return system;
         });
 
@@ -78,6 +82,9 @@ class SystemData {
           )
           .then(() => {
             // console.log("done");
+          })
+          .catch((err) => {
+            console.log("DB error: ", err);
           });
       })
       .catch((err) => {
