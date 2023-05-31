@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import api from "./api";
 import { RegisterRequestFactionEnum } from "spacetraders-sdk";
 import toast, { Toaster } from "react-hot-toast";
+import { useNavigate } from "react-router";
 
 const Login = () => {
   const [token, setToken] = useState("");
   const [agentName, setAgentName] = useState("");
   const [agentFaction, setAgentFaction] = useState("");
+  const navigate = useNavigate();
   //   const [gameInfo, setGameInfo] = useState("");
 
   return (
@@ -46,8 +48,8 @@ const Login = () => {
             ></Input>
             <Button
               onClick={() => {
-                localStorage.setItem("access-token", token);
-                window.location.href = "/";
+                api.updateToken(token);
+                navigate("/");
               }}
             >
               Log in
@@ -88,8 +90,8 @@ const Login = () => {
                   .then((res) => {
                     toast.success(`${res.data.data.agent.symbol} created`);
                     console.log(res);
-                    localStorage.setItem("access-token", res.data.data.token);
-                    window.location.href = "/";
+                    api.updateToken(token);
+                    navigate("/");
                   })
                   .catch((err) => {
                     console.log(err.response);

@@ -1,67 +1,88 @@
-import axios, { AxiosError } from "axios";
-import { config } from "process";
+import axios from "axios";
 import {
   AgentsApi,
   Configuration,
   ContractsApi,
+  DefaultApi,
   FleetApi,
   SystemsApi,
-  DefaultApi,
 } from "spacetraders-sdk";
 
-const configuration = new Configuration({
-  accessToken: localStorage.getItem("access-token") || "",
-});
+class Api {
+  private configuration = new Configuration();
 
-export const instance = axios.create({});
+  private instance = axios.create({});
 
-// TODO use rate limiter instead of retry logic
+  public system = new SystemsApi(this.configuration, undefined, this.instance);
+  public contract = new ContractsApi(
+    this.configuration,
+    undefined,
+    this.instance
+  );
+  public fleet = new FleetApi(this.configuration, undefined, this.instance);
+  public agent = new AgentsApi(this.configuration, undefined, this.instance);
+  public default = new DefaultApi(undefined, undefined, this.instance); // No config (token not needed)
 
-// Retry logic for 429 rate-limit errors
-instance.interceptors.response.use(
-  // response interceptor
-  (res) => res,
-  // error interceptor
-  async (error) => {
-    // console.log(JSON.stringify(error.config));
-    // console.log(JSON.stringify(error.response.status));
-    if (error.response.status === 401) {
-      console.log("Bad token");
+  constructor() {
+    this.updateToken(localStorage.getItem("access-token") || "");
 
-      window.location.href = "/login";
-    }
+    // TODO use rate limiter instead of retry logic
+    // Retry logic for 429 rate-limit errors
+    this.instance.interceptors.response.use(
+      // response interceptor
+      (res) => res,
+      // error interceptor
+      async (error) => {
+        // console.log(JSON.stringify(error.config));
+        // console.log(JSON.stringify(error.response.status));
+        if (error.response.status === 401) {
+          console.log("Bad token");
+        }
 
-    const apiError = error.response?.data?.error;
+        const apiError = error.response?.data?.error;
 
-    if (!apiError) {
-      // No error data, wait for 10s and retry
-      await new Promise((resolve) => {
-        setTimeout(resolve, 10 * 1000);
-      });
+        if (!apiError) {
+          // No error data, wait for 10s and retry
+          await new Promise((resolve) => {
+            setTimeout(resolve, 10 * 1000);
+          });
 
-      return instance.request(error.config);
-    }
+          return this.instance.request(error.config);
+        }
 
-    if (error.response?.status === 429) {
-      const retryAfter = error.response.headers["retry-after"];
+        if (error.response?.status === 429) {
+          const retryAfter = error.response.headers["retry-after"];
 
-      await new Promise((resolve) => {
-        setTimeout(resolve, retryAfter * 1000);
-      });
+          await new Promise((resolve) => {
+            setTimeout(resolve, retryAfter * 1000);
+          });
 
-      return instance.request(error.config);
-    }
+          return this.instance.request(error.config);
+        }
 
-    throw error;
+        throw error;
+      }
+    );
   }
-);
 
-const api = {
-  system: new SystemsApi(configuration, undefined, instance),
-  contract: new ContractsApi(configuration, undefined, instance),
-  fleet: new FleetApi(configuration, undefined, instance),
-  agent: new AgentsApi(configuration, undefined, instance),
-  default: new DefaultApi(undefined, undefined, instance), // No config (token not needed)
-};
+  public updateToken(token: string) {
+    localStorage.setItem("access-token", token);
+    this.configuration = new Configuration({
+      accessToken: token,
+    });
+
+    this.system = new SystemsApi(this.configuration, undefined, this.instance);
+    this.contract = new ContractsApi(
+      this.configuration,
+      undefined,
+      this.instance
+    );
+    this.fleet = new FleetApi(this.configuration, undefined, this.instance);
+    this.agent = new AgentsApi(this.configuration, undefined, this.instance);
+    this.default = new DefaultApi(undefined, undefined, this.instance); // No config (token not needed)
+  }
+}
+
+const api = new Api();
 
 export default api;

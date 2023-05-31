@@ -5,6 +5,7 @@ import { WaypointViewScene } from "./waypoint-view";
 import { Systems } from "../system";
 import WaypointDB from "../waypoint-db";
 import FleetDB from "../fleet-db";
+import mapBackground from "../resources/starbg_gen3_600x400.png";
 
 /**
  * Holds all the data (engine, scenes, actors) needed to draw the map
@@ -77,11 +78,7 @@ const MapView = () => {
       }}
     >
       <div id="map-container">
-        <img
-          id="map-background"
-          src="/assets/starbg_gen2_600x400.png"
-          alt="bg"
-        ></img>
+        <img id="map-background" src={mapBackground} alt="bg"></img>
         <canvas
           id="map-canvas"
           ref={canvasRef}
