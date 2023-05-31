@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/spacetraders-dashboard/static/css/main.21af8231.css",
-    "main.js": "/spacetraders-dashboard/static/js/main.b389c6cf.js",
+    "main.js": "/spacetraders-dashboard/static/js/main.af97d699.js",
     "@atlaskit-internal_refractor-import.js": "/spacetraders-dashboard/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js",
     "static/media/UbuntuMono-BoldItalic.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-BoldItalic.fc5d4735a7d43374879c.ttf",
     "static/media/UbuntuMono-Italic.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-Italic.62c035af965c44841510.ttf",
@@ -13,11 +13,11 @@
     "static/media/starbg_gen3_600x400.png": "/spacetraders-dashboard/static/media/starbg_gen3_600x400.4c2c57e463e0fddbc650.png",
     "index.html": "/spacetraders-dashboard/index.html",
     "main.21af8231.css.map": "/spacetraders-dashboard/static/css/main.21af8231.css.map",
-    "main.b389c6cf.js.map": "/spacetraders-dashboard/static/js/main.b389c6cf.js.map",
+    "main.af97d699.js.map": "/spacetraders-dashboard/static/js/main.af97d699.js.map",
     "@atlaskit-internal_refractor-import.0aff1115.chunk.js.map": "/spacetraders-dashboard/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.21af8231.css",
-    "static/js/main.b389c6cf.js"
+    "static/js/main.af97d699.js"
   ]
 }
