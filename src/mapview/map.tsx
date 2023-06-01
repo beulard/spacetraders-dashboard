@@ -67,12 +67,12 @@ const MapView = () => {
 
   return (
     <div
-      style={{
-        display: "inline-block",
-        paddingTop: "40px",
-        paddingBottom: "20px",
-        maxWidth: "60%",
-      }}
+      style={
+        {
+          // display: "inline-block",
+          // paddingTop: "40px",
+        }
+      }
     >
       <div id="map-container">
         <img id="map-background" src={mapBackground} alt="bg"></img>

@@ -237,19 +237,17 @@ const ContractList = () => {
 
   return (
     <div>
-      <div style={{ margin: "auto", marginTop: "1em", width: "40em" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-evenly",
-            margin: "auto",
-            alignItems: "center",
-            height: "2.4em",
-          }}
-        >
-          <h4 style={{ flex: "5 5 auto" }}>Contracts</h4>
-          <RefreshButton onClick={refresh} />
-        </div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "4em",
+          alignItems: "center",
+          height: "3em",
+        }}
+      >
+        <h4>Contracts</h4>
+        <RefreshButton onClick={refresh} />
       </div>
       <div style={{ margin: "auto", maxWidth: "60em" }}>
         <DynamicTable

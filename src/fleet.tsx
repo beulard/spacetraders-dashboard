@@ -25,6 +25,7 @@ import {
 } from "spacetraders-sdk";
 import FleetDB from "./fleet-db";
 import { HoverTag } from "./components/hover-tag";
+import { RefreshButton } from "./components/refresh-button";
 const { Column } = Table;
 
 const ReactorDescription = (props: { reactor: ShipReactor }) => (
@@ -42,7 +43,7 @@ const CargoInventory = (props: { cargo: ShipCargo }) => (
   <div>
     {props.cargo.inventory.map((item, idx) => (
       <Popover key={idx} content={item.description}>
-        <Tag>{item.name}</Tag>
+        <Tag>{item.symbol}</Tag>
         <Tag>{item.units}</Tag>
       </Popover>
     ))}
@@ -273,20 +274,20 @@ const ShipList = () => {
   }, []);
 
   return (
-    <>
-      <div style={{ margin: "auto", marginTop: "1em", width: "40em" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-evenly",
-            margin: "auto",
-            alignItems: "center",
-            height: "2.4em",
-          }}
-        >
-          <h4 style={{ flex: "5 5 auto" }}>Ships</h4>
-          {/* <RefreshButton onClick={refresh} /> */}
-        </div>
+    <div style={{ width: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "4em",
+          alignItems: "center",
+          height: "3em",
+        }}
+      >
+        <h4>Ships</h4>
+        <RefreshButton
+          onClick={(onDone) => FleetDB.update().then((_) => onDone())}
+        />
       </div>
       <Table
         dataSource={fleet.map((ship) => ({
@@ -295,7 +296,7 @@ const ShipList = () => {
         }))}
         size="small"
         pagination={false}
-        style={{ width: "60%", margin: "auto" }}
+        style={{ margin: "auto" }}
       >
         <Column
           title="Ship"
@@ -357,7 +358,7 @@ const ShipList = () => {
           render={(_, ship: Ship) => <ShipActions ship={ship} />}
         />
       </Table>
-    </>
+    </div>
   );
 };
 

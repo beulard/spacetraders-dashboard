@@ -12,7 +12,7 @@ const RefreshButton = (props: { onClick: (onDone: Function) => any }) => {
   }
 
   return (
-    <div style={{ width: "3em", textAlign: "center", display: "inline-block" }}>
+    <div style={{ width: "3em" }}>
       {loading ? (
         <Spin />
       ) : (

@@ -153,7 +153,23 @@ const MarketList = (props: { waypoints: Waypoint[] }) => {
         marketWaypoints.map((waypoint) => (
           <Panel
             key={waypoint.symbol}
-            header={`${waypoint.symbol} [${waypoint.type}]`}
+            header={
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span>
+                  {waypoint.symbol} [{waypoint.type}]
+                </span>
+                <span style={{ width: "50%", padding: 0 }}>
+                  {/* FIXME Good idea but not great for now */}
+                  <ShipSelector destinationSymbol={waypoint.symbol} />
+                </span>
+              </div>
+            }
           >
             <MarketInfo
               key={waypoint.symbol}
@@ -352,20 +368,13 @@ const SystemInfo = () => {
   ];
 
   return (
-    <span
-      style={{
-        float: "left",
-        textAlign: "left",
-        width: "40%",
-        paddingRight: "2%",
-      }}
-    >
+    <span>
       {system ? (
         <div>
-          <Tabs items={tabItems} className="system-info" />
-          {/* <div
+          <div
             style={{
-              marginBottom: "0.25em",
+              marginBottom: "0em",
+              padding: 0,
               width: "100%",
               display: "inline-block",
             }}
@@ -380,6 +389,7 @@ const SystemInfo = () => {
                   SystemEvent.emit("locate", system);
                 }}
                 type="text"
+                size="small"
                 style={{
                   display: "inline",
                   width: "100%",
@@ -392,7 +402,9 @@ const SystemInfo = () => {
                 </big>
               </Button>
             </Tooltip>
-          </div> */}
+          </div>
+
+          <Tabs size="small" items={tabItems} />
 
           {system.factions.length > 0 && (
             <Accordion

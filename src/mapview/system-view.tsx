@@ -120,10 +120,7 @@ export class SystemViewScene extends ex.Scene {
     });
   }
 
-  // Callback for SystemDB
-  public onSystemDBEvent(_: PouchDB.Core.ChangesResponseChange<{}>) {
-    this.updateDrawnSystems();
-  }
+  onSystemDBEvent = this.updateDrawnSystems.bind(this);
 
   public onActivate() {
     this.camera.zoomOverTime(
