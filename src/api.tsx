@@ -1,4 +1,5 @@
 import axios from "axios";
+import rateLimit from "axios-rate-limit";
 import {
   AgentsApi,
   Configuration,
@@ -11,24 +12,23 @@ import {
 class Api {
   private configuration = new Configuration();
 
-  private instance = axios.create({});
+  private http = rateLimit(axios.create(), {
+    maxRequests: 10,
+    perMilliseconds: 10000,
+  });
 
-  public system = new SystemsApi(this.configuration, undefined, this.instance);
-  public contract = new ContractsApi(
-    this.configuration,
-    undefined,
-    this.instance
-  );
-  public fleet = new FleetApi(this.configuration, undefined, this.instance);
-  public agent = new AgentsApi(this.configuration, undefined, this.instance);
-  public default = new DefaultApi(undefined, undefined, this.instance); // No config (token not needed)
+  public system = new SystemsApi(this.configuration, undefined, this.http);
+  public contract = new ContractsApi(this.configuration, undefined, this.http);
+  public fleet = new FleetApi(this.configuration, undefined, this.http);
+  public agent = new AgentsApi(this.configuration, undefined, this.http);
+  public default = new DefaultApi(undefined, undefined, this.http); // No config (token not needed)
 
   constructor() {
     this.updateToken(localStorage.getItem("access-token") || "");
 
     // TODO use rate limiter instead of retry logic
     // Retry logic for 429 rate-limit errors
-    this.instance.interceptors.response.use(
+    this.http.interceptors.response.use(
       // response interceptor
       (res) => res,
       // error interceptor
@@ -47,7 +47,7 @@ class Api {
             setTimeout(resolve, 10 * 1000);
           });
 
-          return this.instance.request(error.config);
+          return this.http.request(error.config);
         }
 
         if (error.response?.status === 429) {
@@ -57,7 +57,7 @@ class Api {
             setTimeout(resolve, retryAfter * 1000);
           });
 
-          return this.instance.request(error.config);
+          return this.http.request(error.config);
         }
 
         throw error;
@@ -71,15 +71,11 @@ class Api {
       accessToken: token,
     });
 
-    this.system = new SystemsApi(this.configuration, undefined, this.instance);
-    this.contract = new ContractsApi(
-      this.configuration,
-      undefined,
-      this.instance
-    );
-    this.fleet = new FleetApi(this.configuration, undefined, this.instance);
-    this.agent = new AgentsApi(this.configuration, undefined, this.instance);
-    this.default = new DefaultApi(undefined, undefined, this.instance); // No config (token not needed)
+    this.system = new SystemsApi(this.configuration, undefined, this.http);
+    this.contract = new ContractsApi(this.configuration, undefined, this.http);
+    this.fleet = new FleetApi(this.configuration, undefined, this.http);
+    this.agent = new AgentsApi(this.configuration, undefined, this.http);
+    this.default = new DefaultApi(undefined, undefined, this.http); // No config (token not needed)
   }
 }
 
