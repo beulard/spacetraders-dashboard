@@ -181,3 +181,9 @@ td.ant-table-cell {
 .table-popover {
   font-size: 8pt;
 }
+
+.system-info-collapse {
+  max-height: 600px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}

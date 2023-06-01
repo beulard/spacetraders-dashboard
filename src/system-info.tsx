@@ -1,6 +1,16 @@
 import { CodeBlock } from "@atlaskit/code";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
-import { Button, Collapse, Popover, Select, Space, Tag, Tooltip } from "antd";
+import {
+  Button,
+  Collapse,
+  Popover,
+  Select,
+  Space,
+  Tabs,
+  TabsProps,
+  Tag,
+  Tooltip,
+} from "antd";
 import { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -17,7 +27,7 @@ import { Accordion } from "./components/accordion";
 import FleetDB from "./fleet-db";
 import { MarketInfo } from "./market-info";
 import { ShipyardInfo } from "./shipyard-info";
-import { SystemEvent } from "./system";
+import { SystemEvent } from "./system-db";
 import WaypointDB from "./waypoint-db";
 const { Panel } = Collapse;
 
@@ -106,6 +116,80 @@ const WaypointShipTag = (props: { ship: Ship }) => {
         {props.ship.symbol} ({props.ship.nav.status})
       </Button>
     </Tooltip>
+  );
+};
+
+const WaypointList = (props: { waypoints: Waypoint[] }) => {
+  return (
+    <Collapse size="small" className="system-info-collapse">
+      {props.waypoints.length > 0 &&
+        props.waypoints.map((waypoint) => (
+          <Panel
+            key={waypoint.symbol}
+            header={`${waypoint.symbol} [${waypoint.type}]`}
+          >
+            <WaypointInfo
+              key={waypoint.symbol}
+              waypoint={waypoint}
+              details={waypoint}
+            />
+          </Panel>
+        ))}
+    </Collapse>
+  );
+};
+
+const MarketList = (props: { waypoints: Waypoint[] }) => {
+  const marketWaypoints = props.waypoints.filter((w) =>
+    w.traits.map((t) => t.symbol).includes(WaypointTraitSymbolEnum.Marketplace)
+  );
+  return (
+    <Collapse
+      size="small"
+      defaultActiveKey={marketWaypoints.map((w) => w.symbol)}
+      className="system-info-collapse"
+    >
+      {marketWaypoints.length > 0 &&
+        marketWaypoints.map((waypoint) => (
+          <Panel
+            key={waypoint.symbol}
+            header={`${waypoint.symbol} [${waypoint.type}]`}
+          >
+            <MarketInfo
+              key={waypoint.symbol}
+              waypoint={waypoint}
+              ships={FleetDB.getMyShips()}
+            />
+          </Panel>
+        ))}
+    </Collapse>
+  );
+};
+
+const ShipyardList = (props: { waypoints: Waypoint[] }) => {
+  const shipyardWaypoints = props.waypoints.filter((w) =>
+    w.traits.map((t) => t.symbol).includes(WaypointTraitSymbolEnum.Shipyard)
+  );
+  return (
+    <Collapse
+      size="small"
+      defaultActiveKey={shipyardWaypoints.map((w) => w.symbol)}
+      className="system-info-collapse"
+    >
+      {shipyardWaypoints.length > 0 &&
+        shipyardWaypoints.map((waypoint) => (
+          <Panel
+            key={waypoint.symbol}
+            header={`${waypoint.symbol} [${waypoint.type}]`}
+          >
+            <ShipyardInfo
+              key={waypoint.symbol}
+              waypoint={waypoint}
+              ships={FleetDB.getMyShips()}
+            />
+          </Panel>
+        ))}
+    </Collapse>
   );
 };
 
@@ -249,6 +333,23 @@ const SystemInfo = () => {
   }, [system]);
 
   // TODO More practical to add a browsable list of markets and shipyards in the system?
+  const tabItems: TabsProps["items"] = [
+    {
+      key: "waypoints",
+      label: `Waypoints`,
+      children: <WaypointList waypoints={waypoints} />,
+    },
+    {
+      key: "markets",
+      label: `Markets`,
+      children: <MarketList waypoints={waypoints} />,
+    },
+    {
+      key: "shipyards",
+      label: `Shipyards`,
+      children: <ShipyardList waypoints={waypoints} />,
+    },
+  ];
 
   return (
     <span
@@ -261,7 +362,8 @@ const SystemInfo = () => {
     >
       {system ? (
         <div>
-          <div
+          <Tabs items={tabItems} className="system-info" />
+          {/* <div
             style={{
               marginBottom: "0.25em",
               width: "100%",
@@ -290,30 +392,7 @@ const SystemInfo = () => {
                 </big>
               </Button>
             </Tooltip>
-          </div>
-
-          <Collapse
-            size="small"
-            style={{
-              maxHeight: "400px",
-              overflowY: "auto",
-              scrollbarWidth: "thin",
-            }}
-          >
-            {system.waypoints.length > 0 &&
-              system.waypoints.map((waypoint, idx) => (
-                <Panel
-                  key={waypoint.symbol}
-                  header={`${waypoint.symbol} [${waypoint.type}]`}
-                >
-                  <WaypointInfo
-                    key={waypoint.symbol}
-                    waypoint={waypoint}
-                    details={waypoints[idx] || null}
-                  />
-                </Panel>
-              ))}
-          </Collapse>
+          </div> */}
 
           {system.factions.length > 0 && (
             <Accordion

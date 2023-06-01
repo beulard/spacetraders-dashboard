@@ -1,11 +1,8 @@
 import * as ex from "excalibur";
 import { useEffect, useRef } from "react";
+import mapBackground from "../resources/starbg_gen3_600x400.png";
 import { SystemViewScene } from "./system-view";
 import { WaypointViewScene } from "./waypoint-view";
-import { Systems } from "../system";
-import WaypointDB from "../waypoint-db";
-import FleetDB from "../fleet-db";
-import mapBackground from "../resources/starbg_gen3_600x400.png";
 
 /**
  * Holds all the data (engine, scenes, actors) needed to draw the map
@@ -26,13 +23,13 @@ class MapData {
 
     this.game.start().then(async () => {
       // Debug waypoint view
-      this.game.goToScene("waypointview", {
-        system: await Systems.get("X1-VS75"),
-        ships: FleetDB.getMyShips(),
-        waypoints: await WaypointDB.getSystemWaypoints("X1-VS75"),
-      });
+      // this.game.goToScene("waypointview", {
+      //   system: await SystemDB.get("X1-FJ40"),
+      //   ships: FleetDB.getMyShips(),
+      //   waypoints: await WaypointDB.getSystemWaypoints("X1-FJ40"),
+      // });
       // Normal mode
-      // this.game.goToScene("systemview");
+      this.game.goToScene("systemview");
     });
   }
 }

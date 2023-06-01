@@ -1,9 +1,9 @@
-import { Button, Divider, Input, Space } from "antd";
-import { useEffect, useState } from "react";
-import api from "./api";
-import { RegisterRequestFactionEnum } from "spacetraders-sdk";
+import { Button, Input, Space } from "antd";
+import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router";
+import { RegisterRequestFactionEnum } from "spacetraders-sdk";
+import api from "./api";
 
 const Login = () => {
   const [token, setToken] = useState("");

@@ -1,16 +1,15 @@
 import { Space, Switch } from "antd";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
-import api from "./api";
+import AgentDB from "./agent-db";
 import { ContractList } from "./contract";
 import { ShipList } from "./fleet";
 import { Fleet, FleetContext, fetchShipsRecursive } from "./fleet-context";
 import { MapView } from "./mapview/map";
 import { Status } from "./status";
-import { SystemEvent, Systems } from "./system";
-import { getSystemSymbol } from "./utils";
+import { SystemDB, SystemEvent } from "./system-db";
 import { SystemInfo } from "./system-info";
-import AgentDB from "./agent-db";
+import { getSystemSymbol } from "./utils";
 
 function App() {
   const [fetchSystems, setFetchSystems] = useState(false);
@@ -19,12 +18,12 @@ function App() {
 
   useEffect(() => {
     // Fetch systems
-    Systems.fetchPages(1, currentPage);
-    setCurrentPage(currentPage + 1);
+    SystemDB.fetchPages(1, currentPage);
+    setCurrentPage((c) => c + 1);
 
     // Set default selected system to HQ
     AgentDB.update().then((agent) => {
-      Systems.get(getSystemSymbol(agent!.headquarters)).then((res) => {
+      SystemDB.get(getSystemSymbol(agent!.headquarters)).then((res) => {
         SystemEvent.emit("select", res);
         SystemEvent.emit("locate", res);
       });
@@ -39,12 +38,12 @@ function App() {
   function onToggleFetchSystems(value: boolean) {
     setFetchSystems(value);
     if (value) {
-      Systems.fetchStart();
-      Systems.fetchUntil(currentPage).then((page) => {
+      SystemDB.fetchStart();
+      SystemDB.fetchUntil(currentPage).then((page) => {
         setCurrentPage(page);
       });
     } else {
-      Systems.fetchStop();
+      SystemDB.fetchStop();
     }
   }
 
@@ -67,7 +66,7 @@ function App() {
               style={{
                 display: "inline-block",
                 width: "100%",
-                height: "450px",
+                height: "650px",
               }}
             >
               <SystemInfo />

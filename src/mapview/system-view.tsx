@@ -1,7 +1,7 @@
 import * as ex from "excalibur";
 import { System } from "spacetraders-sdk";
 import FleetDB from "../fleet-db";
-import { SystemEvent, Systems } from "../system";
+import { SystemDB, SystemEvent } from "../system-db";
 import WaypointDB from "../waypoint-db";
 import { SystemTypeColor } from "./gfx-common";
 
@@ -120,6 +120,11 @@ export class SystemViewScene extends ex.Scene {
     });
   }
 
+  // Callback for SystemDB
+  public onSystemDBEvent(_: PouchDB.Core.ChangesResponseChange<{}>) {
+    this.updateDrawnSystems();
+  }
+
   public onActivate() {
     this.camera.zoomOverTime(
       this.lastZoomScale,
@@ -176,11 +181,14 @@ export class SystemViewScene extends ex.Scene {
         console.log("ac", this.actors.length);
       }
     });
+    // Listen to additional systems
+    SystemDB.addListener(this.onSystemDBEvent);
   }
 
   public onDeactivate() {
     this.engine.input.pointers.off("wheel");
     this.engine.input.pointers.off("move");
+    SystemDB.removeListener(this.onSystemDBEvent);
   }
 
   public updateDrawnSystems() {
@@ -194,7 +202,7 @@ export class SystemViewScene extends ex.Scene {
       vp.bottom + vp.height
     );
 
-    Systems.find({
+    SystemDB.find({
       selector: {
         x: {
           $gt: expandedViewport.left / this.systemPositionScale,

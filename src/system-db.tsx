@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import api from "./api";
 import { EventEmitter } from "eventemitter3";
 
-class SystemData {
+class SystemDatabase {
   private db: PouchDB.Database;
   private keepFetching: boolean = false;
 
@@ -121,9 +121,6 @@ class SystemData {
     const promise = this.fetchPage(pageIndex).then(async (res) => {
       if (this.keepFetching) {
         // Wait for a couple of seconds
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        // await new Promise((resolve) => setTimeout(resolve, 100));
-        console.log(res.data.meta);
         return await this.fetchUntil(pageIndex + 1);
       } else {
         return pageIndex + 1;
@@ -182,9 +179,11 @@ class SystemData {
         live: true,
         include_docs: true,
       })
-      .on("change", (change) => {
-        callback(change);
-      });
+      .on("change", callback);
+  }
+
+  public removeListener(callback: ListenerCallback) {
+    this.db.removeListener("change", callback);
   }
 }
 
@@ -193,9 +192,9 @@ interface ListenerCallback {
 }
 
 // TODO rename to SystemDB, align api with FleetDB and WaypointDB
-const Systems = new SystemData();
+const SystemDB = new SystemDatabase();
 
 // Global event emitter for system selection in react UI or map view
 const SystemEvent = new EventEmitter();
 
-export { Systems, SystemEvent };
+export { SystemDB, SystemEvent };

@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { Contract, ContractDeliverGood } from "spacetraders-sdk";
 import api from "./api";
 import { RefreshButton } from "./components/refresh-button";
-import { SystemEvent, Systems } from "./system";
+import { SystemDB, SystemEvent } from "./system-db";
 import { getSystemSymbol } from "./utils";
 
 function getTotalPayment(contract: Contract) {
@@ -100,7 +100,7 @@ const ContractBody = (props: { contract: Contract }) => {
               <div
                 className="link-button"
                 onClick={() => {
-                  Systems.get(getSystemSymbol(d.destinationSymbol)).then(
+                  SystemDB.get(getSystemSymbol(d.destinationSymbol)).then(
                     (system) => {
                       SystemEvent.emit("select", system);
                     }
@@ -134,7 +134,6 @@ const ContractBody = (props: { contract: Contract }) => {
 
 const ContractList = () => {
   const [contracts, setContracts] = useState(Array<Contract>());
-  const [acceptContractId, setAcceptContractId] = useState("");
 
   const refresh = (onDone: Function = () => {}) => {
     const promise = api.contract.getContracts();
@@ -184,7 +183,7 @@ const ContractList = () => {
     ],
   };
 
-  const tableRows = contracts.map((contract, idx) => ({
+  const tableRows = contracts.map((contract) => ({
     key: contract.id,
     cells: [
       {
@@ -210,7 +209,7 @@ const ContractList = () => {
               const promise = api.contract.acceptContract(contract.id);
               setContracts(
                 contracts.map((c) =>
-                  c.id === acceptContractId ? { ...c, accepted: true } : c
+                  c.id === contract.id ? { ...c, accepted: true } : c
                 )
               );
               toast.promise(promise, {

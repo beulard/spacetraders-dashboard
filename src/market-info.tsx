@@ -208,7 +208,7 @@ const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
       .then((s) => {
         setMarket(s.data.data);
       });
-  }, [props.ships]);
+  }, [props.ships, props.waypoint.symbol]);
 
   if (market) {
     const items: TabsProps["items"] = [
