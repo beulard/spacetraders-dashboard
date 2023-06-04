@@ -2,6 +2,7 @@ import {
   DownOutlined,
   InfoCircleOutlined,
   LoginOutlined,
+  LogoutOutlined,
   WifiOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
@@ -26,6 +27,9 @@ import {
 import FleetDB from "./fleet-db";
 import { HoverTag } from "./components/hover-tag";
 import { RefreshButton } from "./components/refresh-button";
+import api from "./api";
+import toast from "react-hot-toast";
+import AgentDB from "./agent-db";
 const { Column } = Table;
 
 const ReactorDescription = (props: { reactor: ShipReactor }) => (
@@ -199,14 +203,66 @@ const NavColumn = (props: { ship: Ship }) => {
   );
 };
 
+const ContractSelector = () => {
+  
+}
+
 const ShipActions = (props: { ship: Ship }) => {
   // [Exploration]
   //  Create chart
   // Refine
   // Orbit ?
+  function onOrbit() {
+    api.fleet
+      .orbitShip(props.ship.symbol)
+      .then((_) => {
+        toast.success(
+          `${props.ship.symbol} is now orbitting ${props.ship.nav.waypointSymbol}`
+        );
+        FleetDB.update();
+        AgentDB.update();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
   // Dock !
+  function onDock() {
+    api.fleet
+      .dockShip(props.ship.symbol)
+      .then((_) => {
+        toast.success(
+          `Docked ${props.ship.symbol} at ${props.ship.nav.waypointSymbol}`
+        );
+        FleetDB.update();
+        AgentDB.update();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
   // Survey resources
   // Extract resources
+  function onExtract() {
+    api.fleet
+      .extractResources(props.ship.symbol)
+      .then((res) => {
+        const data = res.data.data;
+        console.log(data);
+        toast.success(
+          `${props.ship.symbol} extracted ${data.extraction.yield.units} of ${data.extraction.yield.symbol} at ${props.ship.nav.waypointSymbol}. On a cooldown for ${data.cooldown.remainingSeconds} s`
+        );
+        FleetDB.update();
+        AgentDB.update();
+      })
+      .catch((err) => {
+        console.log(err);
+        const apiError = err.response.data.error;
+        if (apiError) {
+          toast.error(apiError.message);
+        }
+      });
+  }
   // Jettison cargo (confirm)
   // Jump
   // Navigate
@@ -215,8 +271,38 @@ const ShipActions = (props: { ship: Ship }) => {
   // Scan -> Systems
   //      -> Waypoints
   // Refuel [docked]
+  function onRefuel() {
+    api.fleet
+      .refuelShip(props.ship.symbol)
+      .then((_) => {
+        toast.success(
+          `Refueled ${props.ship.symbol} at ${props.ship.nav.waypointSymbol}`
+        );
+        FleetDB.update();
+        AgentDB.update();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
   // Purchase [docked]
   // Transfer
+  // Deliver
+  function onDeliver() {
+    api.contract
+      .deliverContract(props.ship.symbol)
+      .then((_) => {
+        toast.success(
+          `Refueled ${props.ship.symbol} at ${props.ship.nav.waypointSymbol}`
+        );
+        FleetDB.update();
+        AgentDB.update();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+  }
   // Negotiate contract (?)
   const actions: MenuProps["items"] = [
     {
@@ -226,6 +312,26 @@ const ShipActions = (props: { ship: Ship }) => {
           Dock
         </Button>
       ),
+      onClick: onDock,
+    },
+    {
+      key: "orbit",
+      label: (
+        <Button type="link" icon={<LogoutOutlined />}>
+          Orbit
+        </Button>
+      ),
+      onClick: onOrbit,
+    },
+    {
+      key: "refuel",
+      label: <Button type="link">Refuel</Button>,
+      onClick: onRefuel,
+    },
+    {
+      key: "extract",
+      label: <Button type="link">Extract</Button>,
+      onClick: onExtract,
     },
     // TODO factor scan
     {

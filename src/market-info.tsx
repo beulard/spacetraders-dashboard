@@ -283,17 +283,20 @@ const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
       {
         key: "transactions",
         label: "Transactions",
-        children: (
-          <>
-            TODO
-            <Table
-              dataSource={market.transactions}
-              // {market.exchange.map((i, idx) => (
-              //   <HoverTag key={idx} tooltip={i.description} text={i.name} />
-              // ))}
-            />
-          </>
-        ),
+        children: market.transactions?.map((t, idx) => (
+          <p key={idx}>
+            {t.timestamp} {t.shipSymbol} ${t.totalPrice}
+          </p>
+        )),
+        // <>
+        //   TODO
+        //   <Table
+        //     dataSource={market.transactions}
+        //     // {market.exchange.map((i, idx) => (
+        //     //   <HoverTag key={idx} tooltip={i.description} text={i.name} />
+        //     // ))}
+        //   />
+        // </>
       },
     ];
 
