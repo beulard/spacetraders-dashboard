@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Agent } from "spacetraders-sdk";
 import AgentDB from "./agent-db";
 import { RefreshButton } from "./components/refresh-button";
+import { Statistic } from "antd";
 
 const Status = () => {
   const [name, setName] = useState("");
@@ -35,7 +36,12 @@ const Status = () => {
       }}
     >
       <div>
-        <h5>${credits}</h5>
+        <Statistic
+          // title="Total"
+          value={credits}
+          prefix="$"
+          valueStyle={{ fontSize: "13pt" }}
+        />
       </div>
       <div>
         <h4>
