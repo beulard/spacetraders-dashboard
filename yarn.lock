@@ -300,28 +300,6 @@
     "@babel/runtime" "^7.0.0"
     "@emotion/react" "^11.7.1"
 
-"@atlaskit/tag-group@^10.2.2":
-  version "10.2.2"
-  resolved "https://registry.yarnpkg.com/@atlaskit/tag-group/-/tag-group-10.2.2.tgz#40c25956e8aea23ee6fab612808bbed171865912"
-  integrity sha512-qgjIVU9NVUp6cyjH1RV77E4S4osHiP+CYD7JNxTir7FlzOec/RtxeFWvHV85nq0G/MSbjXk1fgE+PJ7o06tnFg==
-  dependencies:
-    "@babel/runtime" "^7.0.0"
-    "@emotion/react" "^11.7.1"
-
-"@atlaskit/tag@^11.5.2":
-  version "11.5.3"
-  resolved "https://registry.yarnpkg.com/@atlaskit/tag/-/tag-11.5.3.tgz#47cfb73b3e71ccd0bfccc10c8899fc43b118c8ba"
-  integrity sha512-hLk7M3ve8k/GFkRzO2BPblXrxqD+Nq0CfESJ4HnlNDqbwkxwBVc38aXwksLQHK1641+0fqAxrwVc2yZS9aRxXA==
-  dependencies:
-    "@atlaskit/analytics-next" "^9.1.0"
-    "@atlaskit/ds-lib" "^2.2.0"
-    "@atlaskit/icon" "^21.12.0"
-    "@atlaskit/motion" "^1.4.0"
-    "@atlaskit/theme" "^12.5.0"
-    "@atlaskit/tokens" "^1.4.0"
-    "@babel/runtime" "^7.0.0"
-    "@emotion/react" "^11.7.1"
-
 "@atlaskit/theme@^12.5.0":
   version "12.5.3"
   resolved "https://registry.yarnpkg.com/@atlaskit/theme/-/theme-12.5.3.tgz#c791d27ea81eba54bfaad44ddf490705407dcaf3"
@@ -331,19 +309,6 @@
     "@atlaskit/ds-lib" "^2.2.0"
     "@atlaskit/tokens" "^1.4.0"
     "@babel/runtime" "^7.0.0"
-
-"@atlaskit/toggle@^12.6.0":
-  version "12.6.3"
-  resolved "https://registry.yarnpkg.com/@atlaskit/toggle/-/toggle-12.6.3.tgz#486a2c04c5277608b594b5e2a42584d88c65962d"
-  integrity sha512-Gm/aJVoS7iDyZQ5Rn8QKGhnKqfj7180nwgd+syxNGLA0v0eZee4RbnJL4XNxhBFCPvNir7KPpqe7clUEUXyI6w==
-  dependencies:
-    "@atlaskit/analytics-next" "^9.1.0"
-    "@atlaskit/ds-lib" "^2.2.0"
-    "@atlaskit/icon" "^21.12.0"
-    "@atlaskit/theme" "^12.5.0"
-    "@atlaskit/tokens" "^1.4.0"
-    "@babel/runtime" "^7.0.0"
-    "@emotion/react" "^11.7.1"
 
 "@atlaskit/tokens@^1.4.0":
   version "1.4.3"
@@ -10524,9 +10489,6 @@ space-separated-tokens@^1.0.0:
 "spacetraders-sdk@file:api/packages/spacetraders-sdk":
   version "2.0.0"
   dependencies:
-    "@atlaskit/tag" "^11.5.2"
-    "@atlaskit/tag-group" "^10.2.2"
-    "@atlaskit/toggle" "^12.6.0"
     axios "^0.27.2"
 
 spark-md5@3.0.2:

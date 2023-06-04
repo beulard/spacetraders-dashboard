@@ -32,7 +32,24 @@ const SellGoodShipSelect = (props: {
   const [amount, setAmount] = useState(0);
 
   async function onTrade() {
-    toast("Implement sell transaction handling");
+    try {
+      const res = await api.fleet.sellCargo(selectedShip!.symbol, {
+        symbol: props.sellGood.symbol,
+        units: amount,
+      });
+      const transaction = res.data.data.transaction;
+      toast.success(
+        `Sold ${transaction.units} units of ${transaction.tradeSymbol} for $${transaction.totalPrice}`
+      );
+      FleetDB.update();
+      AgentDB.update();
+    } catch (error) {
+      const apiError = (error as any).response?.data?.error;
+      if (apiError) {
+        toast.error(apiError.message);
+      }
+      console.log(error);
+    }
   }
 
   let amountInCargo = 0;
