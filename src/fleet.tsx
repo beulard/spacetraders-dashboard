@@ -17,6 +17,7 @@ import {
   Tag,
 } from "antd";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import {
   Ship,
   ShipCargo,
@@ -24,12 +25,11 @@ import {
   ShipMount,
   ShipReactor,
 } from "spacetraders-sdk";
-import FleetDB from "./fleet-db";
+import AgentDB from "./agent-db";
+import api from "./api";
 import { HoverTag } from "./components/hover-tag";
 import { RefreshButton } from "./components/refresh-button";
-import api from "./api";
-import toast from "react-hot-toast";
-import AgentDB from "./agent-db";
+import FleetDB from "./fleet-db";
 const { Column } = Table;
 
 const ReactorDescription = (props: { reactor: ShipReactor }) => (
@@ -153,6 +153,7 @@ const ShipDescription = (props: { ship: Ship }) => (
 
 // Convert milliseconds to a string like "1h 20m 55s"
 function msToHMS(ms: number) {
+  console.log(ms);
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
@@ -167,34 +168,83 @@ function getTimeLeft(arrivalDate: string) {
 }
 
 const NavColumn = (props: { ship: Ship }) => {
-  const [timeLeft, setTimeLeft] = useState(
-    getTimeLeft(props.ship.nav.route.arrival)
-  );
+  const [ship, setShip] = useState(props.ship);
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  console.log("Update");
+
+  useEffect(() => {
+    console.log("nav updated", props.ship.nav);
+    setTimeLeft(getTimeLeft(props.ship.nav.route.arrival));
+    // setTimeLeft(getTimeLeft(props.ship.nav.route.arrival));
+    // if (props.ship.nav.status === "IN_TRANSIT") {
+    //   const interval = setInterval(() => {
+    //     setTimeLeft((timeLeft) => {
+    //       // Check if we've arrived at destination
+    //       if (timeLeft - 1000 < 0) {
+    //         console.log(props.ship.nav.status);
+    //         if (props.ship.nav.status === "IN_TRANSIT") {
+    //           setShip((s) => ({ ...s, nav: { ...s.nav, status: "IN_ORBIT" } }));
+    //           FleetDB.update();
+    //         }
+    //         return timeLeft;
+    //       }
+    //       return timeLeft - 1000;
+    //     });
+    //   }, 1000);
+
+    //   return () => {
+    //     clearInterval(interval);
+    //   };
+    // }
+  }, [props.ship.nav]);
+
+  useEffect(() => {
+    console.log("timeleft updated", timeLeft);
+    let timeout: NodeJS.Timeout;
+    if (timeLeft - 1000 > 0) {
+      timeout = setTimeout(() => setTimeLeft((t) => t - 1000), 1000);
+    } else {
+      if (props.ship.nav.status === "IN_TRANSIT") {
+        // FIXME called too many times when transit finishes...
+        FleetDB.update();
+      }
+    }
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [timeLeft]);
 
   // Update every second
-  useEffect(() => {
-    setTimeLeft(getTimeLeft(props.ship.nav.route.arrival));
-    const interval = setInterval(() => {
-      setTimeLeft((timeLeft) => {
-        // Check if we've arrived at destination
-        if (timeLeft - 1000 < 0) {
-          if (props.ship.nav.status === "IN_TRANSIT") {
-            FleetDB.update();
-          }
-          return timeLeft;
-        }
-        return timeLeft - 1000;
-      });
-    }, 1000);
-    // Clear on unmount
-    return () => {
-      clearInterval(interval);
-    };
-  }, [props.ship]);
+  // useEffect(() => {
+  //   setTimeLeft(getTimeLeft(props.ship.nav.route.arrival));
+  //   let interval: NodeJS.Timer;
+  //   if (props.ship.nav.status === "IN_TRANSIT") {
+  //     interval = setInterval(() => {
+  //       setTimeLeft((timeLeft) => {
+  //         // Check if we've arrived at destination
+  //         if (timeLeft - 1000 < 0) {
+  //           console.log(ship.nav.status);
+  //           if (ship.nav.status === "IN_TRANSIT") {
+  //             setShip((s) => ({ ...s, nav: { ...s.nav, status: "IN_ORBIT" } }));
+  //             FleetDB.update();
+  //             clearInterval(interval);
+  //           }
+  //           return timeLeft;
+  //         }
+  //         return timeLeft - 1000;
+  //       });
+  //     }, 1000);
+  //   }
+  //   // Clear on unmount
+  //   return () => {
+  //     clearInterval(interval);
+  //   };
+  // }, [ship, props.ship]);
 
   return (
     <>
-      <Tag>{props.ship.nav.status}</Tag>
+      <Tag>{ship.nav.status}</Tag>
       {props.ship.nav.waypointSymbol}
       {props.ship.nav.status === "IN_TRANSIT" && (
         <> (ETA: {msToHMS(timeLeft)})</>
@@ -203,9 +253,7 @@ const NavColumn = (props: { ship: Ship }) => {
   );
 };
 
-const ContractSelector = () => {
-  
-}
+const ContractSelector = () => {};
 
 const ShipActions = (props: { ship: Ship }) => {
   // [Exploration]
@@ -283,6 +331,10 @@ const ShipActions = (props: { ship: Ship }) => {
       })
       .catch((err) => {
         console.log(err);
+        const apiError = err.response.data.error;
+        if (apiError) {
+          toast.error(apiError.message);
+        }
       });
   }
   // Purchase [docked]
@@ -302,7 +354,7 @@ const ShipActions = (props: { ship: Ship }) => {
         console.log(err);
       });
   }
-  }
+
   // Negotiate contract (?)
   const actions: MenuProps["items"] = [
     {
@@ -468,4 +520,4 @@ const ShipList = () => {
   );
 };
 
-export { ShipList, ShipDescription, ReactorDescription, MountTag };
+export { MountTag, ReactorDescription, ShipDescription, ShipList };

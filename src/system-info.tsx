@@ -29,18 +29,20 @@ import { MarketInfo } from "./market-info";
 import { ShipyardInfo } from "./shipyard-info";
 import { SystemEvent } from "./system-db";
 import WaypointDB from "./waypoint-db";
+import { SizeType } from "antd/es/config-provider/SizeContext";
 const { Panel } = Collapse;
 
-const ShipSelector = (props: { destinationSymbol: string }) => {
+const ShipSelector = (props: { destinationSymbol: string; size: SizeType }) => {
   const [sendShips, setSendShips] = useState<string[]>([]);
 
   const fleet = FleetDB.getMyShips();
 
   return (
     <div style={{ display: "flex", alignItems: "center" }}>
-      <div style={{ flexGrow: 1 }}>
+      <div style={{ flexGrow: 1, paddingRight: "5px" }}>
         <Select
           mode="multiple"
+          size={props.size}
           allowClear
           style={{ width: "100%" }}
           placeholder="Navigate ships"
@@ -54,32 +56,31 @@ const ShipSelector = (props: { destinationSymbol: string }) => {
             }))}
         />
       </div>
-      <div style={{ width: "3em", padding: "0 0 0 0.5em" }}>
-        <Button
-          icon={<ArrowRightIcon label="" />}
-          onClick={() => {
-            sendShips.forEach((ship) => {
-              console.log(`Navigating ${ship} to ${props.destinationSymbol}`);
-              api.fleet
-                .navigateShip(ship, {
-                  waypointSymbol: props.destinationSymbol,
-                })
-                .then((res) => {
-                  console.log(res);
-                  toast.success(
-                    `Navigating ${ship} to ${props.destinationSymbol}`
-                  );
-                  FleetDB.update();
-                })
-                .catch((err: AxiosError<any>) => {
-                  console.log(err);
-                  toast.error(err.response?.data.error.message);
-                });
-            });
-            setSendShips([]);
-          }}
-        ></Button>
-      </div>
+      <Button
+        size={props.size}
+        icon={<ArrowRightIcon label="" />}
+        onClick={() => {
+          sendShips.forEach((ship) => {
+            console.log(`Navigating ${ship} to ${props.destinationSymbol}`);
+            api.fleet
+              .navigateShip(ship, {
+                waypointSymbol: props.destinationSymbol,
+              })
+              .then((res) => {
+                console.log(res);
+                toast.success(
+                  `Navigating ${ship} to ${props.destinationSymbol}`
+                );
+                FleetDB.update();
+              })
+              .catch((err: AxiosError<any>) => {
+                console.log(err);
+                toast.error(err.response?.data.error.message);
+              });
+          });
+          setSendShips([]);
+        }}
+      ></Button>
     </div>
   );
 };
@@ -127,6 +128,17 @@ const WaypointList = (props: { waypoints: Waypoint[] }) => {
           <Panel
             key={waypoint.symbol}
             header={`${waypoint.symbol} [${waypoint.type}]`}
+            extra={
+              <span
+                style={{ display: "block", minWidth: "15em" }}
+                onClick={(evt) => evt.stopPropagation()} // Prevent panel collapse on click
+              >
+                <ShipSelector
+                  size="small"
+                  destinationSymbol={waypoint.symbol}
+                />
+              </span>
+            }
           >
             <WaypointInfo
               key={waypoint.symbol}
@@ -140,9 +152,21 @@ const WaypointList = (props: { waypoints: Waypoint[] }) => {
 };
 
 const MarketList = (props: { waypoints: Waypoint[] }) => {
+  const [ships, setShips] = useState<Ship[]>(FleetDB.getMyShips());
+
   const marketWaypoints = props.waypoints.filter((w) =>
     w.traits.map((t) => t.symbol).includes(WaypointTraitSymbolEnum.Marketplace)
   );
+
+  useEffect(() => {
+    const onFleetUpdate = (s: Ship[]) => setShips(s);
+    FleetDB.on("update", onFleetUpdate);
+
+    return () => {
+      FleetDB.off("update", onFleetUpdate);
+    };
+  }, []);
+
   return (
     <Collapse
       size="small"
@@ -152,29 +176,29 @@ const MarketList = (props: { waypoints: Waypoint[] }) => {
       {marketWaypoints.length > 0 &&
         marketWaypoints.map((waypoint) => (
           <Panel
+            showArrow={true}
             key={waypoint.symbol}
             header={
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <span>
-                  {waypoint.symbol} [{waypoint.type}]
-                </span>
-                <span style={{ width: "50%", padding: 0 }}>
-                  {/* FIXME Good idea but not great for now */}
-                  <ShipSelector destinationSymbol={waypoint.symbol} />
-                </span>
+              <div>
+                {waypoint.symbol} [{waypoint.type}]
               </div>
+            }
+            extra={
+              <span
+                style={{ display: "block", minWidth: "15em" }}
+                onClick={(evt) => evt.stopPropagation()} // Prevent panel collapse on click
+              >
+                <ShipSelector
+                  size="small"
+                  destinationSymbol={waypoint.symbol}
+                />
+              </span>
             }
           >
             <MarketInfo
               key={waypoint.symbol}
               waypoint={waypoint}
-              ships={FleetDB.getMyShips()}
+              ships={ships}
             />
           </Panel>
         ))}
@@ -273,7 +297,7 @@ const WaypointInfo = (props: {
         </Space>
       )}
       {/* Navigate ships */}
-      <ShipSelector destinationSymbol={props.waypoint.symbol} />
+      <ShipSelector size="middle" destinationSymbol={props.waypoint.symbol} />
 
       {(hasMarket || hasShipyard || isJumpgate) && (
         <Collapse size="small">

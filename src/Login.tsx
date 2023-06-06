@@ -82,15 +82,16 @@ const Login = () => {
             ></Input>
             <Button
               onClick={() => {
+                console.log("QWEWQE");
                 api.default
                   .register({
                     symbol: agentName,
                     faction: agentFaction as RegisterRequestFactionEnum,
                   })
                   .then((res) => {
+                    api.updateToken(res.data.data.token);
                     toast.success(`${res.data.data.agent.symbol} created`);
                     console.log(res);
-                    api.updateToken(token);
                     navigate("/");
                   })
                   .catch((err) => {

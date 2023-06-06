@@ -187,3 +187,21 @@ td.ant-table-cell {
   overflow-y: auto;
   scrollbar-width: thin;
 }
+
+/* .market-list-panel {
+  height: 22px;
+} */
+
+/* .market-list-panel-header {
+  height: 22px;
+} */
+
+/* .ant-collapse-header {
+  height: 22px;
+  margin: 0px;
+  padding: 0px 5px !important;
+} */
+
+/* .system-info-collapse .ant-collapse-header {
+  height: 22px;
+} */

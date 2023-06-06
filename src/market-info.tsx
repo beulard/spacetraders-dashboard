@@ -30,6 +30,7 @@ const SellGoodShipSelect = (props: {
 }) => {
   const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
   const [amount, setAmount] = useState(0);
+  const [amountInCargo, setAmountInCargo] = useState(0);
 
   async function onTrade() {
     try {
@@ -43,6 +44,7 @@ const SellGoodShipSelect = (props: {
       );
       FleetDB.update();
       AgentDB.update();
+      setAmountInCargo(amountInCargo - transaction.units);
     } catch (error) {
       const apiError = (error as any).response?.data?.error;
       if (apiError) {
@@ -52,13 +54,28 @@ const SellGoodShipSelect = (props: {
     }
   }
 
-  let amountInCargo = 0;
-  if (selectedShip) {
-    amountInCargo = selectedShip.cargo.inventory.reduce(
-      (pSum, v) => (v.symbol === props.sellGood.symbol ? pSum + v.units : pSum),
-      0
-    );
-  }
+  // Update selectedShip when fleet is updated.
+  // Ensures that the amountInCargo is updated when we sell something
+  useEffect(() => {
+    if (selectedShip) {
+      setSelectedShip(
+        props.ships.find((s) => s.symbol === selectedShip.symbol)!
+      );
+    }
+  }, [props.ships, selectedShip]);
+
+  useEffect(() => {
+    if (selectedShip) {
+      setAmount(1);
+      setAmountInCargo(
+        selectedShip.cargo.inventory.reduce(
+          (pSum, v) =>
+            v.symbol === props.sellGood.symbol ? pSum + v.units : pSum,
+          0
+        )
+      );
+    }
+  }, [selectedShip, props.sellGood]);
 
   return (
     <div>
@@ -83,8 +100,7 @@ const SellGoodShipSelect = (props: {
         <Slider
           style={{ width: "80%" }}
           disabled={selectedShip === null || amountInCargo === 0}
-          // disabled={selectedShip === null || amountInCargo !== 0}
-          // max={100}
+          value={amount}
           min={amountInCargo > 0 ? 1 : 0}
           max={amountInCargo}
           onChange={(val) => setAmount(val)}
@@ -128,6 +144,7 @@ const PurchaseGoodShipSelect = (props: {
 }) => {
   const [selectedShip, setSelectedShip] = useState<Ship | null>(null);
   const [amount, setAmount] = useState(1);
+  const [spaceInCargo, setSpaceInCargo] = useState(0);
 
   async function onTrade() {
     // Agent might not have enough funds! Handle in response
@@ -142,6 +159,7 @@ const PurchaseGoodShipSelect = (props: {
       );
       FleetDB.update();
       AgentDB.update();
+      setSpaceInCargo((space) => space - transaction.units);
     } catch (error) {
       const apiError = (error as any).response?.data?.error;
       if (apiError) {
@@ -151,10 +169,12 @@ const PurchaseGoodShipSelect = (props: {
     }
   }
 
-  let spaceInCargo = 0;
-  if (selectedShip) {
-    spaceInCargo = selectedShip.cargo.capacity - selectedShip.cargo.units;
-  }
+  useEffect(() => {
+    if (selectedShip) {
+      setAmount(1);
+      setSpaceInCargo(selectedShip.cargo.capacity - selectedShip.cargo.units);
+    }
+  }, [selectedShip]);
 
   return (
     <div>
@@ -180,6 +200,7 @@ const PurchaseGoodShipSelect = (props: {
           disabled={selectedShip === null || spaceInCargo === 0}
           // disabled={selectedShip === null || amountInCargo !== 0}
           // max={100}
+          value={amount}
           min={spaceInCargo > 0 ? 1 : 0}
           max={spaceInCargo}
           onChange={(val) => setAmount(val)}
@@ -225,7 +246,9 @@ const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
       .then((s) => {
         setMarket(s.data.data);
       });
-  }, [props.ships, props.waypoint.symbol]);
+  }, [props.waypoint.symbol]);
+
+  console.log("Render minfo");
 
   if (market) {
     const items: TabsProps["items"] = [
