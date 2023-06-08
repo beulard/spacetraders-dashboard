@@ -1,5 +1,5 @@
 import * as ex from "excalibur";
-import { System } from "spacetraders-sdk";
+import { System } from "../spacetraders-sdk";
 import FleetDB from "../fleet-db";
 import { SystemDB, SystemEvent } from "../system-db";
 import WaypointDB from "../waypoint-db";

@@ -4,7 +4,7 @@ import {
   MarketTradeGood,
   Ship,
   SystemWaypoint,
-} from "spacetraders-sdk";
+} from "./spacetraders-sdk";
 import { alphabeticSorter, getSystemSymbol } from "./utils";
 import api from "./api";
 import {
@@ -246,7 +246,7 @@ const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
       .then((s) => {
         setMarket(s.data.data);
       });
-  }, [props.waypoint.symbol]);
+  }, [props.waypoint.symbol, props.ships]);
 
   console.log("Render minfo");
 

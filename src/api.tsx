@@ -2,12 +2,13 @@ import axios from "axios";
 import rateLimit from "axios-rate-limit";
 import {
   AgentsApi,
-  Configuration,
   ContractsApi,
   DefaultApi,
   FleetApi,
   SystemsApi,
-} from "spacetraders-sdk";
+} from "./spacetraders-sdk/api";
+import { Configuration } from "./spacetraders-sdk/configuration";
+import toast from "react-hot-toast";
 
 class Api {
   private configuration = new Configuration();
@@ -48,6 +49,8 @@ class Api {
           });
 
           return this.http.request(error.config);
+        } else {
+          toast.error(apiError.message);
         }
 
         if (error.response?.status === 429) {

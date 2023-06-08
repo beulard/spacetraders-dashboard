@@ -1,4 +1,4 @@
-import { Waypoint } from "spacetraders-sdk";
+import { Waypoint } from "./spacetraders-sdk";
 import api from "./api";
 
 const cache: Map<string, Waypoint[]> = new Map();

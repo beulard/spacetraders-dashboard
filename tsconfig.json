@@ -2,13 +2,7 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "Create React App",
   "compilerOptions": {
-    "lib": [
-      "DOM",
-      "ES6",
-      "DOM.Iterable",
-      "ScriptHost",
-      "ES2016.Array.Include"
-    ],
+    "lib": ["DOM", "ES6", "DOM.Iterable", "ScriptHost", "ES2016.Array.Include"],
     "module": "esnext",
     "target": "ES2022",
     "allowJs": true,
@@ -24,7 +18,5 @@
     "skipLibCheck": true,
     "strict": true
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

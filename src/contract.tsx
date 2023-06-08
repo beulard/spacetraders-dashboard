@@ -3,7 +3,7 @@ import DynamicTable from "@atlaskit/dynamic-table";
 import { Button, Popconfirm, Popover } from "antd";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Contract, ContractDeliverGood } from "spacetraders-sdk";
+import { Contract, ContractDeliverGood } from "./spacetraders-sdk";
 import api from "./api";
 import { RefreshButton } from "./components/refresh-button";
 import { SystemDB, SystemEvent } from "./system-db";

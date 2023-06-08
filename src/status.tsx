@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Agent } from "spacetraders-sdk";
+import { Agent } from "./spacetraders-sdk";
 import AgentDB from "./agent-db";
 import { RefreshButton } from "./components/refresh-button";
 import { Statistic } from "antd";

@@ -2,7 +2,6 @@ import { Button, Input, Space } from "antd";
 import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router";
-import { RegisterRequestFactionEnum } from "spacetraders-sdk";
 import api from "./api";
 
 const Login = () => {
@@ -63,6 +62,7 @@ const Login = () => {
             <label htmlFor="agent-name">
               <h4>New agent</h4>
             </label>
+            {/* TODO wrap in form */}
             {/* <form> */}
             <Input
               id="agent-name"
@@ -82,11 +82,10 @@ const Login = () => {
             ></Input>
             <Button
               onClick={() => {
-                console.log("QWEWQE");
                 api.default
                   .register({
                     symbol: agentName,
-                    faction: agentFaction as RegisterRequestFactionEnum,
+                    faction: agentFaction,
                   })
                   .then((res) => {
                     api.updateToken(res.data.data.token);

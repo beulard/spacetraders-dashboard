@@ -1,4 +1,4 @@
-import { Agent } from "spacetraders-sdk";
+import { Agent } from "./spacetraders-sdk";
 import EventEmitter from "eventemitter3";
 import api from "./api";
 import toast from "react-hot-toast";

@@ -1,4 +1,4 @@
-import { Ship } from "spacetraders-sdk";
+import { Ship } from "./spacetraders-sdk";
 import { fetchShipsRecursive } from "./fleet-context";
 import EventEmitter from "eventemitter3";
 
@@ -14,7 +14,7 @@ class FleetDatabase extends EventEmitter {
       // Notify every listener
       this.emit("update", [...this.cache.values()]);
 
-      return this.getMyShips();
+      return ships;
     });
   }
 

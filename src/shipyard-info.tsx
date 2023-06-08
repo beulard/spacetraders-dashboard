@@ -1,3 +1,4 @@
+import { InfoCircleOutlined } from "@ant-design/icons";
 import {
   Button,
   Divider,
@@ -10,17 +11,21 @@ import {
   TabsProps,
   Tag,
 } from "antd";
-import { useEffect, useState } from "react";
-import { Ship, Shipyard, ShipyardShip, SystemWaypoint } from "spacetraders-sdk";
-import api from "./api";
-import { alphabeticSorter, getSystemSymbol } from "./utils";
 import Table, { ColumnsType } from "antd/es/table";
-import { HoverTag } from "./components/hover-tag";
-import { InfoCircleOutlined } from "@ant-design/icons";
-import { MountTag, ReactorDescription } from "./fleet";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import FleetDB from "./fleet-db";
 import AgentDB from "./agent-db";
+import api from "./api";
+import { HoverTag } from "./components/hover-tag";
+import FleetDB from "./fleet-db";
+import {
+  Ship,
+  Shipyard,
+  ShipyardShip,
+  SystemWaypoint,
+} from "./spacetraders-sdk";
+import { alphabeticSorter, getSystemSymbol } from "./utils";
+import { MountTag, ReactorDescription } from "./ship-description";
 
 const ShipyardShipDescription = (props: { ship: ShipyardShip }) => (
   <Space direction="vertical">

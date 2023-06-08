@@ -21,7 +21,7 @@ import {
   Waypoint,
   WaypointTraitSymbolEnum,
   WaypointType,
-} from "spacetraders-sdk";
+} from "./spacetraders-sdk";
 import api from "./api";
 import { Accordion } from "./components/accordion";
 import FleetDB from "./fleet-db";
@@ -69,7 +69,7 @@ const ShipSelector = (props: { destinationSymbol: string; size: SizeType }) => {
               .then((res) => {
                 console.log(res);
                 toast.success(
-                  `Navigating ${ship} to ${props.destinationSymbol}`
+                  `Navigating ${ship} to ${props.destinationSymbol}. ETA: ${res.data.data.nav.route.arrival}`
                 );
                 FleetDB.update();
               })

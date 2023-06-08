@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, createContext } from "react";
-import { Ship } from "spacetraders-sdk";
+import { Ship } from "./spacetraders-sdk";
 import api from "./api";
 
 async function getShipPage(index: number) {

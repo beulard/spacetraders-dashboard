@@ -5,7 +5,7 @@ import {
   SystemWaypoint,
   Waypoint,
   WaypointType,
-} from "spacetraders-sdk";
+} from "../spacetraders-sdk";
 import FleetDB from "../fleet-db";
 import { SystemTypeColor, WaypointTypeStyle } from "./gfx-common";
 
