@@ -1,7 +1,11 @@
 import {
   DownOutlined,
+  DownloadOutlined,
   LoginOutlined,
   LogoutOutlined,
+  ReloadOutlined,
+  ToTopOutlined,
+  VerticalAlignBottomOutlined,
   WifiOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
@@ -115,7 +119,7 @@ export const ShipActions = (props: { ship: Ship }) => {
     {
       key: "dock",
       label: (
-        <Button type="link" icon={<LoginOutlined />}>
+        <Button type="link" icon={<VerticalAlignBottomOutlined />}>
           Dock
         </Button>
       ),
@@ -124,7 +128,7 @@ export const ShipActions = (props: { ship: Ship }) => {
     {
       key: "orbit",
       label: (
-        <Button type="link" icon={<LogoutOutlined />}>
+        <Button type="link" icon={<ToTopOutlined />}>
           Orbit
         </Button>
       ),
@@ -132,36 +136,48 @@ export const ShipActions = (props: { ship: Ship }) => {
     },
     {
       key: "refuel",
-      label: <Button type="link">Refuel</Button>,
+      label: (
+        <Button type="link" icon={<ReloadOutlined />}>
+          Refuel
+        </Button>
+      ),
       onClick: onRefuel,
     },
     {
       key: "extract",
-      label: <Button type="link">Extract</Button>,
+      label: (
+        <Button type="link" icon={<DownloadOutlined />}>
+          Extract
+        </Button>
+      ),
       onClick: onExtract,
     },
     {
       key: "survey",
-      label: <Button type="link">Survey</Button>,
+      label: (
+        <Button type="link" icon={<WifiOutlined />}>
+          Survey
+        </Button>
+      ),
       onClick: onSurvey,
     },
     // TODO factor scan
-    {
-      key: "scan-systems",
-      label: (
-        <Button type="link" icon={<WifiOutlined />}>
-          Scan systems
-        </Button>
-      ),
-    },
-    {
-      key: "scan-waypoints",
-      label: (
-        <Button type="link" icon={<WifiOutlined />}>
-          Scan waypoints
-        </Button>
-      ),
-    },
+    // {
+    //   key: "scan-systems",
+    //   label: (
+    //     <Button type="link" icon={<WifiOutlined />}>
+    //       Scan systems
+    //     </Button>
+    //   ),
+    // },
+    // {
+    //   key: "scan-waypoints",
+    //   label: (
+    //     <Button type="link" icon={<WifiOutlined />}>
+    //       Scan waypoints
+    //     </Button>
+    //   ),
+    // },
   ];
 
   return (

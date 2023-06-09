@@ -1,5 +1,5 @@
-import { Button, Space, Switch } from "antd";
-import { useEffect, useState } from "react";
+import { Space } from "antd";
+import { useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import AgentDB from "./agent-db";
 import { ContractList } from "./contract";
@@ -9,7 +9,6 @@ import { Status } from "./status";
 import { SystemDB, SystemEvent } from "./system-db";
 import { SystemInfo } from "./system-info";
 import { getSystemSymbol } from "./utils";
-import axios from "axios";
 
 // const FetchSystemsToggle = () => {
 //   const [currentPage, setCurrentPage] = useState(1);
@@ -40,11 +39,7 @@ import axios from "axios";
 
 function App() {
   useEffect(() => {
-    // Fetch systems
-    // SystemDB.fetchPages(1, currentPage);
-    // setCurrentPage((c) => c + 1);
-    SystemDB.fetchAll().then((systems) => {
-      console.log(systems);
+    SystemDB.init().then((systems) => {
       // Set default selected system to HQ
       AgentDB.update().then((agent) => {
         const hq = systems.find(

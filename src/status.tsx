@@ -5,6 +5,7 @@ import { RefreshButton } from "./components/refresh-button";
 import { Button, Statistic } from "antd";
 import toast from "react-hot-toast";
 import { SystemDB } from "./system-db";
+import { ReloadOutlined } from "@ant-design/icons";
 
 const FetchSystemsButton = () => {
   const [loading, setLoading] = useState(false);
@@ -17,8 +18,13 @@ const FetchSystemsButton = () => {
   }
 
   return (
-    <Button type="primary" loading={loading} onClick={onFetch}>
-      Fetch systems
+    <Button
+      type="default"
+      loading={loading}
+      onClick={onFetch}
+      icon={<ReloadOutlined />}
+    >
+      Systems
     </Button>
   );
 };

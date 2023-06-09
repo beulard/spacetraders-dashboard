@@ -75,7 +75,6 @@ const ShipSelector = (props: { destinationSymbol: string; size: SizeType }) => {
               })
               .catch((err: AxiosError<any>) => {
                 console.log(err);
-                toast.error(err.response?.data.error.message);
               });
           });
           setSendShips([]);

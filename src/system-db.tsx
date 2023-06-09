@@ -6,6 +6,19 @@ import { System } from "./spacetraders-sdk";
 class SystemDatabase {
   private _systems: System[] = [];
 
+  // Read systems from localStorage if present, else fetch systems.json from api.spacetraders.io
+  public init(): Promise<System[]> {
+    const systemsStr = localStorage.getItem("systems");
+    if (systemsStr) {
+      // console.log("Found systems in localStorage");
+      this._systems = JSON.parse(systemsStr) as System[];
+      return new Promise((resolve) => resolve(this._systems));
+    } else {
+      // console.log("Systems not found in localStorage. Fetching.");
+      return this.fetchAll();
+    }
+  }
+
   public fetchAll(): Promise<System[]> {
     const promise = axios
       .get("https://api.spacetraders.io/v2/systems.json")
@@ -18,6 +31,10 @@ class SystemDatabase {
       loading: "Fetching systems",
       success: "Fetched systems",
       error: "Error fetching systems",
+    });
+
+    promise.then((systems) => {
+      localStorage.setItem("systems", JSON.stringify(systems));
     });
 
     promise.catch((err) => {
