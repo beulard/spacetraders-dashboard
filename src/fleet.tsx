@@ -6,6 +6,7 @@ import { RefreshButton } from "./components/refresh-button";
 import FleetDB from "./fleet-db";
 import { ShipActions } from "./ship-actions";
 import { ShipDescription, CargoInventory } from "./ship-description";
+import toast from "react-hot-toast";
 const { Column } = Table;
 const { Countdown } = Statistic;
 
@@ -37,6 +38,21 @@ const NavColumn = (props: { ship: Ship }) => {
 const ShipList = () => {
   const [fleet, setFleet] = useState<Ship[]>(FleetDB.getMyShips());
 
+  function onRefresh(onDone: Function) {
+    const promise = FleetDB.update();
+
+    toast.promise(promise, {
+      loading: "Fetching ships",
+      success: "Fetched ships",
+      error: "Error (check console)",
+    });
+
+    promise.then((ships: Ship[]) => {
+      setFleet(ships);
+      onDone();
+    });
+  }
+
   useEffect(() => {
     const updateCallback = (ships: Ship[]) => {
       setFleet(ships);
@@ -64,11 +80,7 @@ const ShipList = () => {
         }}
       >
         <h4>Ships</h4>
-        <RefreshButton
-          onClick={(onDone) => {
-            FleetDB.update().then((_) => onDone());
-          }}
-        />
+        <RefreshButton onClick={onRefresh} />
       </div>
       <Table
         dataSource={fleet.map((ship) => ({
