@@ -238,15 +238,83 @@ const PurchaseGoodShipSelect = (props: {
   );
 };
 
-const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
+const ImportExportTable = (props: { market: Market }) => {
+  return (
+    <div>
+      <table>
+        <thead>
+          <tr>
+            <td>Imports</td>
+            <td>Exports</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              {props.market.imports.map((i, idx) => (
+                <HoverTag
+                  color="blue"
+                  key={idx}
+                  tooltip={i.description}
+                  text={i.name}
+                />
+              ))}
+            </td>
+            <td>
+              {props.market.exports.map((i, idx) => (
+                <HoverTag
+                  color="green"
+                  key={idx}
+                  tooltip={i.description}
+                  text={i.name}
+                />
+              ))}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const MarketInfo = (props: {
+  waypoint: SystemWaypoint;
+  localShips: Ship[];
+}) => {
   const [market, setMarket] = useState<Market | null>(null);
-  useEffect(() => {
+  const [ships, setShips] = useState<Ship[]>(props.localShips);
+
+  function updateMarket() {
     api.system
       .getMarket(getSystemSymbol(props.waypoint.symbol), props.waypoint.symbol)
       .then((s) => {
         setMarket(s.data.data);
       });
-  }, [props.waypoint.symbol, props.ships]);
+  }
+
+  useEffect(() => {
+    console.log("effect (waypoint)");
+    updateMarket();
+  }, [props.waypoint.symbol]);
+
+  useEffect(() => {
+    console.log("effect (ships)");
+    // If ships have arrived or left, update the market
+    const updatedShips = FleetDB.getMyShips().filter(
+      (ship) => ship.nav.waypointSymbol === market?.symbol
+    );
+    let changed = false;
+    for (const s of updatedShips) {
+      if (!ships.includes(s)) {
+        changed = true;
+        console.log(`${market?.symbol} changed`);
+      }
+    }
+    if (changed) {
+      updateMarket();
+      setShips(updatedShips);
+    }
+  }, [props.localShips]);
 
   console.log("Render minfo");
 
@@ -255,42 +323,7 @@ const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
       {
         key: "imports",
         label: "Import/export",
-        children: (
-          <div>
-            <table>
-              <thead>
-                <tr>
-                  <td>Imports</td>
-                  <td>Exports</td>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    {market.imports.map((i, idx) => (
-                      <HoverTag
-                        color="blue"
-                        key={idx}
-                        tooltip={i.description}
-                        text={i.name}
-                      />
-                    ))}
-                  </td>
-                  <td>
-                    {market.exports.map((i, idx) => (
-                      <HoverTag
-                        color="green"
-                        key={idx}
-                        tooltip={i.description}
-                        text={i.name}
-                      />
-                    ))}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        ),
+        children: market ? <ImportExportTable market={market} /> : <div></div>,
       },
       {
         key: "exchange",
@@ -350,7 +383,7 @@ const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
               trigger="click"
               title={`Sell ${good.symbol}`}
               content={
-                <SellGoodShipSelect sellGood={good} ships={props.ships} />
+                <SellGoodShipSelect sellGood={good} ships={props.localShips} />
               }
             >
               <Button type="link" size="small">
@@ -372,7 +405,7 @@ const MarketInfo = (props: { waypoint: SystemWaypoint; ships: Ship[] }) => {
               content={
                 <PurchaseGoodShipSelect
                   purchaseGood={good}
-                  ships={props.ships}
+                  ships={props.localShips}
                 />
               }
             >

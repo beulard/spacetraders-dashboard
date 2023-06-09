@@ -198,7 +198,9 @@ const MarketList = (props: { waypoints: Waypoint[] }) => {
             <MarketInfo
               key={waypoint.symbol}
               waypoint={waypoint}
-              ships={ships}
+              localShips={ships.filter(
+                (ship) => ship.nav.waypointSymbol === waypoint.symbol
+              )}
             />
           </Panel>
         ))}
@@ -225,7 +227,9 @@ const ShipyardList = (props: { waypoints: Waypoint[] }) => {
             <ShipyardInfo
               key={waypoint.symbol}
               waypoint={waypoint}
-              ships={FleetDB.getMyShips()}
+              localShips={FleetDB.getMyShips().filter(
+                (ship) => ship.nav.waypointSymbol === waypoint.symbol
+              )}
             />
           </Panel>
         ))}
@@ -304,14 +308,14 @@ const WaypointInfo = (props: {
           {/* Get market */}
           {hasMarket && (
             <Panel key="market" header="Market">
-              <MarketInfo waypoint={props.waypoint} ships={localShips} />
+              <MarketInfo waypoint={props.waypoint} localShips={localShips} />
             </Panel>
           )}
 
           {/* Get shipyard */}
           {hasShipyard && (
             <Panel key="shipyard" header="Shipyard">
-              <ShipyardInfo waypoint={props.waypoint} ships={localShips} />
+              <ShipyardInfo waypoint={props.waypoint} localShips={localShips} />
             </Panel>
           )}
 

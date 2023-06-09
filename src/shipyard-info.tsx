@@ -199,7 +199,7 @@ const ShipyardShipListing = (props: {
 
 export const ShipyardInfo = (props: {
   waypoint: SystemWaypoint;
-  ships: Ship[];
+  localShips: Ship[];
 }) => {
   const [shipyard, setShipyard] = useState<Shipyard | null>(null);
 
@@ -213,7 +213,7 @@ export const ShipyardInfo = (props: {
         console.log(s.data);
         setShipyard(s.data.data);
       });
-  }, [props.ships]);
+  }, [props.localShips]);
 
   // Tabs
   const items: TabsProps["items"] = [
