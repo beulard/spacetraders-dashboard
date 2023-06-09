@@ -10,7 +10,6 @@ class AgentDatabase extends EventEmitter {
   public async update() {
     try {
       const res = await api.agent.getMyAgent();
-      toast.success("Agent refreshed");
       this.agent = res.data.data;
       // Notify every listener
       this.emit("update", this.agent);
