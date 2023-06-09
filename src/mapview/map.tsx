@@ -66,14 +66,7 @@ const MapView = () => {
   }, []);
 
   return (
-    <div
-      style={
-        {
-          // display: "inline-block",
-          // paddingTop: "40px",
-        }
-      }
-    >
+    <div>
       <div id="map-container">
         <img id="map-background" src={mapBackground} alt="bg"></img>
         <canvas
