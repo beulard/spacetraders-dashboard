@@ -1,23 +1,37 @@
-import { Button, Input, Space } from "antd";
+import { Button, Form, Input, Space } from "antd";
 import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { useNavigate } from "react-router";
 import api from "./api";
 
 const Login = () => {
-  const [token, setToken] = useState("");
-  const [agentName, setAgentName] = useState("");
-  const [agentFaction, setAgentFaction] = useState("");
   const navigate = useNavigate();
-  //   const [gameInfo, setGameInfo] = useState("");
+
+  function onRegister(values: { symbol: string; faction: string }) {
+    api.default
+      .register({
+        symbol: values.symbol,
+        faction: values.faction,
+      })
+      .then((res) => {
+        api.updateToken(res.data.data.token);
+        toast.success(`${res.data.data.agent.symbol} created`);
+        console.log(res);
+        navigate("/");
+      })
+      .catch((err) => {
+        console.log(err.response);
+      });
+  }
+
+  function onLogin(values: { token: string }) {
+    api.updateToken(values.token);
+    navigate("/");
+  }
 
   return (
     <div style={{ margin: "auto", textAlign: "center" }}>
       <Toaster position="top-right" />
-      {/* <Space style={{ padding: "1em" }}>
-        <h3>SpaceTraders</h3>
-      </Space>
-      <Divider /> */}
       <h2 style={{ paddingBottom: "1em" }}>Login</h2>
       <Space direction="vertical">
         <p style={{ color: "darkred" }}>No or invalid token</p>
@@ -38,72 +52,68 @@ const Login = () => {
             <label htmlFor="token">
               <h4>Enter token</h4>
             </label>
-            <Input
-              id="token"
-              type="text"
-              placeholder="Token"
-              value={token}
-              onChange={(evt) => setToken(evt.target.value)}
-            ></Input>
-            <Button
-              onClick={() => {
-                api.updateToken(token);
-                navigate("/");
-              }}
-            >
-              Log in
-            </Button>
+            <Form layout="vertical" onFinish={onLogin}>
+              <Form.Item
+                label="Token"
+                name="token"
+                id="token"
+                rules={[
+                  {
+                    required: true,
+                    message: "Required",
+                  },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  Login
+                </Button>
+              </Form.Item>
+            </Form>
           </Space>
           <Space
             direction="vertical"
             size="small"
             style={{ padding: "0 1em 1em 1em" }}
           >
-            <label htmlFor="agent-name">
+            <label htmlFor="symbol">
               <h4>New agent</h4>
             </label>
-            {/* TODO wrap in form */}
-            {/* <form> */}
-            <Input
-              id="agent-name"
-              type="text"
-              placeholder="N4M3"
-              minLength={3}
-              value={agentName}
-              onChange={(evt) => setAgentName(evt.target.value)}
-            ></Input>
-            <Input
-              id="agent-faction"
-              type="text"
-              placeholder="FACTION"
-              defaultValue="COSMIC"
-              value={agentFaction}
-              onChange={(evt) => setAgentFaction(evt.target.value)}
-            ></Input>
-            <Button
-              onClick={() => {
-                api.default
-                  .register({
-                    symbol: agentName,
-                    faction: agentFaction,
-                  })
-                  .then((res) => {
-                    api.updateToken(res.data.data.token);
-                    toast.success(`${res.data.data.agent.symbol} created`);
-                    console.log(res);
-                    navigate("/");
-                  })
-                  .catch((err) => {
-                    console.log(err.response);
-                    toast.error(
-                      err.response.data.error.message + " Check console."
-                    );
-                  });
-              }}
-            >
-              Create
-            </Button>
-            {/* </form> */}
+            <Form layout="vertical" onFinish={onRegister}>
+              <Form.Item
+                label="Symbol"
+                name="symbol"
+                id="agent-name"
+                rules={[
+                  {
+                    required: true,
+                    message: "Min 3 characters",
+                    min: 3,
+                  },
+                ]}
+              >
+                <Input placeholder="N4M3" />
+              </Form.Item>
+              <Form.Item
+                label="Faction"
+                name="faction"
+                rules={[
+                  {
+                    required: true,
+                    message: "Required",
+                  },
+                ]}
+              >
+                <Input placeholder="COSMIC" />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  Create
+                </Button>
+              </Form.Item>
+            </Form>
           </Space>
         </div>
       </Space>
