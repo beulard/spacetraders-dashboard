@@ -2,8 +2,26 @@ import { useEffect, useState } from "react";
 import { Agent } from "./spacetraders-sdk";
 import AgentDB from "./agent-db";
 import { RefreshButton } from "./components/refresh-button";
-import { Statistic } from "antd";
+import { Button, Statistic } from "antd";
 import toast from "react-hot-toast";
+import { SystemDB } from "./system-db";
+
+const FetchSystemsButton = () => {
+  const [loading, setLoading] = useState(false);
+
+  function onFetch() {
+    setLoading(true);
+    SystemDB.fetchAll().then((_) => {
+      setLoading(false);
+    });
+  }
+
+  return (
+    <Button type="primary" loading={loading} onClick={onFetch}>
+      Fetch systems
+    </Button>
+  );
+};
 
 const Status = () => {
   const [name, setName] = useState("");
@@ -66,6 +84,7 @@ const Status = () => {
         </h4>
       </div>
       <RefreshButton onClick={onRefresh} />
+      <FetchSystemsButton />
     </div>
   );
 };

@@ -100,11 +100,10 @@ const ContractBody = (props: { contract: Contract }) => {
               <div
                 className="link-button"
                 onClick={() => {
-                  SystemDB.get(getSystemSymbol(d.destinationSymbol)).then(
-                    (system) => {
-                      SystemEvent.emit("select", system);
-                    }
+                  const system = SystemDB.all.find(
+                    (s) => s.symbol === getSystemSymbol(d.destinationSymbol)
                   );
+                  SystemEvent.emit("select", system);
                 }}
               >
                 {d.destinationSymbol}

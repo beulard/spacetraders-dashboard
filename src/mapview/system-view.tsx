@@ -178,14 +178,11 @@ export class SystemViewScene extends ex.Scene {
         console.log("ac", this.actors.length);
       }
     });
-    // Listen to additional systems
-    SystemDB.addListener(this.onSystemDBEvent);
   }
 
   public onDeactivate() {
     this.engine.input.pointers.off("wheel");
     this.engine.input.pointers.off("move");
-    SystemDB.removeListener(this.onSystemDBEvent);
   }
 
   public updateDrawnSystems() {
@@ -199,20 +196,16 @@ export class SystemViewScene extends ex.Scene {
       vp.bottom + vp.height
     );
 
-    SystemDB.find({
-      selector: {
-        x: {
-          $gt: expandedViewport.left / this.systemPositionScale,
-          $lt: expandedViewport.right / this.systemPositionScale,
-        },
-        y: {
-          $gt: expandedViewport.top / this.systemPositionScale,
-          $lt: expandedViewport.bottom / this.systemPositionScale,
-        },
-      },
-    }).then((res) => {
-      this.drawSystems(res.docs.map((sys) => sys as unknown as System));
-    });
+    // Get systems in exp viewport
+    const systemsInVp = SystemDB.all.filter(
+      (s) =>
+        s.x < expandedViewport.right / this.systemPositionScale &&
+        s.x > expandedViewport.left / this.systemPositionScale &&
+        s.y < expandedViewport.bottom / this.systemPositionScale &&
+        s.y > expandedViewport.top / this.systemPositionScale
+    );
+
+    this.drawSystems(systemsInVp);
   }
 
   public setSelectedSystem(system: SystemGfx) {
