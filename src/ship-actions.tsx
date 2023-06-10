@@ -16,6 +16,8 @@ import FleetDB from "./fleet-db";
 import { Ship, System } from "./spacetraders-sdk";
 import { SystemDB } from "./system-db";
 
+// TODO ship mounts
+
 export const ShipActions = (props: { ship: Ship }) => {
   const [isDocked, setIsDocked] = useState(props.ship.nav.status === "DOCKED");
   // [Exploration]
@@ -240,9 +242,9 @@ export const ShipActions = (props: { ship: Ship }) => {
     <Popover
       trigger="click"
       content={
-        <Space direction="vertical" style={{ gap: 4 }}>
+        <Space direction="vertical" style={{ rowGap: 4 }}>
           {actions.map((a) => (
-            <p>{a!.label}</p>
+            <div key={a.key}>{a.label}</div>
           ))}
         </Space>
       }

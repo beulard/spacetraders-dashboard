@@ -31,6 +31,7 @@ export const MountTag = (props: { mount: ShipMount }) => (
   <HoverTag tooltip={props.mount.description} text={props.mount.name} />
 );
 
+// TODO jettison slider for quantity
 export const CargoInventory = (props: {
   cargo: ShipCargo;
   onJettison: Function;
