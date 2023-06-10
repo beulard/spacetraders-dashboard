@@ -196,6 +196,10 @@ td.ant-table-cell {
   scrollbar-width: thin;
 }
 
+.ship-actions-item {
+  width: 100%;
+}
+
 /* .market-list-panel {
   height: 22px;
 } */

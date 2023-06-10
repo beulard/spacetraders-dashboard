@@ -1,5 +1,5 @@
 import { InfoCircleOutlined } from "@ant-design/icons";
-import { Popover, Progress, Space, Statistic, Table, Tag } from "antd";
+import { Button, Popover, Progress, Space, Statistic, Table, Tag } from "antd";
 import { useEffect, useState } from "react";
 import { Ship, ShipCargo, ShipFuel } from "./spacetraders-sdk";
 import { RefreshButton } from "./components/refresh-button";
@@ -7,6 +7,7 @@ import FleetDB from "./fleet-db";
 import { ShipActions } from "./ship-actions";
 import { ShipDescription, CargoInventory } from "./ship-description";
 import toast from "react-hot-toast";
+import { SystemDB, SystemEvent } from "./system-db";
 const { Column } = Table;
 const { Countdown } = Statistic;
 
@@ -17,10 +18,26 @@ const NavColumn = (props: { ship: Ship }) => {
     setShowCountdown(props.ship.nav.status === "IN_TRANSIT");
   }, [props.ship]);
 
+  function onLocateShip() {
+    SystemEvent.emit(
+      "locate",
+      SystemDB.all.find(
+        (s) => s.symbol === props.ship.nav.route.destination.systemSymbol
+      )
+    );
+  }
+
   return (
-    <>
-      <Tag>{props.ship.nav.status}</Tag>
-      {props.ship.nav.waypointSymbol}
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+      }}
+    >
+      <Tag style={{ margin: 0 }}>{props.ship.nav.status}</Tag>
+      <Button type="link" onClick={onLocateShip}>
+        {props.ship.nav.waypointSymbol}
+      </Button>
       {showCountdown && (
         <Countdown
           valueStyle={{ fontSize: 10 }}
@@ -31,7 +48,7 @@ const NavColumn = (props: { ship: Ship }) => {
           }}
         />
       )}
-    </>
+    </div>
   );
 };
 

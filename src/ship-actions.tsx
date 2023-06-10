@@ -4,17 +4,47 @@ import {
   LoginOutlined,
   LogoutOutlined,
   ReloadOutlined,
+  SendOutlined,
   ToTopOutlined,
   VerticalAlignBottomOutlined,
   WifiOutlined,
 } from "@ant-design/icons";
 import type { MenuProps } from "antd";
-import { Button, Dropdown } from "antd";
+import {
+  Button,
+  Dropdown,
+  Form,
+  Input,
+  Menu,
+  Popover,
+  Select,
+  Space,
+} from "antd";
 import toast from "react-hot-toast";
-import { Ship } from "./spacetraders-sdk";
+import { Ship, System } from "./spacetraders-sdk";
 import AgentDB from "./agent-db";
 import api from "./api";
 import FleetDB from "./fleet-db";
+import { SystemDB } from "./system-db";
+import { useState } from "react";
+import { MenuItemType } from "antd/es/menu/hooks/useItems";
+type MenuItem = Required<MenuProps>["items"][number];
+
+function getItem(
+  label: React.ReactNode,
+  key?: React.Key | null,
+  icon?: React.ReactNode,
+  children?: MenuItem[],
+  type?: "group"
+): MenuItem {
+  return {
+    key,
+    icon,
+    children,
+    label,
+    type,
+  } as MenuItem;
+}
 
 export const ShipActions = (props: { ship: Ship }) => {
   // [Exploration]
@@ -79,6 +109,22 @@ export const ShipActions = (props: { ship: Ship }) => {
   // Navigate
   // Sell
   // Warp
+  function onWarp(values: { waypointSymbol: string }) {
+    console.log("warpin to", values);
+    api.fleet
+      .warpShip(props.ship.symbol, {
+        waypointSymbol: values.waypointSymbol,
+      })
+      .then((res) => {
+        console.log(res);
+        const data = res.data.data;
+        toast.success(
+          `Warping for ${data.fuel.consumed?.amount} fuel. ETA: ${data.nav.route.arrival}`
+        );
+        FleetDB.update();
+      })
+      .catch((err) => console.log(err));
+  }
   // Scan -> Systems
   //      -> Waypoints
   // Refuel [docked]
@@ -115,51 +161,85 @@ export const ShipActions = (props: { ship: Ship }) => {
   }
 
   // Negotiate contract (?)
-  const actions: MenuProps["items"] = [
+  const actions = [
     {
       key: "dock",
       label: (
-        <Button type="link" icon={<VerticalAlignBottomOutlined />}>
+        <Button
+          className="ship-actions-item"
+          icon={<VerticalAlignBottomOutlined style={{ color: "dodgerblue" }} />}
+          onClick={onDock}
+        >
           Dock
         </Button>
       ),
-      onClick: onDock,
     },
     {
       key: "orbit",
       label: (
-        <Button type="link" icon={<ToTopOutlined />}>
+        <Button
+          className="ship-actions-item"
+          icon={<ToTopOutlined style={{ color: "dodgerblue" }} />}
+          onClick={onOrbit}
+        >
           Orbit
         </Button>
       ),
-      onClick: onOrbit,
     },
     {
       key: "refuel",
       label: (
-        <Button type="link" icon={<ReloadOutlined />}>
+        <Button
+          className="ship-actions-item"
+          icon={<ReloadOutlined style={{ color: "dodgerblue" }} />}
+          onClick={onRefuel}
+        >
           Refuel
         </Button>
       ),
-      onClick: onRefuel,
     },
     {
       key: "extract",
       label: (
-        <Button type="link" icon={<DownloadOutlined />}>
+        <Button
+          className="ship-actions-item"
+          icon={<DownloadOutlined style={{ color: "dodgerblue" }} />}
+          onClick={onExtract}
+        >
           Extract
         </Button>
       ),
-      onClick: onExtract,
     },
     {
       key: "survey",
       label: (
-        <Button type="link" icon={<WifiOutlined />}>
+        <Button
+          className="ship-actions-item"
+          icon={<WifiOutlined style={{ color: "dodgerblue" }} />}
+          onClick={onSurvey}
+        >
           Survey
         </Button>
       ),
-      onClick: onSurvey,
+    },
+    {
+      key: "warp",
+      label: (
+        <Popover
+          className="ship-actions-item"
+          trigger="click"
+          title={`Warp ${props.ship.symbol}`}
+          content={
+            <div style={{ minWidth: "14em" }}>
+              <SystemSelector onSubmit={onWarp} />
+            </div>
+          }
+        >
+          <Button icon={<SendOutlined style={{ color: "dodgerblue" }} />}>
+            Warp
+          </Button>
+        </Popover>
+      ),
     },
     // TODO factor scan
     // {
@@ -181,10 +261,78 @@ export const ShipActions = (props: { ship: Ship }) => {
   ];
 
   return (
-    <Dropdown trigger={["click"]} menu={{ items: actions }} placement="top">
+    <Popover
+      trigger="click"
+      content={
+        <Space direction="vertical" style={{ gap: 4 }}>
+          {actions.map((a) => (
+            <p>{a!.label}</p>
+          ))}
+        </Space>
+      }
+    >
       <Button icon={<DownOutlined />} type="primary">
         Actions
       </Button>
-    </Dropdown>
+    </Popover>
+  );
+};
+
+const SystemSelector = (props: {
+  onSubmit: (values: { waypointSymbol: string }) => void;
+}) => {
+  const [system, setSystem] = useState<System | null>(null);
+  const [waypoint, setWaypoint] = useState("");
+
+  return (
+    <Form
+      onFinish={() => {
+        props.onSubmit({ waypointSymbol: system?.waypoints[0]?.symbol || "" });
+      }}
+      layout="inline"
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        margin: 0,
+        width: "100%",
+      }}
+    >
+      <Form.Item style={{ width: "75%", margin: 0 }}>
+        <Select
+          size="small"
+          options={SystemDB.all.map((s) => ({
+            label: s.symbol,
+            value: s.symbol,
+          }))}
+          showSearch
+          placeholder="X1-ABCD"
+          onChange={(v) => {
+            setSystem(SystemDB.all.find((s) => s.symbol === v)!);
+            setWaypoint("");
+          }}
+        />
+      </Form.Item>
+      <Form.Item style={{ width: "85%", margin: 0 }}>
+        <Select
+          size="small"
+          options={system?.waypoints.map((s) => ({
+            label: s.symbol,
+            value: s.symbol,
+          }))}
+          showSearch
+          value={waypoint}
+          placeholder="83510X"
+          onChange={(v) => setWaypoint(v)}
+        />
+      </Form.Item>
+      <Form.Item style={{ margin: 0 }}>
+        <Button
+          type="primary"
+          size="small"
+          icon={<SendOutlined />}
+          htmlType="submit"
+        />
+      </Form.Item>
+    </Form>
   );
 };
