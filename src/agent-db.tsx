@@ -24,7 +24,7 @@ class AgentDatabase extends EventEmitter {
   }
 }
 
-// TODO make a custom hook for subscribing to fleet db events
+// TODO make a custom hook for subscribing to agent db events
 // export function useFleet () {}
 
 const AgentDB = new AgentDatabase();

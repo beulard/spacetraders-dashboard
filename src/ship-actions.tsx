@@ -1,52 +1,23 @@
 import {
   DownOutlined,
   DownloadOutlined,
-  LoginOutlined,
-  LogoutOutlined,
   ReloadOutlined,
   SendOutlined,
   ToTopOutlined,
   VerticalAlignBottomOutlined,
   WifiOutlined,
 } from "@ant-design/icons";
-import type { MenuProps } from "antd";
-import {
-  Button,
-  Dropdown,
-  Form,
-  Input,
-  Menu,
-  Popover,
-  Select,
-  Space,
-} from "antd";
+import { Button, Form, Popover, Select, Space } from "antd";
+import { useState } from "react";
 import toast from "react-hot-toast";
-import { Ship, System } from "./spacetraders-sdk";
 import AgentDB from "./agent-db";
 import api from "./api";
 import FleetDB from "./fleet-db";
+import { Ship, System } from "./spacetraders-sdk";
 import { SystemDB } from "./system-db";
-import { useState } from "react";
-import { MenuItemType } from "antd/es/menu/hooks/useItems";
-type MenuItem = Required<MenuProps>["items"][number];
-
-function getItem(
-  label: React.ReactNode,
-  key?: React.Key | null,
-  icon?: React.ReactNode,
-  children?: MenuItem[],
-  type?: "group"
-): MenuItem {
-  return {
-    key,
-    icon,
-    children,
-    label,
-    type,
-  } as MenuItem;
-}
 
 export const ShipActions = (props: { ship: Ship }) => {
+  const [isDocked, setIsDocked] = useState(props.ship.nav.status === "DOCKED");
   // [Exploration]
   //  Create chart
   // Refine
@@ -55,6 +26,7 @@ export const ShipActions = (props: { ship: Ship }) => {
     api.fleet
       .orbitShip(props.ship.symbol)
       .then((_) => {
+        setIsDocked(false);
         toast.success(
           `${props.ship.symbol} is now orbitting ${props.ship.nav.waypointSymbol}`
         );
@@ -70,6 +42,7 @@ export const ShipActions = (props: { ship: Ship }) => {
     api.fleet
       .dockShip(props.ship.symbol)
       .then((_) => {
+        setIsDocked(true);
         toast.success(
           `Docked ${props.ship.symbol} at ${props.ship.nav.waypointSymbol}`
         );
@@ -162,30 +135,33 @@ export const ShipActions = (props: { ship: Ship }) => {
 
   // Negotiate contract (?)
   const actions = [
-    {
-      key: "dock",
-      label: (
-        <Button
-          className="ship-actions-item"
-          icon={<VerticalAlignBottomOutlined style={{ color: "dodgerblue" }} />}
-          onClick={onDock}
-        >
-          Dock
-        </Button>
-      ),
-    },
-    {
-      key: "orbit",
-      label: (
-        <Button
-          className="ship-actions-item"
-          icon={<ToTopOutlined style={{ color: "dodgerblue" }} />}
-          onClick={onOrbit}
-        >
-          Orbit
-        </Button>
-      ),
-    },
+    isDocked
+      ? {
+          key: "orbit",
+          label: (
+            <Button
+              className="ship-actions-item"
+              icon={<ToTopOutlined style={{ color: "dodgerblue" }} />}
+              onClick={onOrbit}
+            >
+              Orbit
+            </Button>
+          ),
+        }
+      : {
+          key: "dock",
+          label: (
+            <Button
+              className="ship-actions-item"
+              icon={
+                <VerticalAlignBottomOutlined style={{ color: "dodgerblue" }} />
+              }
+              onClick={onDock}
+            >
+              Dock
+            </Button>
+          ),
+        },
     {
       key: "refuel",
       label: (

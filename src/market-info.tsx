@@ -46,10 +46,6 @@ const SellGoodShipSelect = (props: {
       AgentDB.update();
       setAmountInCargo(amountInCargo - transaction.units);
     } catch (error) {
-      const apiError = (error as any).response?.data?.error;
-      if (apiError) {
-        toast.error(apiError.message);
-      }
       console.log(error);
     }
   }
@@ -161,10 +157,6 @@ const PurchaseGoodShipSelect = (props: {
       AgentDB.update();
       setSpaceInCargo((space) => space - transaction.units);
     } catch (error) {
-      const apiError = (error as any).response?.data?.error;
-      if (apiError) {
-        toast.error(apiError.message);
-      }
       console.log(error);
     }
   }

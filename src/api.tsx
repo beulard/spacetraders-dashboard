@@ -27,7 +27,6 @@ class Api {
   constructor() {
     this.updateToken(localStorage.getItem("access-token") || "");
 
-    // TODO use rate limiter instead of retry logic
     // Retry logic for 429 rate-limit errors
     this.http.interceptors.response.use(
       // response interceptor

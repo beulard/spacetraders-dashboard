@@ -50,7 +50,6 @@ class SystemDatabase {
   }
 }
 
-// TODO rename to SystemDB, align api with FleetDB and WaypointDB
 const SystemDB = new SystemDatabase();
 
 // Global event emitter for system selection in react UI or map view

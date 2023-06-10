@@ -1,13 +1,14 @@
 import { InfoCircleOutlined } from "@ant-design/icons";
 import { Button, Popover, Progress, Space, Statistic, Table, Tag } from "antd";
 import { useEffect, useState } from "react";
-import { Ship, ShipCargo, ShipFuel } from "./spacetraders-sdk";
+import { Ship, ShipCargo, ShipCargoItem, ShipFuel } from "./spacetraders-sdk";
 import { RefreshButton } from "./components/refresh-button";
 import FleetDB from "./fleet-db";
 import { ShipActions } from "./ship-actions";
 import { ShipDescription, CargoInventory } from "./ship-description";
 import toast from "react-hot-toast";
 import { SystemDB, SystemEvent } from "./system-db";
+import api from "./api";
 const { Column } = Table;
 const { Countdown } = Statistic;
 
@@ -70,6 +71,8 @@ const ShipList = () => {
     });
   }
 
+  function onJettison(item: ShipCargoItem) {}
+
   useEffect(() => {
     const updateCallback = (ships: Ship[]) => {
       setFleet(ships);
@@ -131,9 +134,29 @@ const ShipList = () => {
           title="Cargo"
           dataIndex="cargo"
           key="cargo"
-          render={(cargo: ShipCargo) => (
+          render={(cargo: ShipCargo, ship: Ship) => (
             <div style={{ display: "flex", alignItems: "center" }}>
-              <Popover content={<CargoInventory cargo={cargo} />}>
+              <Popover
+                content={
+                  <CargoInventory
+                    cargo={cargo}
+                    onJettison={(item: ShipCargoItem) => {
+                      api.fleet
+                        .jettison(ship.symbol, {
+                          symbol: item.symbol,
+                          units: item.units,
+                        })
+                        .then((res) => {
+                          toast.success(
+                            `Jettisoned ${item.units} units of ${item.symbol}`
+                          );
+                          FleetDB.update();
+                        })
+                        .catch((err) => console.log(err));
+                    }}
+                  />
+                }
+              >
                 <Space>
                   <p>
                     {cargo.units} / {cargo.capacity}

@@ -375,7 +375,6 @@ const SystemInfo = () => {
     }
   }, [system]);
 
-  // TODO More practical to add a browsable list of markets and shipyards in the system?
   const tabItems: TabsProps["items"] = [
     {
       key: "waypoints",
