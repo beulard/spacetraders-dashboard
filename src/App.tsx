@@ -10,33 +10,6 @@ import { SystemDB, SystemEvent } from "./system-db";
 import { SystemInfo } from "./system-info";
 import { getSystemSymbol } from "./utils";
 
-// const FetchSystemsToggle = () => {
-//   const [currentPage, setCurrentPage] = useState(1);
-//   const [fetchSystems, setFetchSystems] = useState(false);
-
-//   function onToggleFetchSystems(value: boolean) {
-//     setFetchSystems(value);
-//     if (value) {
-//       SystemDB.fetchStart();
-//       SystemDB.fetchUntil(currentPage).then((page) => {
-//         setCurrentPage(page);
-//       });
-//     } else {
-//       SystemDB.fetchStop();
-//     }
-//   }
-//   return (
-//     <div>
-//       <p>Fetch systems</p>
-//       <Switch
-//         defaultChecked={false}
-//         id="fetch-systems-toggle"
-//         onChange={() => onToggleFetchSystems(!fetchSystems)}
-//       ></Switch>
-//     </div>
-//   );
-// };
-
 const { defaultAlgorithm, darkAlgorithm } = theme;
 
 function App() {
