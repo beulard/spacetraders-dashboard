@@ -1,14 +1,25 @@
 import { InfoCircleOutlined } from "@ant-design/icons";
-import { Button, Popover, Progress, Space, Statistic, Table, Tag } from "antd";
+import {
+  Button,
+  Card,
+  Popover,
+  Progress,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Typography,
+} from "antd";
 import { useEffect, useState } from "react";
-import { Ship, ShipCargo, ShipCargoItem, ShipFuel } from "./spacetraders-sdk";
+import toast from "react-hot-toast";
+import api from "./api";
 import { RefreshButton } from "./components/refresh-button";
 import FleetDB from "./fleet-db";
 import { ShipActions } from "./ship-actions";
-import { ShipDescription, CargoInventory } from "./ship-description";
-import toast from "react-hot-toast";
+import { CargoInventory, ShipDescription } from "./ship-description";
+import { Ship, ShipCargo, ShipCargoItem, ShipFuel } from "./spacetraders-sdk";
 import { SystemDB, SystemEvent } from "./system-db";
-import api from "./api";
+const { Title, Text } = Typography;
 const { Column } = Table;
 const { Countdown } = Statistic;
 
@@ -89,19 +100,13 @@ const ShipList = () => {
   }, []);
 
   return (
-    <div style={{ width: "100%" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "4em",
-          alignItems: "center",
-          height: "3em",
-        }}
-      >
-        <h4>Ships</h4>
-        <RefreshButton onClick={onRefresh} />
-      </div>
+    <Card
+      size="small"
+      title={<Text className="small-heading">Fleet</Text>}
+      extra={<RefreshButton onClick={onRefresh} />}
+      type="inner"
+      style={{ minWidth: "600px" }}
+    >
       <Table
         dataSource={fleet.map((ship) => ({
           ...ship,
@@ -109,7 +114,6 @@ const ShipList = () => {
         }))}
         size="small"
         pagination={false}
-        style={{ margin: "auto" }}
       >
         <Column
           title="Ship"
@@ -191,7 +195,7 @@ const ShipList = () => {
           render={(_, ship: Ship) => <ShipActions ship={ship} />}
         />
       </Table>
-    </div>
+    </Card>
   );
 };
 

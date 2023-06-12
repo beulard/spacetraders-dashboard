@@ -1,5 +1,5 @@
-import { Space } from "antd";
-import { useEffect } from "react";
+import { Card, ConfigProvider, theme } from "antd";
+import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import AgentDB from "./agent-db";
 import { ContractList } from "./contract";
@@ -37,7 +37,11 @@ import { getSystemSymbol } from "./utils";
 //   );
 // };
 
+const { defaultAlgorithm, darkAlgorithm } = theme;
+
 function App() {
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
   useEffect(() => {
     SystemDB.init().then((systems) => {
       // Set default selected system to HQ
@@ -51,43 +55,64 @@ function App() {
     });
   }, []);
 
+  if (isDarkMode) {
+    document.body.style.backgroundColor = "#111";
+  } else {
+    document.body.style.backgroundColor = "white";
+  }
+
   return (
-    <div className="App">
-      <Toaster position="top-right" />
-      <div id="dashboard">
-        <Space direction="vertical" size="small" style={{ width: "100%" }}>
-          <Status />
+    <ConfigProvider
+      theme={{ algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm }}
+    >
+      <div className="app">
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              backgroundColor: isDarkMode ? "#1f1f1f" : "white",
+              color: isDarkMode ? "#fff" : "#000",
+              border: isDarkMode ? "#fff" : "#000",
+            },
+          }}
+        />
+        <div id="dashboard">
+          <Status setIsDarkMode={setIsDarkMode} />
           <div
             style={{
+              flexGrow: 1,
+              flexBasis: "100%",
+              minHeight: "0",
+              overflowY: "auto",
               display: "flex",
-              width: "100%",
             }}
           >
-            <div
+            <SystemInfo />
+            <Card
               style={{
-                textAlign: "left",
-                flex: 1,
-                paddingRight: "2%",
+                marginLeft: "1%",
+                width: "50%",
+                minWidth: "600px",
+                maxHeight: "100%",
               }}
-            >
-              <SystemInfo />
-            </div>
-            <div
-              style={{
-                flex: 1,
+              bodyStyle={{
+                maxHeight: "100%",
+                minWidth: "600px",
+                overflow: "scroll",
+                scrollbarWidth: "thin",
                 display: "flex",
                 flexDirection: "column",
+                gap: "1em",
               }}
             >
               <MapView />
               <ShipList />
               <ContractList />
-            </div>
-            {/* TODO searchable list of systems <SystemList setSelectedSystem={setSelectedSystem} /> */}
+            </Card>
           </div>
-        </Space>
+        </div>
       </div>
-    </div>
+    </ConfigProvider>
   );
 }
 

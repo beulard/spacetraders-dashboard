@@ -1,11 +1,12 @@
+import { ReloadOutlined } from "@ant-design/icons";
+import { Button, Card, Statistic, Switch, Typography } from "antd";
 import { useEffect, useState } from "react";
-import { Agent } from "./spacetraders-sdk";
+import toast from "react-hot-toast";
 import AgentDB from "./agent-db";
 import { RefreshButton } from "./components/refresh-button";
-import { Button, Statistic } from "antd";
-import toast from "react-hot-toast";
+import { Agent } from "./spacetraders-sdk";
 import { SystemDB } from "./system-db";
-import { ReloadOutlined } from "@ant-design/icons";
+const { Title } = Typography;
 
 const FetchSystemsButton = () => {
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,7 @@ const FetchSystemsButton = () => {
   );
 };
 
-const Status = () => {
+const Status = (props: { setIsDarkMode: Function }) => {
   const [name, setName] = useState("");
   const [credits, setCredits] = useState(-1);
   const [home, setHome] = useState("");
@@ -66,15 +67,14 @@ const Status = () => {
   }, []);
 
   return (
-    <div
-      style={{
+    <Card
+      size="small"
+      bordered={true}
+      // style={{ maxHeight: "10%" }}
+      bodyStyle={{
         display: "flex",
         alignItems: "center",
         justifyContent: "space-evenly",
-        maxWidth: "50em",
-        height: "2.4em",
-        padding: "1em",
-        margin: "auto",
       }}
     >
       <div>
@@ -84,14 +84,19 @@ const Status = () => {
           valueStyle={{ fontSize: "13pt" }}
         />
       </div>
-      <div>
-        <h4>
-          {name} from {home}
-        </h4>
+      <div style={{ fontSize: 17 }}>
+        {name} from {home}
       </div>
       <RefreshButton onClick={onRefresh} />
       <FetchSystemsButton />
-    </div>
+      {/* Mode switch */}
+      <Switch
+        onChange={(val) => props.setIsDarkMode(val)}
+        defaultChecked={true}
+        checkedChildren="☽︎"
+        unCheckedChildren="☾"
+      />
+    </Card>
   );
 };
 

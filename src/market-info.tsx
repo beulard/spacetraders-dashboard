@@ -1,12 +1,3 @@
-import { useEffect, useState } from "react";
-import {
-  Market,
-  MarketTradeGood,
-  Ship,
-  SystemWaypoint,
-} from "./spacetraders-sdk";
-import { alphabeticSorter, getSystemSymbol } from "./utils";
-import api from "./api";
 import {
   Button,
   Popconfirm,
@@ -18,11 +9,20 @@ import {
   Tabs,
   TabsProps,
 } from "antd";
-import { HoverTag } from "./components/hover-tag";
 import Table, { ColumnsType } from "antd/es/table";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import FleetDB from "./fleet-db";
 import AgentDB from "./agent-db";
+import api from "./api";
+import { HoverTag } from "./components/hover-tag";
+import FleetDB from "./fleet-db";
+import {
+  Market,
+  MarketTradeGood,
+  Ship,
+  SystemWaypoint,
+} from "./spacetraders-sdk";
+import { alphabeticSorter, getSystemSymbol } from "./utils";
 
 const SellGoodShipSelect = (props: {
   sellGood: MarketTradeGood;
@@ -362,6 +362,7 @@ const MarketInfo = (props: {
           dataIndex: "supply",
           key: "supply",
           className: "small",
+          align: "right",
           render: (v) => <p style={{ padding: 0 }}>{v}</p>,
         },
         {
@@ -369,6 +370,7 @@ const MarketInfo = (props: {
           dataIndex: "sellPrice",
           key: "sell",
           className: "small",
+          align: "right",
           sorter: (a, b) => a.sellPrice - b.sellPrice,
           render: (price, good) => (
             <Popover
@@ -389,6 +391,7 @@ const MarketInfo = (props: {
           dataIndex: "purchasePrice",
           key: "purchasePrice",
           className: "small",
+          align: "right",
           sorter: (a, b) => a.purchasePrice - b.purchasePrice,
           render: (price, good) => (
             <Popover
@@ -412,6 +415,7 @@ const MarketInfo = (props: {
           dataIndex: "tradeVolume",
           key: "tradeVolume",
           className: "small",
+          align: "right",
         },
       ];
       items.unshift({

@@ -1,6 +1,6 @@
 import * as ex from "excalibur";
-import { System } from "../spacetraders-sdk";
 import FleetDB from "../fleet-db";
+import { System } from "../spacetraders-sdk";
 import { SystemDB, SystemEvent } from "../system-db";
 import WaypointDB from "../waypoint-db";
 import { SystemTypeColor } from "./gfx-common";
@@ -101,6 +101,9 @@ export class SystemViewScene extends ex.Scene {
     this.uiElement = document.getElementById("map-ui")!;
 
     this.systemsGfx = new Map<string, SystemGfx>();
+
+    // TODO SystemEvent locate waypoint
+    // Move camera to system -> enter waypoint view -> move to waypoint
 
     // Update selected system gfx on select events
     SystemEvent.on("select", (system: System) => {

@@ -1,13 +1,14 @@
 import { CodeBlock } from "@atlaskit/code";
-import DynamicTable from "@atlaskit/dynamic-table";
-import { Button, Popconfirm, Popover } from "antd";
+import { Button, Card, Popconfirm, Popover, Typography } from "antd";
+import Table, { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Contract, ContractDeliverGood } from "./spacetraders-sdk";
 import api from "./api";
 import { RefreshButton } from "./components/refresh-button";
+import { Contract, ContractDeliverGood } from "./spacetraders-sdk";
 import { SystemDB, SystemEvent } from "./system-db";
 import { getSystemSymbol } from "./utils";
+const { Text } = Typography;
 
 function getTotalPayment(contract: Contract) {
   return contract.terms.payment.onAccepted + contract.terms.payment.onFulfilled;
@@ -41,6 +42,7 @@ const Deadline = (props: { deadline: Date }) => {
 const ContractDescription = (props: { contract: Contract }) => {
   return (
     <Popover
+      overlayInnerStyle={{ padding: 1 }}
       trigger="click"
       content={<ContractBody contract={props.contract} />}
     >
@@ -56,10 +58,7 @@ const ContractBody = (props: { contract: Contract }) => {
 
   // TODO handle other types of contract
   return (
-    <div style={{ margin: "1em", minWidth: "30em" }}>
-      <h4>
-        {contract.type} for {contract.factionSymbol}
-      </h4>
+    <Card size="small" title={`${contract.type} for ${contract.factionSymbol}`}>
       <table>
         <tbody>
           <tr>
@@ -72,17 +71,19 @@ const ContractBody = (props: { contract: Contract }) => {
           </tr>
         </tbody>
       </table>
-      <div style={{ marginTop: "1em" }}>
-        <h6>Deadline</h6>
-        {deadline.toLocaleDateString("fr")} {deadline.toLocaleTimeString("fr")}{" "}
-        <b>
-          (
-          <Deadline deadline={deadline} />)
-        </b>
-      </div>
+      <p>
+        <b>Deadline</b>
+      </p>
+      {deadline.toLocaleDateString("fr")} {deadline.toLocaleTimeString("fr")}{" "}
+      <b>
+        (
+        <Deadline deadline={deadline} />)
+      </b>
       {contract.accepted || (
         <div>
-          <h6>Expires</h6>
+          <p>
+            <b>Expires</b>
+          </p>
           {expires.toDateString()} {expires.toLocaleTimeString()}{" "}
           <b>
             (
@@ -90,29 +91,33 @@ const ContractBody = (props: { contract: Contract }) => {
           </b>
         </div>
       )}
-      <h6>Deliver</h6>
-      <ul>
-        {contract.terms.deliver?.map((item, idx) => {
-          const d = item as ContractDeliverGood;
-          return (
-            <li key={idx} style={{ alignItems: "center" }}>
-              {d.tradeSymbol} to{" "}
-              <div
-                className="link-button"
-                onClick={() => {
-                  const system = SystemDB.all.find(
-                    (s) => s.symbol === getSystemSymbol(d.destinationSymbol)
-                  );
-                  SystemEvent.emit("select", system);
-                }}
-              >
-                {d.destinationSymbol}
-              </div>{" "}
-              {d.unitsFulfilled}/{d.unitsRequired}
-            </li>
-          );
-        })}
-      </ul>
+      <div>
+        <p>
+          <b>Deliver</b>
+        </p>
+        <ul style={{ margin: 0 }}>
+          {contract.terms.deliver?.map((item, idx) => {
+            const d = item as ContractDeliverGood;
+            return (
+              <li key={idx}>
+                {d.tradeSymbol} to{" "}
+                <div
+                  className="link-button"
+                  onClick={() => {
+                    const system = SystemDB.all.find(
+                      (s) => s.symbol === getSystemSymbol(d.destinationSymbol)
+                    );
+                    SystemEvent.emit("select", system);
+                  }}
+                >
+                  {d.destinationSymbol}
+                </div>{" "}
+                {d.unitsFulfilled}/{d.unitsRequired}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
       <div style={{ paddingTop: "0.5em" }}>
         <Popover
           mouseEnterDelay={0.3}
@@ -127,12 +132,12 @@ const ContractBody = (props: { contract: Contract }) => {
           <Button type="dashed">Show JSON</Button>
         </Popover>
       </div>
-    </div>
+    </Card>
   );
 };
 
 const ContractList = () => {
-  const [contracts, setContracts] = useState(Array<Contract>());
+  const [contracts, setContracts] = useState<Contract[]>([]);
 
   const refresh = (onDone: Function = () => {}) => {
     const promise = api.contract.getContracts();
@@ -157,105 +162,85 @@ const ContractList = () => {
   };
   useEffect(refresh, []);
 
-  const tableHead = {
-    cells: [
-      {
-        key: "type",
-        content: "Type",
-        isSortable: true,
-      },
-      {
-        key: "faction",
-        content: "Faction",
-        isSortable: false,
-      },
-      { key: "payment", content: "Total payment", isSortable: true },
-      {
-        key: "info",
-        content: "Info",
-      },
-      {
-        key: "acceptButton",
-        content: "Accept",
-        isSortable: true,
-      },
-    ],
-  };
-
-  const tableRows = contracts.map((contract) => ({
-    key: contract.id,
-    cells: [
-      {
-        key: "type",
-        content: contract.type,
-      },
-      {
-        key: "faction",
-        content: contract.factionSymbol,
-      },
-      { key: "payment", content: `$${getTotalPayment(contract)}` },
-      {
-        key: "info",
-        content: <ContractDescription contract={contract} />,
-      },
-      {
-        key: "acceptButton",
-        content: (
-          <Popconfirm
-            disabled={contract.accepted}
-            title="Accept contract?"
-            onConfirm={() => {
-              const promise = api.contract.acceptContract(contract.id);
-              setContracts(
-                contracts.map((c) =>
-                  c.id === contract.id ? { ...c, accepted: true } : c
-                )
-              );
-              toast.promise(promise, {
-                loading: "Accepting...",
-                success: "Accepted contract. Good luck!",
-                error: "Error!",
+  const columns: ColumnsType<Contract> = [
+    {
+      key: "type",
+      title: "Type",
+      dataIndex: "type",
+    },
+    {
+      key: "faction",
+      title: "Faction",
+      dataIndex: "factionSymbol",
+      align: "right",
+    },
+    {
+      key: "payment",
+      title: "Total payment",
+      sorter: (a, b) => getTotalPayment(a) - getTotalPayment(b),
+      render: (_, contract) => `$${getTotalPayment(contract)}`,
+      align: "right",
+    },
+    {
+      key: "info",
+      title: "Info",
+      render: (_, contract) => <ContractDescription contract={contract} />,
+      align: "center",
+    },
+    {
+      key: "acceptButton",
+      title: "Accept",
+      align: "center",
+      render: (_, contract) => (
+        <Popconfirm
+          disabled={contract.accepted}
+          title="Accept contract?"
+          onConfirm={() => {
+            const promise = api.contract.acceptContract(contract.id);
+            setContracts(
+              contracts.map((c) =>
+                c.id === contract.id ? { ...c, accepted: true } : c
+              )
+            );
+            toast.promise(promise, {
+              loading: "Accepting...",
+              success: "Accepted contract. Good luck!",
+              error: "Error!",
+            });
+            promise
+              .then((_) => {
+                refresh();
+              })
+              .catch((err) => {
+                console.log(err);
               });
-              promise
-                .then((_) => {
-                  refresh();
-                })
-                .catch((err) => {
-                  console.log(err);
-                });
-            }}
-          >
-            <Button disabled={contract.accepted} type="primary">
-              Accept
-            </Button>
-          </Popconfirm>
-        ),
-      },
-    ],
-  }));
+          }}
+        >
+          <Button disabled={contract.accepted} type="primary">
+            Accept
+          </Button>
+        </Popconfirm>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "4em",
-          alignItems: "center",
-          height: "3em",
-        }}
-      >
-        <h4>Contracts</h4>
-        <RefreshButton onClick={refresh} />
-      </div>
-      <div style={{ margin: "auto", maxWidth: "60em" }}>
-        <DynamicTable
-          head={tableHead}
-          rows={tableRows}
-          isRankable={true}
-        ></DynamicTable>
-      </div>
-    </div>
+    <Card
+      size="small"
+      title={<Text className="small-heading">Contracts</Text>}
+      extra={<RefreshButton onClick={refresh} />}
+      type="inner"
+      style={{ minWidth: "600px" }}
+    >
+      <Table
+        className="contracts-table"
+        rowClassName="table-row"
+        size="small"
+        columns={columns}
+        dataSource={contracts}
+        pagination={false}
+      ></Table>
+    </Card>
   );
 };
 

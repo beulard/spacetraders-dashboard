@@ -2,6 +2,7 @@ import { CodeBlock } from "@atlaskit/code";
 import ArrowRightIcon from "@atlaskit/icon/glyph/arrow-right";
 import {
   Button,
+  Card,
   Collapse,
   Popover,
   Select,
@@ -11,9 +12,15 @@ import {
   Tag,
   Tooltip,
 } from "antd";
+import { SizeType } from "antd/es/config-provider/SizeContext";
 import { AxiosError } from "axios";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import api from "./api";
+import { Accordion } from "./components/accordion";
+import FleetDB from "./fleet-db";
+import { MarketInfo } from "./market-info";
+import { ShipyardInfo } from "./shipyard-info";
 import {
   Ship,
   System,
@@ -22,14 +29,8 @@ import {
   WaypointTraitSymbolEnum,
   WaypointType,
 } from "./spacetraders-sdk";
-import api from "./api";
-import { Accordion } from "./components/accordion";
-import FleetDB from "./fleet-db";
-import { MarketInfo } from "./market-info";
-import { ShipyardInfo } from "./shipyard-info";
 import { SystemEvent } from "./system-db";
 import WaypointDB from "./waypoint-db";
-import { SizeType } from "antd/es/config-provider/SizeContext";
 const { Panel } = Collapse;
 
 const ShipSelector = (props: { destinationSymbol: string; size: SizeType }) => {
@@ -222,6 +223,17 @@ const ShipyardList = (props: { waypoints: Waypoint[] }) => {
           <Panel
             key={waypoint.symbol}
             header={`${waypoint.symbol} [${waypoint.type}]`}
+            extra={
+              <span
+                style={{ display: "block", minWidth: "15em" }}
+                onClick={(evt) => evt.stopPropagation()} // Prevent panel collapse on click
+              >
+                <ShipSelector
+                  size="small"
+                  destinationSymbol={waypoint.symbol}
+                />
+              </span>
+            }
           >
             <ShipyardInfo
               key={waypoint.symbol}
@@ -394,17 +406,25 @@ const SystemInfo = () => {
   ];
 
   return (
-    <span>
+    <span style={{ width: "50%", maxHeight: "100%" }}>
       {system ? (
-        <div>
-          <div
-            style={{
-              marginBottom: "0em",
-              padding: 0,
-              width: "100%",
-              display: "inline-block",
-            }}
-          >
+        <Card
+          size="small"
+          bordered={true}
+          style={{
+            maxHeight: "100%",
+            display: "flex",
+            flexDirection: "column",
+            // height: "100%",
+          }}
+          bodyStyle={{
+            paddingTop: "1%",
+            flexGrow: 1,
+            textAlign: "left",
+            overflowY: "scroll",
+            scrollbarWidth: "thin",
+          }}
+          title={
             <Tooltip
               title="Locate on map"
               mouseEnterDelay={0.1}
@@ -417,10 +437,9 @@ const SystemInfo = () => {
                 type="text"
                 size="small"
                 style={{
-                  display: "inline",
+                  fontWeight: "bold",
                   width: "100%",
                   height: "100%",
-                  textAlign: "center",
                 }}
               >
                 <big>
@@ -428,8 +447,8 @@ const SystemInfo = () => {
                 </big>
               </Button>
             </Tooltip>
-          </div>
-
+          }
+        >
           <Tabs size="small" items={tabItems} />
 
           {system.factions.length > 0 && (
@@ -441,7 +460,7 @@ const SystemInfo = () => {
               ))}
             ></Accordion>
           )}
-        </div>
+        </Card>
       ) : (
         <div>No selected system</div>
       )}
