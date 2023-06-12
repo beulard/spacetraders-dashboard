@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.css": "/spacetraders-dashboard/static/css/main.b9ace5b9.css",
-    "main.js": "/spacetraders-dashboard/static/js/main.95e95b0d.js",
-    "@atlaskit-internal_refractor-import.js": "/spacetraders-dashboard/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js",
+    "main.css": "/spacetraders-dashboard/static/css/main.58146348.css",
+    "main.js": "/spacetraders-dashboard/static/js/main.05cae8b8.js",
+    "@atlaskit-internal_refractor-import.js": "/spacetraders-dashboard/static/js/@atlaskit-internal_refractor-import.9f0d1285.chunk.js",
     "static/media/UbuntuMono-BoldItalic.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-BoldItalic.fc5d4735a7d43374879c.ttf",
     "static/media/UbuntuMono-Italic.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-Italic.62c035af965c44841510.ttf",
     "static/media/UbuntuMono-Regular.ttf": "/spacetraders-dashboard/static/media/UbuntuMono-Regular.b36e40ad575cc6d61071.ttf",
@@ -12,12 +12,12 @@
     "static/media/OpenSans-Regular.ttf": "/spacetraders-dashboard/static/media/OpenSans-Regular.a5fe783dd47c116806f9.ttf",
     "static/media/starbg_gen3_600x400.png": "/spacetraders-dashboard/static/media/starbg_gen3_600x400.4c2c57e463e0fddbc650.png",
     "index.html": "/spacetraders-dashboard/index.html",
-    "main.b9ace5b9.css.map": "/spacetraders-dashboard/static/css/main.b9ace5b9.css.map",
-    "main.95e95b0d.js.map": "/spacetraders-dashboard/static/js/main.95e95b0d.js.map",
-    "@atlaskit-internal_refractor-import.0aff1115.chunk.js.map": "/spacetraders-dashboard/static/js/@atlaskit-internal_refractor-import.0aff1115.chunk.js.map"
+    "main.58146348.css.map": "/spacetraders-dashboard/static/css/main.58146348.css.map",
+    "main.05cae8b8.js.map": "/spacetraders-dashboard/static/js/main.05cae8b8.js.map",
+    "@atlaskit-internal_refractor-import.9f0d1285.chunk.js.map": "/spacetraders-dashboard/static/js/@atlaskit-internal_refractor-import.9f0d1285.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.b9ace5b9.css",
-    "static/js/main.95e95b0d.js"
+    "static/css/main.58146348.css",
+    "static/js/main.05cae8b8.js"
   ]
 }
