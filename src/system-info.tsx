@@ -36,7 +36,10 @@ const { Panel } = Collapse;
 const ShipSelector = (props: { destinationSymbol: string; size: SizeType }) => {
   const [sendShips, setSendShips] = useState<string[]>([]);
 
-  const fleet = FleetDB.getMyShips();
+  // Filter out ships already at destination waypoint
+  const fleet = FleetDB.getMyShips().filter(
+    (s) => s.nav.waypointSymbol !== props.destinationSymbol
+  );
 
   return (
     <div style={{ display: "flex", alignItems: "center" }}>
