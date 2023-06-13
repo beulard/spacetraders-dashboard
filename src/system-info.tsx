@@ -195,13 +195,7 @@ const MarketList = (props: { waypoints: Waypoint[] }) => {
               </span>
             }
           >
-            <MarketInfo
-              key={waypoint.symbol}
-              waypoint={waypoint}
-              localShipsD={ships.filter(
-                (ship) => ship.nav.waypointSymbol === waypoint.symbol
-              )}
-            />
+            <MarketInfo key={waypoint.symbol} waypoint={waypoint} />
           </Panel>
         ))}
     </Collapse>
@@ -319,7 +313,7 @@ const WaypointInfo = (props: {
           {/* Get market */}
           {hasMarket && (
             <Panel key="market" header="Market">
-              <MarketInfo waypoint={props.waypoint} localShipsD={localShips} />
+              <MarketInfo waypoint={props.waypoint} />
             </Panel>
           )}
 

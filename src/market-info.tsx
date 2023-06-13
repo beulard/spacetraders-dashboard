@@ -269,10 +269,7 @@ const ImportExportTable = (props: { market: Market }) => {
   );
 };
 
-const MarketInfo = (props: {
-  waypoint: SystemWaypoint;
-  localShipsD: Ship[];
-}) => {
+const MarketInfo = (props: { waypoint: SystemWaypoint }) => {
   const [market, setMarket] = useState<Market | null>(null);
   const [ships, setShips] = useState<Ship[]>([]);
 
