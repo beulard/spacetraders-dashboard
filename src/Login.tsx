@@ -18,7 +18,7 @@ import Title from "antd/es/typography/Title";
 const { defaultAlgorithm, darkAlgorithm } = theme;
 
 const Login = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const navigate = useNavigate();
 
   function onRegister(values: { symbol: string; faction: string }) {
@@ -57,7 +57,6 @@ const Login = () => {
         <div style={{ margin: "auto", textAlign: "center" }}>
           <Toaster position="top-right" />
           <Title level={2}>Login</Title>
-          {/* <h2 style={{ paddingBottom: "1em" }}>Login</h2> */}
           <Space direction="vertical">
             <p style={{ color: "darkred" }}>No or invalid token</p>
             <p>Please enter valid token or create a new agent</p>
