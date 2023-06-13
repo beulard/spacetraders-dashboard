@@ -271,44 +271,76 @@ const ImportExportTable = (props: { market: Market }) => {
 
 const MarketInfo = (props: {
   waypoint: SystemWaypoint;
-  localShips: Ship[];
+  localShipsD: Ship[];
 }) => {
   const [market, setMarket] = useState<Market | null>(null);
-  const [ships, setShips] = useState<Ship[]>(props.localShips);
+  const [ships, setShips] = useState<Ship[]>([]);
 
-  function updateMarket() {
+  useEffect(() => {
+    console.log(`${market?.symbol} fetch`);
     api.system
       .getMarket(getSystemSymbol(props.waypoint.symbol), props.waypoint.symbol)
       .then((s) => {
+        setShips(
+          FleetDB.getMyShips().filter(
+            (ship) => ship.nav.waypointSymbol === s.data.data.symbol
+          )
+        );
         setMarket(s.data.data);
       });
-  }
-
-  useEffect(() => {
-    console.log("effect (waypoint)");
-    updateMarket();
   }, [props.waypoint.symbol]);
 
   useEffect(() => {
-    console.log("effect (ships)");
-    // If ships have arrived or left, update the market
-    const updatedShips = FleetDB.getMyShips().filter(
-      (ship) => ship.nav.waypointSymbol === market?.symbol
-    );
-    let changed = false;
-    for (const s of updatedShips) {
-      if (!ships.includes(s)) {
-        changed = true;
-        console.log(`${market?.symbol} changed`);
-      }
-    }
-    if (changed) {
-      updateMarket();
-      setShips(updatedShips);
-    }
-  }, [props.localShips]);
+    const updateShips = (newShips: Ship[]) => {
+      if (market) {
+        const newLocalShips = newShips.filter(
+          (ship) => ship.nav.waypointSymbol === market.symbol
+        );
+        // If updated ship nav status is different from stored
+        if (
+          ships.length !== newLocalShips.length ||
+          !ships.every(
+            (x) =>
+              newLocalShips.filter(
+                (s) => s.symbol === x.symbol && s.nav.status === x.nav.status
+              ).length !== 0
+          )
+        ) {
+          // Fetch market and ships
+          console.log(`${market.symbol} fetch`);
+          api.system
+            .getMarket(
+              getSystemSymbol(props.waypoint.symbol),
+              props.waypoint.symbol
+            )
+            .then((s) => {
+              setShips(
+                FleetDB.getMyShips().filter(
+                  (ship) => ship.nav.waypointSymbol === s.data.data.symbol
+                )
+              );
+              setMarket(s.data.data);
+            });
 
-  console.log("Render minfo");
+          // DEBUG
+          // console.log(
+          //   `${market.symbol} ship update. old:`,
+          //   ships.map((s) => ({ symbol: s.symbol, status: s.nav.status })),
+          //   "new: ",
+          //   newLocalShips.map((s) => ({
+          //     symbol: s.symbol,
+          //     status: s.nav.status,
+          //   }))
+          // );
+        }
+      }
+    };
+    FleetDB.addListener("update", updateShips);
+
+    return () => {
+      FleetDB.removeListener("update", updateShips);
+    };
+  });
 
   if (market) {
     const items: TabsProps["items"] = [
@@ -376,9 +408,7 @@ const MarketInfo = (props: {
             <Popover
               trigger="click"
               title={`Sell ${good.symbol}`}
-              content={
-                <SellGoodShipSelect sellGood={good} ships={props.localShips} />
-              }
+              content={<SellGoodShipSelect sellGood={good} ships={ships} />}
             >
               <Button type="link" size="small">
                 ${price}
@@ -398,10 +428,7 @@ const MarketInfo = (props: {
               trigger="click"
               title={`Purchase ${good.symbol}`}
               content={
-                <PurchaseGoodShipSelect
-                  purchaseGood={good}
-                  ships={props.localShips}
-                />
+                <PurchaseGoodShipSelect purchaseGood={good} ships={ships} />
               }
             >
               <Button type="link" size="small">
@@ -439,6 +466,9 @@ const MarketInfo = (props: {
       });
     }
 
+    // DEBUG
+    console.log(`Redraw market ${market.symbol}`);
+
     return (
       <Tabs
         tabBarStyle={{
@@ -446,7 +476,6 @@ const MarketInfo = (props: {
           marginTop: -10,
           marginBottom: 5,
         }}
-        // renderTabBar={() => <div>qwe</div>}
         style={{ fontSize: 11 }}
         size="small"
         items={items}
