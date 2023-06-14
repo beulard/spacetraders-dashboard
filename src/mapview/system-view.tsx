@@ -1,6 +1,6 @@
 import * as ex from "excalibur";
 import { FleetDB } from "../fleet-db";
-import { System } from "../spacetraders-sdk";
+import { System, SystemWaypoint } from "../spacetraders-sdk";
 import { SystemDB, SystemEvent } from "../system-db";
 import WaypointDB from "../waypoint-db";
 import { SystemTypeColor } from "./gfx-common";
@@ -94,6 +94,29 @@ export class SystemViewScene extends ex.Scene {
   // Keep track of the zoom scale before transition to waypoint view
   private lastZoomScale = 0.025;
   private uiElement: HTMLElement | null = null;
+  private locateWaypointCallback = (locate: {
+    system: System;
+    waypoint: SystemWaypoint;
+  }) => {
+    // console.log("locate wp from system");
+    // console.log("dest:", locate.waypoint.symbol);
+    // Move camera to system, then enter waypoint view, then send locateWaypoint event again
+    console.log("moving");
+    this.camera
+      .move(
+        ex.vec(
+          locate.system.x * this.systemPositionScale,
+          locate.system.y * this.systemPositionScale
+        ),
+        1000,
+        ex.EasingFunctions.EaseInOutCubic
+      )
+      .then(() => {
+        this.enterWaypointView(locate.system).then(() => {
+          SystemEvent.emit("locateWaypoint", locate);
+        });
+      });
+  };
 
   constructor() {
     super();
@@ -181,11 +204,17 @@ export class SystemViewScene extends ex.Scene {
         console.log("ac", this.actors.length);
       }
     });
+
+    SystemEvent.addListener("locateWaypoint", this.locateWaypointCallback);
   }
 
   public onDeactivate() {
     this.engine.input.pointers.off("wheel");
     this.engine.input.pointers.off("move");
+
+    // OK to remove all listeners for locateWaypoint
+    // since WaypointView should add one back on activate
+    SystemEvent.removeListener("locateWaypoint");
   }
 
   public updateDrawnSystems() {
@@ -220,6 +249,48 @@ export class SystemViewScene extends ex.Scene {
     this.selectedSystemGfx.highlight();
   }
 
+  private enterWaypointView(system: System) {
+    this.setSelectedSystem(this.systemsGfx.get(system.symbol)!);
+
+    this.lastZoomScale = this.camera.zoom;
+    // Fetch waypoint data
+    const waypointFetch = WaypointDB.getSystemWaypoints(system.symbol);
+    const fleetFetch = FleetDB.update();
+
+    this.camera.move(
+      this.selectedSystemGfx!.pos,
+      400,
+      ex.EasingFunctions.EaseOutCubic
+    );
+
+    return this.camera
+      .zoomOverTime(
+        Math.max(0.2, this.camera.zoom),
+        400,
+        ex.EasingFunctions.EaseInCubic
+      )
+      .then(async () => {
+        // Show message to let user know waypoints request is still ongoing
+        const loading_label = document.createElement("p");
+        loading_label.className = "loading-label";
+        loading_label.innerHTML = "Fetching system data...";
+        this.uiElement?.appendChild(loading_label);
+
+        const waypoints = await waypointFetch;
+        const ships = await fleetFetch;
+
+        // Remove message
+        loading_label.remove();
+
+        this.engine.goToScene("waypointview", {
+          system: system,
+          ships: ships.filter((s) => s.nav.systemSymbol === system.symbol),
+          waypoints: waypoints,
+        });
+        return waypoints;
+      });
+  }
+
   public drawSystems(systems: Array<System>) {
     for (const system of systems) {
       const gfx = this.systemsGfx.get(system.symbol);
@@ -243,45 +314,7 @@ export class SystemViewScene extends ex.Scene {
         gfx.on("pointerdown", (evt) => {
           if (evt.button === "Left") {
             if (this.selectedSystemGfx === gfx) {
-              this.lastZoomScale = this.camera.zoom;
-              // Fetch waypoint data
-              const waypointFetch = WaypointDB.getSystemWaypoints(
-                system.symbol
-              );
-              const fleetFetch = FleetDB.update();
-
-              this.camera.move(
-                this.selectedSystemGfx.pos,
-                400,
-                ex.EasingFunctions.EaseOutCubic
-              );
-              this.camera
-                .zoomOverTime(
-                  Math.max(0.2, this.camera.zoom),
-                  400,
-                  ex.EasingFunctions.EaseInCubic
-                )
-                .then(async () => {
-                  // Show message to let user know waypoints request is still ongoing
-                  const loading_label = document.createElement("p");
-                  loading_label.className = "loading-label";
-                  loading_label.innerHTML = "Fetching system data...";
-                  this.uiElement?.appendChild(loading_label);
-
-                  const waypoints = await waypointFetch;
-                  const ships = await fleetFetch;
-
-                  // Remove message
-                  loading_label.remove();
-
-                  this.engine.goToScene("waypointview", {
-                    system: system,
-                    ships: ships.filter(
-                      (s) => s.nav.systemSymbol === system.symbol
-                    ),
-                    waypoints: waypoints,
-                  });
-                });
+              this.enterWaypointView(system);
             }
 
             this.setSelectedSystem(gfx);

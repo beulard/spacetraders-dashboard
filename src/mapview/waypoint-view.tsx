@@ -8,6 +8,7 @@ import {
 } from "../spacetraders-sdk";
 import { FleetDB } from "../fleet-db";
 import { SystemTypeColor, WaypointTypeStyle } from "./gfx-common";
+import { SystemEvent } from "../system-db";
 
 interface SystemData {
   system: System;
@@ -59,6 +60,28 @@ export class WaypointViewScene extends ex.Scene {
   // Keep track of where we placed the waypoints in game coords
   private waypointPositions = new Map<string, ex.Vector>();
   private fleetUpdateCallback = (ships: Ship[]) => this.drawShips(ships);
+  private locateWaypointCallback = (
+    currentSystem: string,
+    locate: { system: System; waypoint: SystemWaypoint }
+  ) => {
+    // console.log("locate wp from wp");
+    // console.log("dest:", locate.waypoint.symbol);
+    if (currentSystem === locate.system.symbol) {
+      this.camera.move(
+        ex.vec(
+          locate.waypoint.x * WaypointPositionScale,
+          locate.waypoint.y * WaypointPositionScale
+        ),
+        1000,
+        ex.EasingFunctions.EaseInOutCubic
+      );
+    } else {
+      // Go to system view, then send a locateWaypoint event again
+      this.exit().then(() => {
+        SystemEvent.emit("locateWaypoint", locate);
+      });
+    }
+  };
 
   public onInitialize(engine: ex.Engine): void {}
 
@@ -126,12 +149,12 @@ export class WaypointViewScene extends ex.Scene {
       this.fleetUpdateCallback
     ).listenerCount("update");
     console.log(`Fleet listeners ${cnt}`);
-  }
 
-  private exit() {
-    this.camera
-      .zoomOverTime(this.minZoomScale, 300, ex.EasingFunctions.EaseInCubic)
-      .then(() => this.engine.goToScene("systemview"));
+    SystemEvent.addListener(
+      "locateWaypoint",
+      (locate: { system: System; waypoint: SystemWaypoint }) =>
+        this.locateWaypointCallback(context.data?.system.symbol!, locate)
+    );
   }
 
   public onDeactivate() {
@@ -143,6 +166,20 @@ export class WaypointViewScene extends ex.Scene {
       this.fleetUpdateCallback
     ).listenerCount("update");
     console.log(`Fleet listeners ${cnt}`);
+
+    // OK to remove all listeners for locateWaypoint
+    // since SystemView will add one back
+    SystemEvent.removeListener("locateWaypoint");
+  }
+
+  private exit() {
+    const promise = this.camera.zoomOverTime(
+      this.minZoomScale,
+      300,
+      ex.EasingFunctions.EaseInCubic
+    );
+    promise.then(() => this.engine.goToScene("systemview"));
+    return promise;
   }
 
   private drawShips(ships: Ship[]) {

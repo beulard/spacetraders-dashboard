@@ -19,6 +19,7 @@ import { ShipActions } from "./ship-actions";
 import { CargoInventory, ShipDescription } from "./ship-description";
 import { Ship, ShipCargo, ShipCargoItem, ShipFuel } from "./spacetraders-sdk";
 import { SystemDB, SystemEvent } from "./system-db";
+import WaypointDB from "./waypoint-db";
 const { Title, Text } = Typography;
 const { Column } = Table;
 const { Countdown } = Statistic;
@@ -31,12 +32,15 @@ const NavColumn = (props: { ship: Ship }) => {
   }, [props.ship]);
 
   function onLocateShip() {
-    SystemEvent.emit(
-      "locate",
-      SystemDB.all.find(
-        (s) => s.symbol === props.ship.nav.route.destination.systemSymbol
-      )
+    const system = SystemDB.all.find(
+      (s) => s.symbol === props.ship.nav.systemSymbol
     );
+    SystemEvent.emit("locateWaypoint", {
+      system: system,
+      waypoint: system?.waypoints.find(
+        (w) => w.symbol === props.ship.nav.waypointSymbol
+      )!,
+    });
   }
 
   return (

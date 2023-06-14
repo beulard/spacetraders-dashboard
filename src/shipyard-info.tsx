@@ -259,7 +259,7 @@ export const ShipyardInfo = (props: {
       key: "types",
       label: "Ship types",
       children: shipyard?.shipTypes.map((s, idx) => (
-        <Tag key={idx}>{s.type?.toLowerCase()}</Tag>
+        <Tag key={idx}>{s.type}</Tag>
       )),
     },
   ];
