@@ -375,14 +375,14 @@ const SystemInfo = () => {
 
   const tabItems: TabsProps["items"] = [
     {
-      key: "waypoints",
-      label: `Waypoints`,
-      children: <WaypointList waypoints={waypoints} />,
-    },
-    {
       key: "markets",
       label: `Markets`,
       children: <MarketList waypoints={waypoints} />,
+    },
+    {
+      key: "waypoints",
+      label: `Waypoints`,
+      children: <WaypointList waypoints={waypoints} />,
     },
     {
       key: "shipyards",
