@@ -22,6 +22,7 @@ import {
   Ship,
   Shipyard,
   ShipyardShip,
+  ShipyardTransaction,
   SystemWaypoint,
 } from "./spacetraders-sdk";
 import { alphabeticSorter, getSystemSymbol } from "./utils";
@@ -197,6 +198,44 @@ const ShipyardShipListing = (props: {
   );
 };
 
+const TransactionsTable = (props: { transactions: ShipyardTransaction[] }) => {
+  return (
+    <Table
+      className="small-table"
+      rowClassName="table-row"
+      size="small"
+      dataSource={props.transactions}
+      columns={[
+        {
+          title: "Date",
+          dataIndex: "timestamp",
+          key: "date",
+          render: (val) => {
+            const date = new Date(val);
+            return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+          },
+        },
+        {
+          title: "Agent",
+          dataIndex: "agentSymbol",
+          key: "agent",
+        },
+        {
+          title: "Ship",
+          dataIndex: "shipSymbol",
+          key: "ship",
+        },
+        {
+          title: "Price",
+          dataIndex: "price",
+          key: "price",
+          render: (val) => `$${val}`,
+        },
+      ]}
+    />
+  );
+};
+
 export const ShipyardInfo = (props: {
   waypoint: SystemWaypoint;
   localShips: Ship[];
@@ -240,11 +279,7 @@ export const ShipyardInfo = (props: {
     items.push({
       key: "transactions",
       label: "Transactions",
-      children: shipyard.transactions?.map((t, idx) => (
-        <p key={idx}>
-          {t.timestamp} {t.agentSymbol} {t.price}
-        </p>
-      )),
+      children: <TransactionsTable transactions={shipyard.transactions!} />,
     });
   }
 
