@@ -152,15 +152,30 @@ small {
   cursor: help;
 }
 
+.small-table tr {
+  padding-top: 3pt !important;
+  padding-bottom: 3pt !important;
+}
+
+.small-table th {
+  font-size: 9pt;
+  line-height: 9pt;
+}
+
+.small-table td {
+  font-size: 8pt;
+  padding: 0px;
+}
 
 .tradegoods-table th {
   font-size: 9pt;
+  padding-top: 3pt !important;
+  padding-bottom: 3pt !important;
 }
 
 td.ant-table-cell {
   padding: 0px;
 }
-
 
 .tradegoods-table td {
   font-size: 8pt;

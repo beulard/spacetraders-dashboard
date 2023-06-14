@@ -19,6 +19,7 @@ import { FleetDB } from "./fleet-db";
 import {
   Market,
   MarketTradeGood,
+  MarketTransaction,
   Ship,
   SystemWaypoint,
 } from "./spacetraders-sdk";
@@ -269,6 +270,60 @@ const ImportExportTable = (props: { market: Market }) => {
   );
 };
 
+const TransactionsTable = (props: { transactions: MarketTransaction[] }) => {
+  return (
+    <Table
+      className="small-table"
+      rowClassName="table-row"
+      size="small"
+      dataSource={props.transactions}
+      columns={[
+        {
+          title: "Date",
+          dataIndex: "timestamp",
+          key: "date",
+          render: (val) => {
+            const date = new Date(val);
+            return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+          },
+        },
+        {
+          title: "Type",
+          dataIndex: "type",
+          key: "type",
+        },
+        {
+          title: "Ship",
+          dataIndex: "shipSymbol",
+          key: "ship",
+        },
+        {
+          title: "Item",
+          dataIndex: "tradeSymbol",
+          key: "item",
+        },
+        {
+          title: "Units",
+          dataIndex: "units",
+          key: "units",
+        },
+        {
+          title: "Price/unit",
+          dataIndex: "pricePerUnit",
+          key: "pricePerUnit",
+          render: (val) => `$${val}`,
+        },
+        {
+          title: "Price",
+          dataIndex: "totalPrice",
+          key: "price",
+          render: (val) => `$${val}`,
+        },
+      ]}
+    />
+  );
+};
+
 const MarketInfo = (props: { waypoint: SystemWaypoint }) => {
   const [market, setMarket] = useState<Market | null>(null);
   const [ships, setShips] = useState<Ship[]>([]);
@@ -357,24 +412,6 @@ const MarketInfo = (props: { waypoint: SystemWaypoint }) => {
           </div>
         ),
       },
-      {
-        key: "transactions",
-        label: "Transactions",
-        children: market.transactions?.map((t, idx) => (
-          <p key={idx}>
-            {t.timestamp} {t.shipSymbol} ${t.totalPrice}
-          </p>
-        )),
-        // <>
-        //   TODO
-        //   <Table
-        //     dataSource={market.transactions}
-        //     // {market.exchange.map((i, idx) => (
-        //     //   <HoverTag key={idx} tooltip={i.description} text={i.name} />
-        //     // ))}
-        //   />
-        // </>
-      },
     ];
 
     if (market.tradeGoods) {
@@ -460,6 +497,11 @@ const MarketInfo = (props: { waypoint: SystemWaypoint }) => {
             ></Table>
           </>
         ),
+      });
+      items.push({
+        key: "transactions",
+        label: "Transactions",
+        children: <TransactionsTable transactions={market.transactions!} />,
       });
     }
 
