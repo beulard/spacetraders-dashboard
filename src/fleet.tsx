@@ -35,6 +35,7 @@ const NavColumn = (props: { ship: Ship }) => {
     const system = SystemDB.all.find(
       (s) => s.symbol === props.ship.nav.systemSymbol
     );
+    SystemEvent.emit("select", system);
     SystemEvent.emit("locateWaypoint", {
       system: system,
       waypoint: system?.waypoints.find(
