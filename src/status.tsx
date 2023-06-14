@@ -1,5 +1,5 @@
 import { SyncOutlined } from "@ant-design/icons";
-import { Button, Card, Spin, Statistic, Switch } from "antd";
+import { Button, Card, Spin, Statistic, Switch, Tooltip } from "antd";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { AgentDB, useAgent } from "./agent-db";
@@ -25,6 +25,33 @@ const FetchSystemsButton = () => {
     >
       Systems
     </Button>
+  );
+};
+
+const CopyTokenButton = (props: { label: string }) => {
+  const [clicked, setClicked] = useState(false);
+
+  function onClick() {
+    navigator.clipboard.writeText(localStorage.getItem("access-token")!);
+    setClicked(true);
+  }
+
+  return (
+    <Tooltip
+      title={!clicked ? "Copy token to clipboard" : "Copied ✔️"}
+      mouseEnterDelay={0.3}
+      onOpenChange={(val) => {
+        if (val === false) setClicked(false);
+      }}
+    >
+      <Button
+        type="text"
+        onClick={onClick}
+        style={{ padding: 1, paddingLeft: 10, paddingRight: 10 }}
+      >
+        <big>{props.label}</big>
+      </Button>
+    </Tooltip>
   );
 };
 
@@ -65,9 +92,9 @@ const Status = (props: { setIsDarkMode: Function }) => {
               valueStyle={{ fontSize: "13pt" }}
             />
           </div>
-          <div style={{ fontSize: 17 }}>
-            {agent.symbol} from {agent.headquarters}
-          </div>
+          <CopyTokenButton
+            label={`${agent.symbol} from ${agent.headquarters}`}
+          />
           <RefreshButton onClick={onRefresh} />
         </>
       ) : (
