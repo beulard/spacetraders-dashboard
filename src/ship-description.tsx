@@ -1,14 +1,9 @@
 import { CloseCircleOutlined } from "@ant-design/icons";
-import {
-  Button,
-  Divider,
-  Popconfirm,
-  Popover,
-  Space,
-  Tag,
-  Tooltip,
-} from "antd";
+import { Button, Divider, Popconfirm, Popover, Space, Tag } from "antd";
+import toast from "react-hot-toast";
+import api from "./api";
 import { HoverTag } from "./components/hover-tag";
+import { FleetDB } from "./fleet-db";
 import {
   Ship,
   ShipCargo,
@@ -16,9 +11,6 @@ import {
   ShipMount,
   ShipReactor,
 } from "./spacetraders-sdk";
-import api from "./api";
-import toast from "react-hot-toast";
-import FleetDB from "./fleet-db";
 
 export const ReactorDescription = (props: { reactor: ShipReactor }) => (
   <Space>
@@ -38,8 +30,8 @@ export const CargoInventory = (props: {
 }) => (
   <div>
     {props.cargo.inventory.map((item, idx) => (
-      <div style={{ display: "flex", alignItems: "center" }}>
-        <Popover key={idx} content={item.description}>
+      <div key={idx} style={{ display: "flex", alignItems: "center" }}>
+        <Popover content={item.description}>
           <Tag>{item.symbol}</Tag>
         </Popover>
         <Tag>{item.units}</Tag>

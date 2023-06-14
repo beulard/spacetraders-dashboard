@@ -18,7 +18,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import api from "./api";
 import { Accordion } from "./components/accordion";
-import FleetDB from "./fleet-db";
+import { FleetDB, useShips } from "./fleet-db";
 import { MarketInfo } from "./market-info";
 import { ShipyardInfo } from "./shipyard-info";
 import {
@@ -33,11 +33,16 @@ import { SystemEvent } from "./system-db";
 import WaypointDB from "./waypoint-db";
 const { Panel } = Collapse;
 
-const ShipSelector = (props: { destinationSymbol: string; size: SizeType }) => {
+const ShipSelector = (props: {
+  destinationSymbol: string;
+  ships: Ship[];
+  size: SizeType;
+}) => {
   const [sendShips, setSendShips] = useState<string[]>([]);
 
   // Filter out ships already at destination waypoint
-  const fleet = FleetDB.getMyShips().filter(
+  // TODO also filter ships in transit?
+  const availableShips = props.ships.filter(
     (s) => s.nav.waypointSymbol !== props.destinationSymbol
   );
 
@@ -52,7 +57,7 @@ const ShipSelector = (props: { destinationSymbol: string; size: SizeType }) => {
           placeholder="Navigate ships"
           onChange={(value) => setSendShips(value)}
           value={sendShips}
-          options={fleet
+          options={availableShips
             .filter((ship) => !sendShips.includes(ship.symbol)) // Filter out already selected ships
             .map((ship) => ({
               label: ship.symbol,
@@ -124,6 +129,8 @@ const WaypointShipTag = (props: { ship: Ship }) => {
 };
 
 const WaypointList = (props: { waypoints: Waypoint[] }) => {
+  const [ships] = useShips();
+
   return (
     <Collapse size="small" className="system-info-collapse">
       {props.waypoints.length > 0 &&
@@ -138,6 +145,7 @@ const WaypointList = (props: { waypoints: Waypoint[] }) => {
               >
                 <ShipSelector
                   size="small"
+                  ships={ships}
                   destinationSymbol={waypoint.symbol}
                 />
               </span>
@@ -146,6 +154,9 @@ const WaypointList = (props: { waypoints: Waypoint[] }) => {
             <WaypointInfo
               key={waypoint.symbol}
               waypoint={waypoint}
+              localShips={ships.filter(
+                (s) => s.nav.waypointSymbol === waypoint.symbol
+              )}
               details={waypoint}
             />
           </Panel>
@@ -155,20 +166,11 @@ const WaypointList = (props: { waypoints: Waypoint[] }) => {
 };
 
 const MarketList = (props: { waypoints: Waypoint[] }) => {
-  const [ships, setShips] = useState<Ship[]>(FleetDB.getMyShips());
+  const [ships] = useShips();
 
   const marketWaypoints = props.waypoints.filter((w) =>
     w.traits.map((t) => t.symbol).includes(WaypointTraitSymbolEnum.Marketplace)
   );
-
-  useEffect(() => {
-    const onFleetUpdate = (s: Ship[]) => setShips(s);
-    FleetDB.on("update", onFleetUpdate);
-
-    return () => {
-      FleetDB.off("update", onFleetUpdate);
-    };
-  }, []);
 
   return (
     <Collapse
@@ -193,6 +195,7 @@ const MarketList = (props: { waypoints: Waypoint[] }) => {
               >
                 <ShipSelector
                   size="small"
+                  ships={ships}
                   destinationSymbol={waypoint.symbol}
                 />
               </span>
@@ -206,9 +209,12 @@ const MarketList = (props: { waypoints: Waypoint[] }) => {
 };
 
 const ShipyardList = (props: { waypoints: Waypoint[] }) => {
+  const [ships] = useShips();
+
   const shipyardWaypoints = props.waypoints.filter((w) =>
     w.traits.map((t) => t.symbol).includes(WaypointTraitSymbolEnum.Shipyard)
   );
+
   return (
     <Collapse
       size="small"
@@ -227,6 +233,7 @@ const ShipyardList = (props: { waypoints: Waypoint[] }) => {
               >
                 <ShipSelector
                   size="small"
+                  ships={ships}
                   destinationSymbol={waypoint.symbol}
                 />
               </span>
@@ -247,28 +254,9 @@ const ShipyardList = (props: { waypoints: Waypoint[] }) => {
 
 const WaypointInfo = (props: {
   waypoint: SystemWaypoint;
+  localShips: Ship[];
   details: Waypoint | null;
 }) => {
-  const [fleet, setFleet] = useState<Ship[]>(FleetDB.getMyShips());
-
-  // Ships in orbit, docked, etc
-  const localShips = fleet.filter(
-    (ship) => ship.nav.waypointSymbol === props.waypoint.symbol
-  );
-
-  useEffect(() => {
-    // Subscribe to fleet update events
-    const updateCallback = (ships: Ship[]) => {
-      setFleet(ships);
-    };
-    FleetDB.on("update", updateCallback);
-
-    // Unsubscribe on unmount
-    return () => {
-      FleetDB.off("update", updateCallback);
-    };
-  }, []);
-
   const hasMarket = props.details?.traits.reduce(
     (pHas, v) => pHas || v.symbol === WaypointTraitSymbolEnum.Marketplace,
     false
@@ -300,16 +288,14 @@ const WaypointInfo = (props: {
           </Space>
         </div>
       )}
-      {localShips.length > 0 && (
+      {props.localShips.length > 0 && (
         <Space>
           Ships:
-          {localShips.map((ship, idx) => (
+          {props.localShips.map((ship, idx) => (
             <WaypointShipTag ship={ship} key={idx} />
           ))}
         </Space>
       )}
-      {/* Navigate ships */}
-      <ShipSelector size="middle" destinationSymbol={props.waypoint.symbol} />
 
       {(hasMarket || hasShipyard || isJumpgate) && (
         <Collapse size="small">
@@ -323,7 +309,10 @@ const WaypointInfo = (props: {
           {/* Get shipyard */}
           {hasShipyard && (
             <Panel key="shipyard" header="Shipyard">
-              <ShipyardInfo waypoint={props.waypoint} localShips={localShips} />
+              <ShipyardInfo
+                waypoint={props.waypoint}
+                localShips={props.localShips}
+              />
             </Panel>
           )}
 

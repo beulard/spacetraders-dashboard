@@ -1,6 +1,7 @@
 import { Ship } from "./spacetraders-sdk";
 import { fetchShipsRecursive } from "./fleet-context";
 import EventEmitter from "eventemitter3";
+import { useEffect, useState } from "react";
 
 class FleetDatabase extends EventEmitter {
   private cache: Map<string, Ship> = new Map();
@@ -28,4 +29,23 @@ class FleetDatabase extends EventEmitter {
 
 const FleetDB = new FleetDatabase();
 
-export default FleetDB;
+// Hook for fleet
+function useShips(): [Ship[], React.Dispatch<React.SetStateAction<Ship[]>>] {
+  const [ships, setShips] = useState<Ship[]>(FleetDB.getMyShips());
+  useEffect(() => {
+    function fleetUpdateCallback(newShips: Ship[]) {
+      setShips(newShips);
+    }
+    FleetDB.addListener("update", fleetUpdateCallback);
+
+    return () => {
+      FleetDB.removeListener("update", fleetUpdateCallback);
+    };
+  }, []);
+
+  return [ships, setShips];
+}
+
+FleetDB.update();
+
+export { FleetDB, useShips };

@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import api from "./api";
 import { RefreshButton } from "./components/refresh-button";
-import FleetDB from "./fleet-db";
+import { FleetDB, useShips } from "./fleet-db";
 import { ShipActions } from "./ship-actions";
 import { CargoInventory, ShipDescription } from "./ship-description";
 import { Ship, ShipCargo, ShipCargoItem, ShipFuel } from "./spacetraders-sdk";
@@ -65,7 +65,8 @@ const NavColumn = (props: { ship: Ship }) => {
 };
 
 const ShipList = () => {
-  const [fleet, setFleet] = useState<Ship[]>(FleetDB.getMyShips());
+  // const [fleet, setFleet] = useState<Ship[]>(FleetDB.getMyShips());
+  const [fleet, setFleet] = useShips();
 
   function onRefresh(onDone: Function) {
     const promise = FleetDB.update();
@@ -82,22 +83,18 @@ const ShipList = () => {
     });
   }
 
-  function onJettison(item: ShipCargoItem) {}
-
-  useEffect(() => {
-    const updateCallback = (ships: Ship[]) => {
-      setFleet(ships);
-    };
-    FleetDB.on("update", updateCallback);
-
-    // Initial fetch
-    FleetDB.update();
-
-    // Unsubscribe on unmount
-    return () => {
-      FleetDB.off("update", updateCallback);
-    };
-  }, []);
+  function onJettison(ship: Ship, item: ShipCargoItem) {
+    api.fleet
+      .jettison(ship.symbol, {
+        symbol: item.symbol,
+        units: item.units,
+      })
+      .then((res) => {
+        toast.success(`Jettisoned ${item.units} units of ${item.symbol}`);
+        FleetDB.update();
+      })
+      .catch((err) => console.log(err));
+  }
 
   return (
     <Card
@@ -144,20 +141,7 @@ const ShipList = () => {
                 content={
                   <CargoInventory
                     cargo={cargo}
-                    onJettison={(item: ShipCargoItem) => {
-                      api.fleet
-                        .jettison(ship.symbol, {
-                          symbol: item.symbol,
-                          units: item.units,
-                        })
-                        .then((res) => {
-                          toast.success(
-                            `Jettisoned ${item.units} units of ${item.symbol}`
-                          );
-                          FleetDB.update();
-                        })
-                        .catch((err) => console.log(err));
-                    }}
+                    onJettison={(item: ShipCargoItem) => onJettison(ship, item)}
                   />
                 }
               >

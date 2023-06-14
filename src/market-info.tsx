@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 import AgentDB from "./agent-db";
 import api from "./api";
 import { HoverTag } from "./components/hover-tag";
-import FleetDB from "./fleet-db";
+import { FleetDB } from "./fleet-db";
 import {
   Market,
   MarketTradeGood,

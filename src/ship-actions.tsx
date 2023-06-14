@@ -12,7 +12,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import AgentDB from "./agent-db";
 import api from "./api";
-import FleetDB from "./fleet-db";
+import { FleetDB } from "./fleet-db";
 import { Ship, System } from "./spacetraders-sdk";
 import { SystemDB } from "./system-db";
 

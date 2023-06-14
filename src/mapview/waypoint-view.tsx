@@ -6,7 +6,7 @@ import {
   Waypoint,
   WaypointType,
 } from "../spacetraders-sdk";
-import FleetDB from "../fleet-db";
+import { FleetDB } from "../fleet-db";
 import { SystemTypeColor, WaypointTypeStyle } from "./gfx-common";
 
 interface SystemData {
@@ -58,10 +58,9 @@ export class WaypointViewScene extends ex.Scene {
   private shipGfx: ex.Actor[] = [];
   // Keep track of where we placed the waypoints in game coords
   private waypointPositions = new Map<string, ex.Vector>();
+  private fleetUpdateCallback = (ships: Ship[]) => this.drawShips(ships);
 
-  public onInitialize(engine: ex.Engine): void {
-    FleetDB.on("update", (ships) => this.drawShips(ships));
-  }
+  public onInitialize(engine: ex.Engine): void {}
 
   public onActivate(context: ex.SceneActivationContext<SystemData>) {
     this.clear();
@@ -121,6 +120,12 @@ export class WaypointViewScene extends ex.Scene {
         this.exit();
       }
     });
+    // Listen to fleet events
+    let cnt = FleetDB.addListener(
+      "update",
+      this.fleetUpdateCallback
+    ).listenerCount("update");
+    console.log(`Fleet listeners ${cnt}`);
   }
 
   private exit() {
@@ -132,6 +137,12 @@ export class WaypointViewScene extends ex.Scene {
   public onDeactivate() {
     this.engine.input.pointers.off("wheel");
     this.engine.input.pointers.off("move");
+
+    let cnt = FleetDB.removeListener(
+      "update",
+      this.fleetUpdateCallback
+    ).listenerCount("update");
+    console.log(`Fleet listeners ${cnt}`);
   }
 
   private drawShips(ships: Ship[]) {
