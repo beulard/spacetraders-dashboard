@@ -234,13 +234,13 @@ const ImportExportTable = (props: { market: Market }) => {
   return (
     <div>
       <table>
-        <thead>
+        <thead style={{ borderWidth: 1 }}>
           <tr>
             <td>Imports</td>
             <td>Exports</td>
           </tr>
         </thead>
-        <tbody>
+        <tbody style={{ borderStyle: "none" }}>
           <tr>
             <td>
               {props.market.imports.map((i, idx) => (
