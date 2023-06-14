@@ -2,6 +2,7 @@ import { Agent } from "./spacetraders-sdk";
 import EventEmitter from "eventemitter3";
 import api from "./api";
 import toast from "react-hot-toast";
+import { useEffect, useState } from "react";
 
 class AgentDatabase extends EventEmitter {
   private agent: Agent | null = null;
@@ -24,9 +25,26 @@ class AgentDatabase extends EventEmitter {
   }
 }
 
-// TODO make a custom hook for subscribing to agent db events
-// export function useFleet () {}
+function useAgent(): [Agent, React.Dispatch<React.SetStateAction<Agent>>] {
+  const [agent, setAgent] = useState<Agent>(AgentDB.getMyAgent());
+
+  useEffect(() => {
+    function agentUpdateCallback(newAgent: Agent) {
+      setAgent(newAgent);
+    }
+    AgentDB.addListener("update", agentUpdateCallback);
+
+    return () => {
+      AgentDB.removeListener("update", agentUpdateCallback);
+    };
+  }, []);
+
+  return [agent, setAgent];
+}
 
 const AgentDB = new AgentDatabase();
 
-export default AgentDB;
+// Trigger initial fetch
+// AgentDB.update();
+
+export { AgentDB, useAgent };

@@ -12,7 +12,7 @@ import {
 import Table, { ColumnsType } from "antd/es/table";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import AgentDB from "./agent-db";
+import { AgentDB } from "./agent-db";
 import api from "./api";
 import { HoverTag } from "./components/hover-tag";
 import { FleetDB } from "./fleet-db";

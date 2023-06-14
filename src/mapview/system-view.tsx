@@ -291,7 +291,6 @@ export class SystemViewScene extends ex.Scene {
           }
         });
 
-        // TODO show only sector labels when zooming all the way out?
         gfx.on("preupdate", () => {
           gfx.scale = ex
             .vec(1, 1)

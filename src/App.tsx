@@ -1,7 +1,7 @@
 import { Card, ConfigProvider, theme } from "antd";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
-import AgentDB from "./agent-db";
+import { AgentDB } from "./agent-db";
 import { ContractList } from "./contract";
 import { ShipList } from "./fleet";
 import { MapView } from "./mapview/map";

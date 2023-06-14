@@ -41,7 +41,7 @@ const ShipSelector = (props: {
   const [sendShips, setSendShips] = useState<string[]>([]);
 
   // Filter out ships already at destination waypoint
-  // TODO also filter ships in transit?
+  // Could also filter ships in transit
   const availableShips = props.ships.filter(
     (s) => s.nav.waypointSymbol !== props.destinationSymbol
   );

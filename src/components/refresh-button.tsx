@@ -1,6 +1,5 @@
-import Button from "@atlaskit/button";
-import RefreshIcon from "@atlaskit/icon/glyph/refresh";
-import { Spin } from "antd";
+import { SyncOutlined } from "@ant-design/icons";
+import { Button } from "antd";
 import { useState } from "react";
 
 const RefreshButton = (props: { onClick: (onDone: Function) => any }) => {
@@ -13,11 +12,7 @@ const RefreshButton = (props: { onClick: (onDone: Function) => any }) => {
 
   return (
     <div style={{ width: "3em" }}>
-      {loading ? (
-        <Spin />
-      ) : (
-        <Button onClick={click} iconBefore={<RefreshIcon label="" />}></Button>
-      )}
+      <Button loading={loading} onClick={click} icon={<SyncOutlined />} />
     </div>
   );
 };

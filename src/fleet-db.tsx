@@ -24,9 +24,6 @@ class FleetDatabase extends EventEmitter {
   }
 }
 
-// TODO make a custom hook for subscribing to fleet db events
-// export function useFleet () {}
-
 const FleetDB = new FleetDatabase();
 
 // Hook for fleet
@@ -46,6 +43,7 @@ function useShips(): [Ship[], React.Dispatch<React.SetStateAction<Ship[]>>] {
   return [ships, setShips];
 }
 
+// Trigger initial fetch
 FleetDB.update();
 
 export { FleetDB, useShips };

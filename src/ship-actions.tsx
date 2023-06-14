@@ -10,7 +10,7 @@ import {
 import { Button, Form, Popover, Select, Space } from "antd";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import AgentDB from "./agent-db";
+import { AgentDB } from "./agent-db";
 import api from "./api";
 import { FleetDB } from "./fleet-db";
 import { Ship, System } from "./spacetraders-sdk";
@@ -219,7 +219,6 @@ export const ShipActions = (props: { ship: Ship }) => {
         </Popover>
       ),
     },
-    // TODO factor scan
     // {
     //   key: "scan-systems",
     //   label: (
