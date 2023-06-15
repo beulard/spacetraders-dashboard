@@ -105,9 +105,15 @@ const ContractBody = (props: { contract: Contract }) => {
                   className="link-button"
                   onClick={() => {
                     const system = SystemDB.all.find(
-                      (s) => s.symbol === getSystemSymbol(d.destinationSymbol)
-                    );
-                    SystemEvent.emit("select", system);
+                      (sys) =>
+                        sys.symbol === getSystemSymbol(d.destinationSymbol)
+                    )!;
+                    SystemEvent.emit("locateWaypoint", {
+                      system: system,
+                      waypoint: system.waypoints.find(
+                        (w) => w.symbol === d.destinationSymbol
+                      ),
+                    });
                   }}
                 >
                   {d.destinationSymbol}

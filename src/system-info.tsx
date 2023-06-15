@@ -208,6 +208,10 @@ const MarketList = (props: { waypoints: Waypoint[] }) => {
   );
 };
 
+const JumpgateInfo = () => {
+  return <p>TODO</p>;
+};
+
 const ShipyardList = (props: { waypoints: Waypoint[] }) => {
   const [ships] = useShips();
 
@@ -317,7 +321,11 @@ const WaypointInfo = (props: {
           )}
 
           {/* Get jump gate (connected systems) */}
-          {isJumpgate && <Panel key="jumpgate" header="Jumpgate"></Panel>}
+          {isJumpgate && (
+            <Panel key="jumpgate" header="Jumpgate">
+              <JumpgateInfo />
+            </Panel>
+          )}
         </Collapse>
       )}
 

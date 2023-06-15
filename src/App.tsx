@@ -9,6 +9,8 @@ import { Status } from "./status";
 import { SystemDB, SystemEvent } from "./system-db";
 import { SystemInfo } from "./system-info";
 import { getSystemSymbol } from "./utils";
+import { SurveyList } from "./survey";
+import { FleetDB } from "./fleet-db";
 
 const { defaultAlgorithm, darkAlgorithm } = theme;
 
@@ -16,6 +18,7 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
+    FleetDB.update();
     SystemDB.init().then((systems) => {
       // Set default selected system to HQ
       AgentDB.update().then((agent) => {
@@ -80,6 +83,7 @@ function App() {
             >
               <MapView />
               <ShipList />
+              <SurveyList />
               <ContractList />
             </Card>
           </div>

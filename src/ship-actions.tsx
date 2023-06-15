@@ -15,6 +15,7 @@ import api from "./api";
 import { FleetDB } from "./fleet-db";
 import { Ship, System } from "./spacetraders-sdk";
 import { SystemDB } from "./system-db";
+import { SurveyDB } from "./survey";
 
 // TODO ship mounts
 
@@ -59,6 +60,10 @@ export const ShipActions = (props: { ship: Ship }) => {
       .createSurvey(props.ship.symbol)
       .then((res) => {
         console.log(res);
+        for (const survey of res.data.data.surveys) {
+          toast.success(`New survey: ${survey.signature}`);
+          SurveyDB.push(survey);
+        }
       })
       .catch(() => {});
   }
@@ -248,7 +253,7 @@ export const ShipActions = (props: { ship: Ship }) => {
         </Space>
       }
     >
-      <Button icon={<DownOutlined />} type="primary">
+      <Button size="small" icon={<DownOutlined />} type="primary">
         Actions
       </Button>
     </Popover>

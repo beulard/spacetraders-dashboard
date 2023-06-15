@@ -43,7 +43,4 @@ function useShips(): [Ship[], React.Dispatch<React.SetStateAction<Ship[]>>] {
   return [ships, setShips];
 }
 
-// Trigger initial fetch
-FleetDB.update();
-
 export { FleetDB, useShips };
