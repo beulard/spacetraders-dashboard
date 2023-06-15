@@ -175,7 +175,7 @@ const MarketList = (props: { waypoints: Waypoint[] }) => {
   return (
     <Collapse
       size="small"
-      defaultActiveKey={marketWaypoints.map((w) => w.symbol)}
+      activeKey={marketWaypoints.map((w) => w.symbol)}
       className="system-info-collapse"
     >
       {marketWaypoints.length > 0 &&
